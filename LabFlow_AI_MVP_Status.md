@@ -5,8 +5,10 @@
 - Project name: LabFlow AI Scheduler
 - Folder: `E:\work\AI\labflow-ai-scheduler`
 - App URL: `http://localhost:3000`
+- Deployed URL: `https://labflow-ai-scheduler.vercel.app/`
+- GitHub repository: `https://github.com/mangodizet/labflow-ai-scheduler`
 - Stack: Next.js, TypeScript, Tailwind CSS
-- Current phase: Frontend MVP prototype
+- Current phase: Deployed UI / scheduling MVP prototype
 
 ## Original MVP Scenario
 
@@ -125,6 +127,8 @@ Completed:
 - Added placeholder Calendar API route at `/api/calendar/events`
 - Changed the scheduler flow so users select an experiment and set date/time before a timeline is generated
 - Added initial Supabase schema migration for experiment templates, workflow steps, runs, scheduled events, protocol links, and research notes
+- Pushed the project to GitHub at `https://github.com/mangodizet/labflow-ai-scheduler`
+- Deployed the app to Vercel at `https://labflow-ai-scheduler.vercel.app/`
 
 Validated:
 
@@ -133,6 +137,8 @@ Validated:
 - `npm test` passed
 - Browser page loaded successfully
 - Browser console showed no errors or warnings during review
+- Vercel deployment returned `200 OK`
+- Vercel deployment title verified as `LabFlow AI Scheduler`
 
 Known dependency note:
 
@@ -172,16 +178,18 @@ The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
 4. Implement real Google Calendar event reads in `/api/calendar/events`
 5. Replace mock conflicts with real calendar busy blocks
 6. Add calendar event creation flow
-7. Add deployment configuration for Vercel
+7. Add production environment variables in Vercel after Supabase and Google OAuth are configured
 
-## Git and Push Preparation
+## Git and Deployment
 
-Local Git repository should include:
+Local Git repository includes:
 
 - Project source files
 - `package.json`
 - `package-lock.json`
 - This scenario/progress document
+- Supabase migration files
+- Google Calendar setup guide
 
 Files that should remain ignored:
 
@@ -189,13 +197,18 @@ Files that should remain ignored:
 - `.next/`
 - local environment files such as `.env.local`
 
-Push requires a remote repository URL, for example:
+Remote:
 
 ```bash
-git remote add origin https://github.com/<owner>/<repo>.git
-git push -u origin main
+origin https://github.com/mangodizet/labflow-ai-scheduler.git
+```
+
+Deployment:
+
+```text
+https://labflow-ai-scheduler.vercel.app/
 ```
 
 ## Status Date
 
-- Last updated: 2026-05-08
+- Last updated: 2026-05-09
