@@ -123,6 +123,7 @@ Completed:
 - Added current user detection and disconnect UI for authenticated sessions
 - Added OAuth callback route at `/auth/callback`
 - Added placeholder Calendar API route at `/api/calendar/events`
+- Changed the scheduler flow so users select an experiment and set date/time before a timeline is generated
 
 Validated:
 

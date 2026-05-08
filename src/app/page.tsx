@@ -135,17 +135,22 @@ function formatDuration(minutes: number) {
 }
 
 export default function Home() {
-  const [templateId, setTemplateId] = useState(templates[0].id);
-  const [startDate, setStartDate] = useState("2026-05-12");
-  const [workStart, setWorkStart] = useState("09:00");
+  const [templateId, setTemplateId] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [workStart, setWorkStart] = useState("");
   const [avoidWeekends, setAvoidWeekends] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
   const [authStatus, setAuthStatus] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const template = templates.find((item) => item.id === templateId) ?? templates[0];
+  const template = templates.find((item) => item.id === templateId);
+  const canGenerateSchedule = Boolean(template && startDate && workStart);
 
   const schedule = useMemo<ScheduledStep[]>(() => {
+    if (!template || !startDate || !workStart) {
+      return [];
+    }
+
     return generateSchedule({
       steps: template.steps,
       startDate,
@@ -153,7 +158,7 @@ export default function Home() {
       avoidWeekends,
       conflicts: mockCalendarConflicts,
     });
-  }, [avoidWeekends, startDate, template.steps, workStart]);
+  }, [avoidWeekends, startDate, template, workStart]);
 
   const shiftedCount = schedule.filter((step) => step.shifted).length;
   const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
@@ -216,6 +221,26 @@ export default function Home() {
 
     setUserEmail(null);
     setAuthStatus("Google Calendar disconnected.");
+  }
+
+  function handleTemplateSelection(value: string) {
+    setTemplateId(value);
+    setSyncStatus("");
+  }
+
+  function handleStartDateInput(value: string) {
+    setStartDate(value);
+    setSyncStatus("");
+  }
+
+  function handleWorkStartInput(value: string) {
+    setWorkStart(value);
+    setSyncStatus("");
+  }
+
+  function handleWeekendPreferenceInput(checked: boolean) {
+    setAvoidWeekends(checked);
+    setSyncStatus("");
   }
 
   return (
@@ -290,16 +315,26 @@ export default function Home() {
               <select
                 id="template"
                 value={templateId}
-                onChange={(event) => setTemplateId(event.target.value)}
+                onChange={(event) => {
+                  handleTemplateSelection(event.currentTarget.value);
+                }}
+                onInput={(event) => {
+                  handleTemplateSelection(event.currentTarget.value);
+                }}
                 className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
               >
+                <option value="">Select experiment</option>
                 {templates.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
                   </option>
                 ))}
               </select>
-              <p className="mt-3 text-sm leading-6 text-[#66756b]">{template.summary}</p>
+              <p className="mt-3 text-sm leading-6 text-[#66756b]">
+                {template
+                  ? template.summary
+                  : "Choose an experiment template, then set a start date and preferred time to generate the timeline."}
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -311,7 +346,12 @@ export default function Home() {
                   id="startDate"
                   type="date"
                   value={startDate}
-                  onChange={(event) => setStartDate(event.target.value)}
+                  onChange={(event) => {
+                    handleStartDateInput(event.currentTarget.value);
+                  }}
+                  onInput={(event) => {
+                    handleStartDateInput(event.currentTarget.value);
+                  }}
                   className="mt-2 w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
                 />
               </div>
@@ -324,7 +364,12 @@ export default function Home() {
                   id="workStart"
                   type="time"
                   value={workStart}
-                  onChange={(event) => setWorkStart(event.target.value)}
+                  onChange={(event) => {
+                    handleWorkStartInput(event.currentTarget.value);
+                  }}
+                  onInput={(event) => {
+                    handleWorkStartInput(event.currentTarget.value);
+                  }}
                   className="mt-2 w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
                 />
               </div>
@@ -335,7 +380,12 @@ export default function Home() {
               <input
                 type="checkbox"
                 checked={avoidWeekends}
-                onChange={(event) => setAvoidWeekends(event.target.checked)}
+                onChange={(event) => {
+                  handleWeekendPreferenceInput(event.currentTarget.checked);
+                }}
+                onInput={(event) => {
+                  handleWeekendPreferenceInput(event.currentTarget.checked);
+                }}
                 className="h-5 w-5 accent-[#2f6f4e]"
               />
             </label>
@@ -364,7 +414,8 @@ export default function Home() {
                     `${schedule.length} events are ready. Connect Google Calendar in the next integration step.`,
                   )
                 }
-                className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] sm:w-auto"
+                disabled={!canGenerateSchedule}
+                className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b] sm:w-auto"
               >
                 Prepare Calendar Sync
               </button>
@@ -378,8 +429,9 @@ export default function Home() {
               </p>
             ) : null}
 
-            <div className="divide-y divide-[#edf2ea]">
-              {schedule.map((step, index) => (
+            {canGenerateSchedule ? (
+              <div className="divide-y divide-[#edf2ea]">
+                {schedule.map((step, index) => (
                 <article key={`${step.name}-${index}`} className="grid gap-4 px-5 py-5 md:grid-cols-[150px_1fr_140px] md:items-start">
                   <div>
                     <p className="text-sm font-semibold text-[#2f6f4e]">Day {step.dayOffset}</p>
@@ -414,8 +466,16 @@ export default function Home() {
                     <strong className="mt-1 block text-base">{formatDuration(step.durationMinutes)}</strong>
                   </div>
                 </article>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-5 py-16 text-center">
+                <h3 className="text-lg font-semibold text-[#17211b]">No timeline generated yet</h3>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#66756b]">
+                  Select an experiment template, start date, and preferred start time to preview the schedule.
+                </p>
+              </div>
+            )}
           </section>
         </section>
       </div>
