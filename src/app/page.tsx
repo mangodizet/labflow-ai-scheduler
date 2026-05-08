@@ -133,6 +133,7 @@ export default function Home() {
   const [startDate, setStartDate] = useState("2026-05-12");
   const [workStart, setWorkStart] = useState("09:00");
   const [avoidWeekends, setAvoidWeekends] = useState(true);
+  const [syncStatus, setSyncStatus] = useState("");
 
   const template = templates.find((item) => item.id === templateId) ?? templates[0];
 
@@ -257,10 +258,25 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-[#17211b]">Generated timeline</h2>
                 <p className="text-sm text-[#66756b]">Preview before creating Google Calendar events.</p>
               </div>
-              <button className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] sm:w-auto">
+              <button
+                onClick={() =>
+                  setSyncStatus(
+                    `${schedule.length} events are ready. Connect Google Calendar in the next integration step.`,
+                  )
+                }
+                className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] sm:w-auto"
+              >
                 Prepare Calendar Sync
               </button>
             </div>
+            {syncStatus ? (
+              <p
+                className="border-b border-[#d8e2d4] bg-[#f8faf7] px-5 py-3 text-sm font-medium text-[#2f6f4e]"
+                role="status"
+              >
+                {syncStatus}
+              </p>
+            ) : null}
 
             <div className="divide-y divide-[#edf2ea]">
               {schedule.map((step, index) => (

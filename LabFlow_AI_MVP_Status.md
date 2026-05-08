@@ -115,6 +115,7 @@ Completed:
 - Refactored rule-based scheduling into `src/lib/scheduler.ts`
 - Fixed weekend revalidation after mock conflict shifts
 - Fixed the `Hands-on` summary to count only hands-on workflow steps
+- Added visible feedback for the calendar sync preparation button
 
 Validated:
 
