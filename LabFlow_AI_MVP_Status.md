@@ -119,6 +119,8 @@ Completed:
 - Added Vitest unit tests for scheduler weekend handling, conflict shifts, and category totals
 - Added Supabase client setup for Google OAuth
 - Added Google Calendar connection UI with environment setup feedback
+- Added Google Calendar setup guide
+- Added current user detection and disconnect UI for authenticated sessions
 - Added OAuth callback route at `/auth/callback`
 - Added placeholder Calendar API route at `/api/calendar/events`
 
@@ -141,9 +143,10 @@ Known dependency note:
 - `src/lib/scheduler.ts`: Rule-based scheduling utilities and shared scheduler types
 - `src/lib/scheduler.test.ts`: Scheduler unit tests
 - `src/lib/supabase/client.ts`: Supabase browser client setup
-- `src/lib/supabase/auth.ts`: Google OAuth sign-in helper with Calendar scopes
+- `src/lib/supabase/auth.ts`: Google OAuth sign-in, current user, and sign-out helpers
 - `src/app/auth/callback/route.ts`: Supabase OAuth callback handler
 - `src/app/api/calendar/events/route.ts`: Calendar integration API placeholder
+- `GOOGLE_CALENDAR_SETUP.md`: Supabase and Google Cloud setup guide
 - `src/app/layout.tsx`: App metadata and root layout
 - `src/app/globals.css`: Global styles
 - `package.json`: Project scripts and dependencies

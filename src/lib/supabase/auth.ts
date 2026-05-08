@@ -24,3 +24,22 @@ export async function signInWithGoogleCalendar() {
     },
   });
 }
+
+export async function getCurrentUserEmail() {
+  const supabase = createSupabaseBrowserClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error) {
+    throw error;
+  }
+
+  return user?.email ?? null;
+}
+
+export async function signOut() {
+  const supabase = createSupabaseBrowserClient();
+  return supabase.auth.signOut();
+}

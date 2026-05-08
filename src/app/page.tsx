@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   generateSchedule,
@@ -9,7 +9,11 @@ import {
   type ScheduledStep,
   type Step,
 } from "@/lib/scheduler";
-import { signInWithGoogleCalendar } from "@/lib/supabase/auth";
+import {
+  getCurrentUserEmail,
+  signInWithGoogleCalendar,
+  signOut,
+} from "@/lib/supabase/auth";
 import { hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 const templates = [
@@ -137,6 +141,7 @@ export default function Home() {
   const [avoidWeekends, setAvoidWeekends] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
   const [authStatus, setAuthStatus] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const template = templates.find((item) => item.id === templateId) ?? templates[0];
 
@@ -154,6 +159,34 @@ export default function Home() {
   const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
   const canConnectGoogle = hasSupabaseBrowserConfig();
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadUser() {
+      if (!canConnectGoogle) {
+        return;
+      }
+
+      try {
+        const email = await getCurrentUserEmail();
+
+        if (isMounted) {
+          setUserEmail(email);
+        }
+      } catch {
+        if (isMounted) {
+          setAuthStatus("Unable to read the current Google connection.");
+        }
+      }
+    }
+
+    void loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canConnectGoogle]);
+
   async function handleGoogleConnect() {
     if (!canConnectGoogle) {
       setAuthStatus(
@@ -167,6 +200,22 @@ export default function Home() {
     if (error) {
       setAuthStatus(error.message);
     }
+  }
+
+  async function handleSignOut() {
+    if (!canConnectGoogle) {
+      return;
+    }
+
+    const { error } = await signOut();
+
+    if (error) {
+      setAuthStatus(error.message);
+      return;
+    }
+
+    setUserEmail(null);
+    setAuthStatus("Google Calendar disconnected.");
   }
 
   return (
@@ -207,12 +256,26 @@ export default function Home() {
               <p className="mt-2 text-sm leading-6 text-[#66756b]">
                 Connect Google through Supabase OAuth before replacing mock conflicts with real calendar events.
               </p>
-              <button
-                onClick={handleGoogleConnect}
-                className="mt-4 w-full border border-[#2f6f4e] bg-white px-4 py-2 text-sm font-semibold text-[#2f6f4e] transition hover:bg-[#eef5ef]"
-              >
-                Connect Google Calendar
-              </button>
+              {userEmail ? (
+                <div className="mt-4 space-y-3">
+                  <p className="border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-medium text-[#2f6f4e]">
+                    Connected as {userEmail}
+                  </p>
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full border border-[#bfd0c4] bg-white px-4 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                  >
+                    Disconnect
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleGoogleConnect}
+                  className="mt-4 w-full border border-[#2f6f4e] bg-white px-4 py-2 text-sm font-semibold text-[#2f6f4e] transition hover:bg-[#eef5ef]"
+                >
+                  Connect Google Calendar
+                </button>
+              )}
               {authStatus ? (
                 <p className="mt-3 text-sm font-medium text-[#8a4b16]" role="status">
                   {authStatus}
