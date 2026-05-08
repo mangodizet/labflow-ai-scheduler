@@ -39,7 +39,28 @@ https://<your-supabase-project-ref>.supabase.co/auth/v1/callback
 4. Paste the Google OAuth Client Secret.
 5. Save the provider settings.
 
-## 4. Calendar Scopes Used by the App
+## 4. Apply the Database Schema
+
+The initial schema is stored in:
+
+```text
+supabase/migrations/0001_initial_labflow_schema.sql
+```
+
+Apply it through the Supabase SQL editor or the Supabase CLI after linking a project.
+
+The schema creates:
+
+- `experiment_templates`
+- `workflow_steps`
+- `experiment_runs`
+- `scheduled_events`
+- `protocol_links`
+- `research_note_links`
+
+Each table uses row level security so authenticated users can only manage rows they own.
+
+## 5. Calendar Scopes Used by the App
 
 The app currently requests:
 
@@ -53,7 +74,7 @@ https://www.googleapis.com/auth/calendar.events.readonly
 
 These scopes allow the app to identify the user, read calendar events for conflict detection, and create experiment events after user approval.
 
-## 5. Local Verification
+## 6. Local Verification
 
 1. Restart the dev server after creating `.env.local`.
 2. Open `http://localhost:3000`.
@@ -61,7 +82,7 @@ These scopes allow the app to identify the user, read calendar events for confli
 4. Complete Google consent.
 5. Confirm the app redirects back to `/`.
 
-## 6. Next Code Step
+## 7. Next Code Step
 
 After OAuth works, replace the placeholder implementation in:
 

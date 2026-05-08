@@ -124,6 +124,7 @@ Completed:
 - Added OAuth callback route at `/auth/callback`
 - Added placeholder Calendar API route at `/api/calendar/events`
 - Changed the scheduler flow so users select an experiment and set date/time before a timeline is generated
+- Added initial Supabase schema migration for experiment templates, workflow steps, runs, scheduled events, protocol links, and research notes
 
 Validated:
 
@@ -148,6 +149,7 @@ Known dependency note:
 - `src/app/auth/callback/route.ts`: Supabase OAuth callback handler
 - `src/app/api/calendar/events/route.ts`: Calendar integration API placeholder
 - `GOOGLE_CALENDAR_SETUP.md`: Supabase and Google Cloud setup guide
+- `supabase/migrations/0001_initial_labflow_schema.sql`: Initial database schema and RLS policies
 - `src/app/layout.tsx`: App metadata and root layout
 - `src/app/globals.css`: Global styles
 - `package.json`: Project scripts and dependencies
@@ -166,7 +168,7 @@ The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
 
 1. Configure Supabase project values in `.env.local`
 2. Configure Google OAuth consent screen, OAuth client, and Calendar API
-3. Add database tables for templates, steps, runs, protocol links, and note links
+3. Apply the initial Supabase migration
 4. Implement real Google Calendar event reads in `/api/calendar/events`
 5. Replace mock conflicts with real calendar busy blocks
 6. Add calendar event creation flow
