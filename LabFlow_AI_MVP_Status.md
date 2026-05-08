@@ -117,6 +117,10 @@ Completed:
 - Fixed the `Hands-on` summary to count only hands-on workflow steps
 - Added visible feedback for the calendar sync preparation button
 - Added Vitest unit tests for scheduler weekend handling, conflict shifts, and category totals
+- Added Supabase client setup for Google OAuth
+- Added Google Calendar connection UI with environment setup feedback
+- Added OAuth callback route at `/auth/callback`
+- Added placeholder Calendar API route at `/api/calendar/events`
 
 Validated:
 
@@ -136,6 +140,10 @@ Known dependency note:
 - `src/app/page.tsx`: Main interactive MVP prototype
 - `src/lib/scheduler.ts`: Rule-based scheduling utilities and shared scheduler types
 - `src/lib/scheduler.test.ts`: Scheduler unit tests
+- `src/lib/supabase/client.ts`: Supabase browser client setup
+- `src/lib/supabase/auth.ts`: Google OAuth sign-in helper with Calendar scopes
+- `src/app/auth/callback/route.ts`: Supabase OAuth callback handler
+- `src/app/api/calendar/events/route.ts`: Calendar integration API placeholder
 - `src/app/layout.tsx`: App metadata and root layout
 - `src/app/globals.css`: Global styles
 - `package.json`: Project scripts and dependencies
@@ -152,12 +160,13 @@ The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
 
 ## Next Development Steps
 
-1. Add Supabase Auth with Google OAuth
-2. Add database tables for templates, steps, runs, protocol links, and note links
-3. Add Google Calendar API integration
-4. Replace mock conflicts with real calendar reads
-5. Add calendar event creation flow
-6. Add deployment configuration for Vercel
+1. Configure Supabase project values in `.env.local`
+2. Configure Google OAuth consent screen, OAuth client, and Calendar API
+3. Add database tables for templates, steps, runs, protocol links, and note links
+4. Implement real Google Calendar event reads in `/api/calendar/events`
+5. Replace mock conflicts with real calendar busy blocks
+6. Add calendar event creation flow
+7. Add deployment configuration for Vercel
 
 ## Git and Push Preparation
 

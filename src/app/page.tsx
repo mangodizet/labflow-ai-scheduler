@@ -9,6 +9,8 @@ import {
   type ScheduledStep,
   type Step,
 } from "@/lib/scheduler";
+import { signInWithGoogleCalendar } from "@/lib/supabase/auth";
+import { hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 const templates = [
   {
@@ -134,6 +136,7 @@ export default function Home() {
   const [workStart, setWorkStart] = useState("09:00");
   const [avoidWeekends, setAvoidWeekends] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
+  const [authStatus, setAuthStatus] = useState("");
 
   const template = templates.find((item) => item.id === templateId) ?? templates[0];
 
@@ -149,6 +152,22 @@ export default function Home() {
 
   const shiftedCount = schedule.filter((step) => step.shifted).length;
   const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
+  const canConnectGoogle = hasSupabaseBrowserConfig();
+
+  async function handleGoogleConnect() {
+    if (!canConnectGoogle) {
+      setAuthStatus(
+        "Add Supabase environment variables before connecting Google Calendar.",
+      );
+      return;
+    }
+
+    const { error } = await signInWithGoogleCalendar();
+
+    if (error) {
+      setAuthStatus(error.message);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#f4f7f3] text-[#17211b]">
@@ -183,6 +202,24 @@ export default function Home() {
 
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <aside className="flex flex-col gap-5 border border-[#d8e2d4] bg-white p-5">
+            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+              <h2 className="text-sm font-semibold text-[#26382d]">Google Calendar</h2>
+              <p className="mt-2 text-sm leading-6 text-[#66756b]">
+                Connect Google through Supabase OAuth before replacing mock conflicts with real calendar events.
+              </p>
+              <button
+                onClick={handleGoogleConnect}
+                className="mt-4 w-full border border-[#2f6f4e] bg-white px-4 py-2 text-sm font-semibold text-[#2f6f4e] transition hover:bg-[#eef5ef]"
+              >
+                Connect Google Calendar
+              </button>
+              {authStatus ? (
+                <p className="mt-3 text-sm font-medium text-[#8a4b16]" role="status">
+                  {authStatus}
+                </p>
+              ) : null}
+            </div>
+
             <div>
               <label className="text-sm font-semibold text-[#26382d]" htmlFor="template">
                 Experiment template
