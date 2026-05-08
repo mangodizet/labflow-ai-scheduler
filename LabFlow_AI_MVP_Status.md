@@ -112,6 +112,9 @@ Completed:
 - Added summary metrics for steps, scheduled workload, and adjusted events
 - Updated page metadata to `LabFlow AI Scheduler`
 - Verified local app at `http://localhost:3000`
+- Refactored rule-based scheduling into `src/lib/scheduler.ts`
+- Fixed weekend revalidation after mock conflict shifts
+- Fixed the `Hands-on` summary to count only hands-on workflow steps
 
 Validated:
 
@@ -123,43 +126,30 @@ Validated:
 ## Current Files of Interest
 
 - `src/app/page.tsx`: Main interactive MVP prototype
+- `src/lib/scheduler.ts`: Rule-based scheduling utilities and shared scheduler types
 - `src/app/layout.tsx`: App metadata and root layout
 - `src/app/globals.css`: Global styles
 - `package.json`: Project scripts and dependencies
 
 ## Known Issues and Follow-Up Items
 
-### P2: Conflict move can land on a weekend
+### Resolved: Conflict move can land on a weekend
 
-Current conflict handling moves a conflicted task by one day after weekend avoidance has already run. If that move lands on Saturday or Sunday, the task can still end up on a weekend even when weekend avoidance is enabled.
+Conflict handling now re-runs weekend validation after moving a conflicted task.
 
-Recommended fix:
+### Resolved: Hands-on total includes assay time
 
-- Move scheduling logic into `src/lib/scheduler.ts`
-- Add a single `findNextValidSlot` function
-- Re-run weekend and work-hour checks after each conflict adjustment
-
-### P3: Hands-on total includes assay time
-
-The summary card labeled `Hands-on` currently sums all scheduled steps, including `Assay` tasks.
-
-Recommended fix:
-
-- Either filter the total to `category === "Hands-on"`
-- Or rename the metric to `Total scheduled work`
+The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
 
 ## Next Development Steps
 
-1. Refactor scheduler logic into `src/lib/scheduler.ts`
-2. Fix weekend handling after conflict shifts
-3. Correct or rename the hands-on summary metric
-4. Add basic unit tests for scheduling rules
-5. Add Supabase Auth with Google OAuth
-6. Add database tables for templates, steps, runs, protocol links, and note links
-7. Add Google Calendar API integration
-8. Replace mock conflicts with real calendar reads
-9. Add calendar event creation flow
-10. Add deployment configuration for Vercel
+1. Add basic unit tests for scheduling rules
+2. Add Supabase Auth with Google OAuth
+3. Add database tables for templates, steps, runs, protocol links, and note links
+4. Add Google Calendar API integration
+5. Replace mock conflicts with real calendar reads
+6. Add calendar event creation flow
+7. Add deployment configuration for Vercel
 
 ## Git and Push Preparation
 

@@ -2,19 +2,13 @@
 
 import { useMemo, useState } from "react";
 
-type Step = {
-  name: string;
-  dayOffset: number;
-  durationMinutes: number;
-  category: "Hands-on" | "Incubation" | "Assay";
-  protocol: string;
-};
-
-type ScheduledStep = Step & {
-  date: Date;
-  shifted: boolean;
-  conflict: string | null;
-};
+import {
+  generateSchedule,
+  sumStepMinutes,
+  type CalendarConflict,
+  type ScheduledStep,
+  type Step,
+} from "@/lib/scheduler";
 
 const templates = [
   {
@@ -103,38 +97,10 @@ const templates = [
   },
 ];
 
-const mockCalendarConflicts = [
+const mockCalendarConflicts: CalendarConflict[] = [
   { dayOffset: 6, label: "Lab seminar, 1:30 PM - 2:30 PM" },
   { dayOffset: 7, label: "PI meeting, 11:00 AM - 12:00 PM" },
 ];
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function withTime(date: Date, time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  const next = new Date(date);
-  next.setHours(hours, minutes, 0, 0);
-  return next;
-}
-
-function avoidWeekend(date: Date) {
-  const next = new Date(date);
-  const day = next.getDay();
-
-  if (day === 6) {
-    next.setDate(next.getDate() + 2);
-  }
-
-  if (day === 0) {
-    next.setDate(next.getDate() + 1);
-  }
-
-  return next;
-}
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -171,29 +137,17 @@ export default function Home() {
   const template = templates.find((item) => item.id === templateId) ?? templates[0];
 
   const schedule = useMemo<ScheduledStep[]>(() => {
-    const baseDate = new Date(`${startDate}T00:00:00`);
-
-    return template.steps.map((step) => {
-      const originalDate = withTime(addDays(baseDate, step.dayOffset), workStart);
-      const adjustedDate = avoidWeekends ? avoidWeekend(originalDate) : originalDate;
-      const conflict = mockCalendarConflicts.find(
-        (item) => item.dayOffset === step.dayOffset,
-      );
-
-      return {
-        ...step,
-        date: conflict ? addDays(adjustedDate, 1) : adjustedDate,
-        shifted: adjustedDate.getTime() !== originalDate.getTime() || Boolean(conflict),
-        conflict: conflict?.label ?? null,
-      };
+    return generateSchedule({
+      steps: template.steps,
+      startDate,
+      workStart,
+      avoidWeekends,
+      conflicts: mockCalendarConflicts,
     });
   }, [avoidWeekends, startDate, template.steps, workStart]);
 
   const shiftedCount = schedule.filter((step) => step.shifted).length;
-  const totalHandsOnMinutes = schedule.reduce(
-    (total, step) => total + step.durationMinutes,
-    0,
-  );
+  const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
 
   return (
     <main className="min-h-screen bg-[#f4f7f3] text-[#17211b]">
@@ -217,7 +171,7 @@ export default function Home() {
             </div>
             <div className="border border-[#d8e2d4] bg-white px-4 py-3">
               <span className="block text-[#637568]">Hands-on</span>
-              <strong className="mt-1 block text-2xl">{formatDuration(totalHandsOnMinutes)}</strong>
+              <strong className="mt-1 block text-2xl">{formatDuration(handsOnMinutes)}</strong>
             </div>
             <div className="border border-[#d8e2d4] bg-white px-4 py-3">
               <span className="block text-[#637568]">Adjusted</span>
