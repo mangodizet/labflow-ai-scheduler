@@ -116,18 +116,26 @@ Completed:
 - Fixed weekend revalidation after mock conflict shifts
 - Fixed the `Hands-on` summary to count only hands-on workflow steps
 - Added visible feedback for the calendar sync preparation button
+- Added Vitest unit tests for scheduler weekend handling, conflict shifts, and category totals
 
 Validated:
 
 - `npm run lint` passed
 - `npm run build` passed
+- `npm test` passed
 - Browser page loaded successfully
 - Browser console showed no errors or warnings during review
+
+Known dependency note:
+
+- `npm audit` reports a moderate PostCSS advisory through `next@16.2.6`.
+- The suggested automatic fix would downgrade Next.js to 9.x, which is a breaking change and was not applied.
 
 ## Current Files of Interest
 
 - `src/app/page.tsx`: Main interactive MVP prototype
 - `src/lib/scheduler.ts`: Rule-based scheduling utilities and shared scheduler types
+- `src/lib/scheduler.test.ts`: Scheduler unit tests
 - `src/app/layout.tsx`: App metadata and root layout
 - `src/app/globals.css`: Global styles
 - `package.json`: Project scripts and dependencies
@@ -144,13 +152,12 @@ The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
 
 ## Next Development Steps
 
-1. Add basic unit tests for scheduling rules
-2. Add Supabase Auth with Google OAuth
-3. Add database tables for templates, steps, runs, protocol links, and note links
-4. Add Google Calendar API integration
-5. Replace mock conflicts with real calendar reads
-6. Add calendar event creation flow
-7. Add deployment configuration for Vercel
+1. Add Supabase Auth with Google OAuth
+2. Add database tables for templates, steps, runs, protocol links, and note links
+3. Add Google Calendar API integration
+4. Replace mock conflicts with real calendar reads
+5. Add calendar event creation flow
+6. Add deployment configuration for Vercel
 
 ## Git and Push Preparation
 
