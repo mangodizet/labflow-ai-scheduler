@@ -10,8 +10,7 @@ const googleCalendarScopes = [
 
 export async function signInWithGoogleCalendar() {
   const supabase = createSupabaseBrowserClient();
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || window.location.origin;
 
   return supabase.auth.signInWithOAuth({
     provider: "google",
