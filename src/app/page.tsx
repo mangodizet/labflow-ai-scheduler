@@ -109,19 +109,32 @@ const mockCalendarConflicts: CalendarConflict[] = [
 ];
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  return `${weekdays[date.getDay()]}, ${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
 function formatTime(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHours = hours % 12 || 12;
+
+  return `${displayHours}:${minutes} ${period}`;
 }
 
 function formatDuration(minutes: number) {
@@ -309,7 +322,10 @@ export default function Home() {
                 </label>
                 <input
                   id="startDate"
-                  type="date"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{4}-\d{2}-\d{2}"
+                  placeholder="YYYY-MM-DD"
                   value={startDate}
                   onChange={(event) => setStartDate(event.target.value)}
                   className="mt-2 w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
@@ -322,7 +338,10 @@ export default function Home() {
                 </label>
                 <input
                   id="workStart"
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d{2}:\d{2}"
+                  placeholder="09:00"
                   value={workStart}
                   onChange={(event) => setWorkStart(event.target.value)}
                   className="mt-2 w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
