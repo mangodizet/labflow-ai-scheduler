@@ -110,6 +110,17 @@ const mockCalendarConflicts: CalendarConflict[] = [
 
 type Language = "en" | "ko";
 
+type DraftEvent = ScheduledStep & {
+  id: string;
+};
+
+type DraftEventEdit = {
+  name: string;
+  date: string;
+  time: string;
+  durationMinutes: number;
+};
+
 const templateCopy = {
   en: {
     "thp1-m2":
@@ -160,7 +171,14 @@ const copy = {
       "Protocol and note links",
     ],
     generatedTimeline: "Generated timeline",
-    previewBeforeCalendar: "Preview before creating Google Calendar events.",
+    previewBeforeCalendar: "Review and edit the draft calendar before syncing.",
+    draftCalendar: "Draft calendar",
+    editEvent: "Edit event",
+    eventName: "Event name",
+    eventDate: "Date",
+    eventTime: "Time",
+    eventDuration: "Duration minutes",
+    selectEventToEdit: "Select a calendar event to edit its draft details.",
     prepareCalendarSync: "Prepare Calendar Sync",
     readyForCalendar:
       "events are ready. Connect Google Calendar in the next integration step.",
@@ -211,7 +229,14 @@ const copy = {
       "프로토콜과 노트 링크",
     ],
     generatedTimeline: "생성된 일정",
-    previewBeforeCalendar: "Google Calendar에 등록하기 전에 일정을 미리 확인합니다.",
+    previewBeforeCalendar: "Google Calendar에 등록하기 전에 초안 일정을 확인하고 수정합니다.",
+    draftCalendar: "초안 캘린더",
+    editEvent: "일정 수정",
+    eventName: "일정 이름",
+    eventDate: "날짜",
+    eventTime: "시간",
+    eventDuration: "소요 시간(분)",
+    selectEventToEdit: "수정할 캘린더 일정을 선택하세요.",
     prepareCalendarSync: "캘린더 동기화 준비",
     readyForCalendar:
       "개의 이벤트가 준비되었습니다. 다음 연동 단계에서 Google Calendar를 연결하세요.",
@@ -261,6 +286,25 @@ function formatDuration(minutes: number, language: Language) {
   return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
 }
 
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatTimeInput(date: Date) {
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
+function combineDateAndTime(dateValue: string, timeValue: string) {
+  return new Date(`${dateValue}T${timeValue || "00:00"}:00`);
+}
+
 function getTemplateSummary(templateId: string, language: Language, fallback: string) {
   return (
     templateCopy[language][templateId as keyof (typeof templateCopy)[Language]] ??
@@ -277,6 +321,8 @@ export default function Home() {
   const [syncStatus, setSyncStatus] = useState("");
   const [authStatus, setAuthStatus] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [draftEdits, setDraftEdits] = useState<Record<string, DraftEventEdit>>({});
+  const [selectedEventId, setSelectedEventId] = useState("");
   const t = copy[language];
 
   const template = templates.find((item) => item.id === templateId);
@@ -299,6 +345,36 @@ export default function Home() {
   const shiftedCount = schedule.filter((step) => step.shifted).length;
   const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
   const canConnectGoogle = hasSupabaseBrowserConfig();
+  const draftEvents = useMemo<DraftEvent[]>(() => {
+    return schedule.map((step, index) => {
+      const id = `${step.dayOffset}-${step.name}-${index}`;
+      const edit = draftEdits[id];
+
+      if (!edit) {
+        return {
+          ...step,
+          id,
+        };
+      }
+
+      return {
+        ...step,
+        id,
+        name: edit.name,
+        date: combineDateAndTime(edit.date, edit.time),
+        durationMinutes: edit.durationMinutes,
+      };
+    });
+  }, [draftEdits, schedule]);
+  const selectedEvent = draftEvents.find((event) => event.id === selectedEventId);
+  const groupedDraftEvents = useMemo(() => {
+    return draftEvents.reduce<Record<string, DraftEvent[]>>((groups, event) => {
+      const key = formatDateInput(event.date);
+      groups[key] = [...(groups[key] ?? []), event];
+      return groups;
+    }, {});
+  }, [draftEvents]);
+  const draftDates = Object.keys(groupedDraftEvents).sort();
 
   useEffect(() => {
     let isMounted = true;
@@ -362,20 +438,55 @@ export default function Home() {
   function handleTemplateSelection(value: string) {
     setTemplateId(value);
     setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
   }
 
   function handleStartDateInput(value: string) {
     setStartDate(value);
     setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
   }
 
   function handleWorkStartInput(value: string) {
     setWorkStart(value);
     setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
   }
 
   function handleWeekendPreferenceInput(checked: boolean) {
     setAvoidWeekends(checked);
+    setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
+  }
+
+  function updateDraftEvent(id: string, patch: Partial<DraftEventEdit>) {
+    const event = draftEvents.find((item) => item.id === id);
+
+    if (!event) {
+      return;
+    }
+
+    setDraftEdits((current) => {
+      const baseEdit = {
+        name: event.name,
+        date: formatDateInput(event.date),
+        time: formatTimeInput(event.date),
+        durationMinutes: event.durationMinutes,
+      };
+
+      return {
+        ...current,
+        [id]: {
+          ...baseEdit,
+          ...current[id],
+          ...patch,
+        },
+      };
+    });
     setSyncStatus("");
   }
 
@@ -575,8 +686,8 @@ export default function Home() {
                 onClick={() =>
                   setSyncStatus(
                     language === "ko"
-                      ? `${schedule.length}${t.readyForCalendar}`
-                      : `${schedule.length} ${t.readyForCalendar}`,
+                      ? `${draftEvents.length}${t.readyForCalendar}`
+                      : `${draftEvents.length} ${t.readyForCalendar}`,
                   )
                 }
                 disabled={!canGenerateSchedule}
@@ -595,51 +706,132 @@ export default function Home() {
             ) : null}
 
             {canGenerateSchedule ? (
-              <div className="divide-y divide-[#edf2ea]">
-                {schedule.map((step, index) => (
-                <article key={`${step.name}-${index}`} className="grid gap-4 px-5 py-5 md:grid-cols-[150px_1fr_140px] md:items-start">
-                  <div>
-                    <p className="text-sm font-semibold text-[#2f6f4e]">
-                      {t.day} {step.dayOffset}
-                    </p>
-                    <p className="mt-1 text-sm text-[#66756b]">
-                      {formatDate(step.date, language)}
-                    </p>
-                    <p className="text-sm text-[#66756b]">
-                      {formatTime(step.date, language)}
-                    </p>
+              <div className="grid gap-5 p-5 xl:grid-cols-[1fr_280px]">
+                <div>
+                  <h3 className="text-base font-semibold text-[#17211b]">{t.draftCalendar}</h3>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {draftDates.map((dateKey) => (
+                      <section
+                        key={dateKey}
+                        className="min-h-40 border border-[#d8e2d4] bg-[#fbfdf9]"
+                      >
+                        <div className="border-b border-[#d8e2d4] px-3 py-2">
+                          <p className="text-sm font-semibold text-[#2f6f4e]">
+                            {formatDate(new Date(`${dateKey}T00:00:00`), language)}
+                          </p>
+                        </div>
+                        <div className="space-y-2 p-3">
+                          {groupedDraftEvents[dateKey].map((event) => (
+                            <button
+                              key={event.id}
+                              onClick={() => setSelectedEventId(event.id)}
+                              className={`w-full border px-3 py-2 text-left transition ${
+                                selectedEventId === event.id
+                                  ? "border-[#2f6f4e] bg-[#eef5ef]"
+                                  : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
+                              }`}
+                            >
+                              <span className="block text-xs font-semibold text-[#2f6f4e]">
+                                {formatTime(event.date, language)} ·{" "}
+                                {formatDuration(event.durationMinutes, language)}
+                              </span>
+                              <span className="mt-1 block text-sm font-semibold text-[#17211b]">
+                                {event.name}
+                              </span>
+                              <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5 text-xs text-[#55675c]">
+                                {t.categories[event.category]}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                    ))}
                   </div>
+                </div>
 
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-semibold text-[#17211b]">{step.name}</h3>
-                      <span className="border border-[#d8e2d4] px-2 py-1 text-xs font-semibold text-[#55675c]">
-                        {t.categories[step.category]}
-                      </span>
-                      {step.shifted ? (
-                        <span className="border border-[#e8c889] bg-[#fff7df] px-2 py-1 text-xs font-semibold text-[#795b16]">
-                          {t.adjusted}
-                        </span>
-                      ) : null}
+                <aside className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+                  <h3 className="text-base font-semibold text-[#17211b]">{t.editEvent}</h3>
+                  {selectedEvent ? (
+                    <div className="mt-4 space-y-4">
+                      <label className="block text-sm font-semibold text-[#26382d]">
+                        {t.eventName}
+                        <input
+                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          value={selectedEvent.name}
+                          onChange={(event) =>
+                            updateDraftEvent(selectedEvent.id, {
+                              name: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </label>
+
+                      <label className="block text-sm font-semibold text-[#26382d]">
+                        {t.eventDate}
+                        <input
+                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          type="date"
+                          value={formatDateInput(selectedEvent.date)}
+                          onChange={(event) =>
+                            updateDraftEvent(selectedEvent.id, {
+                              date: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </label>
+
+                      <label className="block text-sm font-semibold text-[#26382d]">
+                        {t.eventTime}
+                        <input
+                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          type="time"
+                          value={formatTimeInput(selectedEvent.date)}
+                          onChange={(event) =>
+                            updateDraftEvent(selectedEvent.id, {
+                              time: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </label>
+
+                      <label className="block text-sm font-semibold text-[#26382d]">
+                        {t.eventDuration}
+                        <input
+                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          min="1"
+                          type="number"
+                          value={selectedEvent.durationMinutes}
+                          onChange={(event) =>
+                            updateDraftEvent(selectedEvent.id, {
+                              durationMinutes: Math.max(
+                                1,
+                                Number(event.currentTarget.value),
+                              ),
+                            })
+                          }
+                        />
+                      </label>
+
+                      <div className="border border-[#d8e2d4] bg-white p-3 text-sm leading-6 text-[#66756b]">
+                        <p>
+                          {t.day} {selectedEvent.dayOffset}
+                        </p>
+                        <p>
+                          {t.protocolPlaceholder}: {selectedEvent.protocol}
+                        </p>
+                        {selectedEvent.conflict ? (
+                          <p className="font-medium text-[#8a4b16]">
+                            {t.conflictAvoided}: {selectedEvent.conflict}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-[#66756b]">
-                      {t.protocolPlaceholder}: {step.protocol}
+                  ) : (
+                    <p className="mt-3 text-sm leading-6 text-[#66756b]">
+                      {t.selectEventToEdit}
                     </p>
-                    {step.conflict ? (
-                      <p className="mt-2 text-sm font-medium text-[#8a4b16]">
-                        {t.conflictAvoided}: {step.conflict}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="border border-[#d8e2d4] bg-[#f8faf7] px-3 py-2 text-sm text-[#26382d] md:text-center">
-                    <span className="block text-[#66756b]">{t.duration}</span>
-                    <strong className="mt-1 block text-base">
-                      {formatDuration(step.durationMinutes, language)}
-                    </strong>
-                  </div>
-                </article>
-                ))}
+                  )}
+                </aside>
               </div>
             ) : (
               <div className="px-5 py-16 text-center">

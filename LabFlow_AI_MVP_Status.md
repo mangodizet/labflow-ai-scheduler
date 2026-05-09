@@ -130,6 +130,8 @@ Completed:
 - Pushed the project to GitHub at `https://github.com/mangodizet/labflow-ai-scheduler`
 - Deployed the app to Vercel at `https://labflow-ai-scheduler.vercel.app/`
 - Added an English/Korean language toggle for the main scheduling UI
+- Replaced the generated schedule list with an editable draft calendar view
+- Added event editing for draft event name, date, time, and duration before Google Calendar sync
 
 Validated:
 
@@ -141,6 +143,7 @@ Validated:
 - Vercel deployment returned `200 OK`
 - Vercel deployment title verified as `LabFlow AI Scheduler`
 - English/Korean language toggle verified in the local browser
+- Draft calendar view and event edit panel verified in the local browser
 
 Known dependency note:
 
