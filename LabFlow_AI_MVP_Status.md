@@ -129,6 +129,7 @@ Completed:
 - Added initial Supabase schema migration for experiment templates, workflow steps, runs, scheduled events, protocol links, and research notes
 - Pushed the project to GitHub at `https://github.com/mangodizet/labflow-ai-scheduler`
 - Deployed the app to Vercel at `https://labflow-ai-scheduler.vercel.app/`
+- Added an English/Korean language toggle for the main scheduling UI
 
 Validated:
 
@@ -139,6 +140,7 @@ Validated:
 - Browser console showed no errors or warnings during review
 - Vercel deployment returned `200 OK`
 - Vercel deployment title verified as `LabFlow AI Scheduler`
+- English/Korean language toggle verified in the local browser
 
 Known dependency note:
 
