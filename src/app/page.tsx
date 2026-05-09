@@ -192,6 +192,8 @@ const copy = {
     calendarPersistenceWarning:
       "Calendar events were created, but Supabase could not save the sync record.",
     connectBeforeSync: "Connect Google Calendar before syncing events.",
+    duplicateSync:
+      "This schedule has already been synced. Edit the draft schedule before syncing again.",
     noTimeline: "No timeline generated yet",
     noTimelineDescription:
       "Select an experiment template, start date, and preferred start time to preview the schedule.",
@@ -266,6 +268,8 @@ const copy = {
     calendarPersistenceWarning:
       "캘린더 이벤트는 생성됐지만 Supabase에 동기화 기록을 저장하지 못했습니다.",
     connectBeforeSync: "이벤트를 동기화하려면 먼저 Google Calendar를 연결하세요.",
+    duplicateSync:
+      "이미 동기화된 일정입니다. 다시 동기화하려면 초안 일정을 수정하세요.",
     noTimeline: "아직 생성된 일정이 없습니다",
     noTimelineDescription:
       "실험 템플릿, 시작 날짜, 희망 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
@@ -668,7 +672,9 @@ export default function Home() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(data?.error ?? t.calendarSyncFailed);
+        throw new Error(
+          data?.duplicate ? t.duplicateSync : data?.error ?? t.calendarSyncFailed,
+        );
       }
 
       const createdCount = data?.createdEvents?.length ?? draftEvents.length;

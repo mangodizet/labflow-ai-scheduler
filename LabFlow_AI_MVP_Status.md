@@ -146,6 +146,8 @@ Completed:
 - Added Supabase persistence after Google Calendar sync
 - Calendar sync now creates an `experiment_runs` record and stores synced `scheduled_events.google_event_id`
 - Added UI warning text for cases where Google events are created but Supabase sync records fail to save
+- Added duplicate Google Calendar sync prevention using an experiment run sync signature
+- Added Supabase migration `0002_add_calendar_sync_signature.sql`
 
 Validated:
 
@@ -161,6 +163,7 @@ Validated:
 - Calendar API route builds successfully, but live Google sync still requires Supabase and Google OAuth environment configuration
 - Real busy-block conflict detection is wired in code and will activate after Google OAuth is configured and connected
 - Supabase sync persistence is wired in code and will activate after the migration is applied
+- Duplicate sync prevention requires the `0002_add_calendar_sync_signature.sql` migration
 
 Known dependency note:
 
@@ -260,8 +263,8 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 3. Apply the initial Supabase migration
 4. Add production environment variables in Vercel after Supabase and Google OAuth are configured
 5. Reconnect Google Calendar from local and deployed app to verify provider token scopes
-6. Test that created Google event IDs are saved to Supabase scheduled events
-7. Add duplicate-sync prevention using saved Google event IDs
+6. Apply both Supabase migrations in order
+7. Test that created Google event IDs are saved to Supabase scheduled events
 8. Add a real experiment-template editor so researchers can define workflows without code changes
 9. Add drag/drop or direct calendar resizing for draft schedule editing
 10. Add a visible conflict-review panel showing which Google busy blocks affected the schedule

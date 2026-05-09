@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createHash } from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -124,6 +125,26 @@ function toGoogleDateTime(dateValue: string, durationMinutes: number) {
   };
 }
 
+function createSyncSignature(run: CalendarSyncRun, events: CalendarDraftEvent[]) {
+  const normalizedEvents = events.map((event) => ({
+    category: event.category,
+    date: event.date,
+    dayOffset: event.dayOffset,
+    durationMinutes: event.durationMinutes,
+    name: event.name,
+    protocol: event.protocol,
+  }));
+
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        events: normalizedEvents,
+        run,
+      }),
+    )
+    .digest("hex");
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const timeMin =
@@ -190,6 +211,33 @@ export async function POST(request: Request) {
     return createCalendarError("Missing experiment run details.");
   }
 
+  const syncSignature = createSyncSignature(run, events);
+  let persistenceWarning: string | null = null;
+
+  if (supabase && userId) {
+    const { data: existingRun, error: existingRunError } = await supabase
+      .from("experiment_runs")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("sync_signature", syncSignature)
+      .maybeSingle();
+
+    if (existingRun) {
+      return NextResponse.json(
+        {
+          duplicate: true,
+          error:
+            "This schedule has already been synced. Edit the draft schedule before syncing again.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (existingRunError) {
+      persistenceWarning = existingRunError.message;
+    }
+  }
+
   const createdEvents: GoogleCalendarEvent[] = [];
 
   for (const event of events) {
@@ -241,8 +289,6 @@ export async function POST(request: Request) {
     });
   }
 
-  let persistenceWarning: string | null = null;
-
   if (supabase && userId) {
     const { data: experimentRun, error: runError } = await supabase
       .from("experiment_runs")
@@ -252,6 +298,7 @@ export async function POST(request: Request) {
         preferred_start_time: run.preferredStartTime,
         start_date: run.startDate,
         status: "scheduled",
+        sync_signature: syncSignature,
         user_id: userId,
       })
       .select("id")

@@ -45,6 +45,7 @@ The initial schema is stored in:
 
 ```text
 supabase/migrations/0001_initial_labflow_schema.sql
+supabase/migrations/0002_add_calendar_sync_signature.sql
 ```
 
 Apply it through the Supabase SQL editor or the Supabase CLI after linking a project.
@@ -59,6 +60,8 @@ The schema creates:
 - `research_note_links`
 
 Each table uses row level security so authenticated users can only manage rows they own.
+
+The second migration adds `experiment_runs.sync_signature` and a unique index to prevent the same draft schedule from being synced repeatedly.
 
 ## 5. Calendar Scopes Used by the App
 
