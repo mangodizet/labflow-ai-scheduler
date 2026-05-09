@@ -3,12 +3,12 @@
 ## Project
 
 - Project name: LabFlow AI Scheduler
-- Folder: `E:\work\AI\labflow-ai-scheduler`
+- Folder: `E:\AI\labflow-ai-scheduler`
 - App URL: `http://localhost:3000`
 - Deployed URL: `https://labflow-ai-scheduler.vercel.app/`
 - GitHub repository: `https://github.com/mangodizet/labflow-ai-scheduler`
 - Stack: Next.js, TypeScript, Tailwind CSS
-- Current phase: Deployed UI / scheduling MVP prototype
+- Current phase: Scheduler stabilization / calendar integration preparation
 
 ## Original MVP Scenario
 
@@ -102,7 +102,7 @@ Current state:
 
 Completed:
 
-- Created Next.js project in `E:\work\AI\labflow-ai-scheduler`
+- Created Next.js project in `E:\AI\labflow-ai-scheduler`
 - Added TypeScript and ESLint setup through `create-next-app`
 - Replaced default Next.js page with LabFlow AI Scheduler MVP screen
 - Added two in-memory experiment templates
@@ -132,6 +132,11 @@ Completed:
 - Added an English/Korean language toggle for the main scheduling UI
 - Replaced the generated schedule list with an editable draft calendar view
 - Added event editing for draft event name, date, time, and duration before Google Calendar sync
+- Added scheduler stabilization for invalid date/time input handling
+- Added same-day sequential placement so overlapping workflow steps are pushed later in the day
+- Added working-hours overflow handling that moves tasks to the next valid workday
+- Added scheduler warning codes and localized UI warning messages
+- Added unit tests for sequential placement, working-hours overflow, invalid inputs, and invalid durations
 
 Validated:
 
@@ -174,6 +179,18 @@ Conflict handling now re-runs weekend validation after moving a conflicted task.
 ### Resolved: Hands-on total includes assay time
 
 The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
+
+### Resolved: Same-day steps can overlap
+
+Steps assigned to the same day are now placed sequentially using the previous event end time.
+
+### Resolved: Tasks can exceed working hours without notice
+
+The scheduler now moves tasks that do not fit within the configured working day to the next valid workday and displays a warning.
+
+### Resolved: Invalid scheduler inputs are not guarded
+
+Invalid date/time inputs now return an empty generated schedule, and invalid step durations are clamped with a warning.
 
 ## Future Expansion After Scheduler MVP
 
@@ -233,6 +250,8 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 5. Replace mock conflicts with real calendar busy blocks
 6. Add calendar event creation flow
 7. Add production environment variables in Vercel after Supabase and Google OAuth are configured
+8. Add a real experiment-template editor so researchers can define workflows without code changes
+9. Add drag/drop or direct calendar resizing for draft schedule editing
 
 ## Git and Deployment
 

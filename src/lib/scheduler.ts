@@ -11,10 +11,18 @@ export type CalendarConflict = {
   label: string;
 };
 
+export type ScheduleWarningCode =
+  | "calendar-conflict"
+  | "duration-exceeds-workday"
+  | "invalid-duration"
+  | "weekend-shift"
+  | "workday-overflow";
+
 export type ScheduledStep = Step & {
   date: Date;
   shifted: boolean;
   conflict: string | null;
+  warnings: ScheduleWarningCode[];
 };
 
 type GenerateScheduleOptions = {
@@ -23,6 +31,13 @@ type GenerateScheduleOptions = {
   workStart: string;
   avoidWeekends: boolean;
   conflicts?: CalendarConflict[];
+  workEnd?: string;
+};
+
+type ParsedTime = {
+  hour: number;
+  minute: number;
+  totalMinutes: number;
 };
 
 function addDays(date: Date, days: number) {
@@ -31,11 +46,70 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
-function withTime(date: Date, time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
+function addMinutes(date: Date, minutes: number) {
   const next = new Date(date);
-  next.setHours(hours, minutes, 0, 0);
+  next.setMinutes(next.getMinutes() + minutes);
   return next;
+}
+
+function parseDateInput(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, yearValue, monthValue, dayValue] = match;
+  const year = Number(yearValue);
+  const month = Number(monthValue);
+  const day = Number(dayValue);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function parseTimeInput(value: string): ParsedTime | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, hourValue, minuteValue] = match;
+  const hour = Number(hourValue);
+  const minute = Number(minuteValue);
+
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return null;
+  }
+
+  return {
+    hour,
+    minute,
+    totalMinutes: hour * 60 + minute,
+  };
+}
+
+function withTime(date: Date, time: ParsedTime) {
+  const next = new Date(date);
+  next.setHours(time.hour, time.minute, 0, 0);
+  return next;
+}
+
+function dateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function movePastWeekend(date: Date) {
@@ -54,21 +128,92 @@ function movePastWeekend(date: Date) {
 }
 
 function normalizeWorkDate(date: Date, avoidWeekends: boolean) {
-  return avoidWeekends ? movePastWeekend(date) : date;
-}
-
-function resolveScheduledDate(
-  originalDate: Date,
-  avoidWeekends: boolean,
-  conflict?: CalendarConflict,
-) {
-  let date = normalizeWorkDate(originalDate, avoidWeekends);
-
-  if (conflict) {
-    date = normalizeWorkDate(addDays(date, 1), avoidWeekends);
+  if (!avoidWeekends) {
+    return {
+      date,
+      shiftedWeekend: false,
+    };
   }
 
-  return date;
+  const next = movePastWeekend(date);
+
+  return {
+    date: next,
+    shiftedWeekend: next.getTime() !== date.getTime(),
+  };
+}
+
+function isAfter(date: Date, comparison: Date) {
+  return date.getTime() > comparison.getTime();
+}
+
+function addWarning(
+  warnings: ScheduleWarningCode[],
+  warning: ScheduleWarningCode,
+) {
+  if (!warnings.includes(warning)) {
+    warnings.push(warning);
+  }
+}
+
+function fitWithinWorkday({
+  date,
+  durationMinutes,
+  workStart,
+  workEnd,
+  avoidWeekends,
+  cursorsByDate,
+  warnings,
+}: {
+  date: Date;
+  durationMinutes: number;
+  workStart: ParsedTime;
+  workEnd: ParsedTime;
+  avoidWeekends: boolean;
+  cursorsByDate: Map<string, Date>;
+  warnings: ScheduleWarningCode[];
+}) {
+  let scheduledDate = date;
+  const workdayCapacity = workEnd.totalMinutes - workStart.totalMinutes;
+
+  if (durationMinutes > workdayCapacity) {
+    addWarning(warnings, "duration-exceeds-workday");
+  }
+
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    const weekendResult = normalizeWorkDate(scheduledDate, avoidWeekends);
+    scheduledDate = weekendResult.date;
+
+    if (weekendResult.shiftedWeekend) {
+      addWarning(warnings, "weekend-shift");
+    }
+
+    const dayStart = withTime(scheduledDate, workStart);
+    const dayEnd = withTime(scheduledDate, workEnd);
+
+    if (isAfter(dayStart, scheduledDate)) {
+      scheduledDate = dayStart;
+    }
+
+    const cursor = cursorsByDate.get(dateKey(scheduledDate));
+
+    if (cursor && isAfter(cursor, scheduledDate)) {
+      scheduledDate = cursor;
+    }
+
+    const scheduledEnd = addMinutes(scheduledDate, durationMinutes);
+
+    if (durationMinutes > workdayCapacity || !isAfter(scheduledEnd, dayEnd)) {
+      cursorsByDate.set(dateKey(scheduledDate), scheduledEnd);
+      return scheduledDate;
+    }
+
+    addWarning(warnings, "workday-overflow");
+    scheduledDate = withTime(addDays(scheduledDate, 1), workStart);
+  }
+
+  cursorsByDate.set(dateKey(scheduledDate), addMinutes(scheduledDate, durationMinutes));
+  return scheduledDate;
 }
 
 export function generateSchedule({
@@ -77,19 +222,68 @@ export function generateSchedule({
   workStart,
   avoidWeekends,
   conflicts = [],
+  workEnd = "17:00",
 }: GenerateScheduleOptions): ScheduledStep[] {
-  const baseDate = new Date(`${startDate}T00:00:00`);
+  const baseDate = parseDateInput(startDate);
+  const parsedWorkStart = parseTimeInput(workStart);
+  const parsedWorkEnd = parseTimeInput(workEnd);
+
+  if (
+    !baseDate ||
+    !parsedWorkStart ||
+    !parsedWorkEnd ||
+    parsedWorkEnd.totalMinutes <= parsedWorkStart.totalMinutes
+  ) {
+    return [];
+  }
+
+  const cursorsByDate = new Map<string, Date>();
 
   return steps.map((step) => {
-    const originalDate = withTime(addDays(baseDate, step.dayOffset), workStart);
+    const warnings: ScheduleWarningCode[] = [];
+    const originalDate = withTime(addDays(baseDate, step.dayOffset), parsedWorkStart);
     const conflict = conflicts.find((item) => item.dayOffset === step.dayOffset);
-    const date = resolveScheduledDate(originalDate, avoidWeekends, conflict);
+    const durationMinutes =
+      Number.isFinite(step.durationMinutes) && step.durationMinutes > 0
+        ? step.durationMinutes
+        : 1;
+    let candidateDate = originalDate;
+
+    if (durationMinutes !== step.durationMinutes) {
+      addWarning(warnings, "invalid-duration");
+    }
+
+    const weekendResult = normalizeWorkDate(candidateDate, avoidWeekends);
+    candidateDate = weekendResult.date;
+
+    if (weekendResult.shiftedWeekend) {
+      addWarning(warnings, "weekend-shift");
+    }
+
+    if (conflict) {
+      addWarning(warnings, "calendar-conflict");
+      candidateDate = addDays(candidateDate, 1);
+    }
+
+    const date = fitWithinWorkday({
+      date: candidateDate,
+      durationMinutes,
+      workStart: parsedWorkStart,
+      workEnd: parsedWorkEnd,
+      avoidWeekends,
+      cursorsByDate,
+      warnings,
+    });
 
     return {
       ...step,
+      durationMinutes,
       date,
-      shifted: date.getTime() !== originalDate.getTime(),
+      shifted:
+        date.getTime() !== originalDate.getTime() ||
+        durationMinutes !== step.durationMinutes,
       conflict: conflict?.label ?? null,
+      warnings,
     };
   });
 }

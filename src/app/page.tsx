@@ -6,6 +6,7 @@ import {
   generateSchedule,
   sumStepMinutes,
   type CalendarConflict,
+  type ScheduleWarningCode,
   type ScheduledStep,
   type Step,
 } from "@/lib/scheduler";
@@ -145,6 +146,7 @@ const copy = {
     steps: "Steps",
     handsOn: "Hands-on",
     adjusted: "Adjusted",
+    warnings: "Warnings",
     googleCalendar: "Google Calendar",
     googleCalendarDescription:
       "Connect Google through Supabase OAuth before replacing mock conflicts with real calendar events.",
@@ -189,6 +191,13 @@ const copy = {
     protocolPlaceholder: "Protocol link placeholder",
     conflictAvoided: "Conflict avoided",
     duration: "Duration",
+    warningMessages: {
+      "calendar-conflict": "Moved to avoid a calendar conflict.",
+      "duration-exceeds-workday": "Duration is longer than one working day.",
+      "invalid-duration": "Invalid duration was adjusted to 1 minute.",
+      "weekend-shift": "Moved to avoid weekend work.",
+      "workday-overflow": "Moved to the next workday because it exceeded working hours.",
+    },
     categories: {
       "Hands-on": "Hands-on",
       Incubation: "Incubation",
@@ -203,6 +212,7 @@ const copy = {
     steps: "단계",
     handsOn: "작업 시간",
     adjusted: "조정됨",
+    warnings: "주의사항",
     googleCalendar: "구글 캘린더",
     googleCalendarDescription:
       "기존 캘린더 일정과의 충돌을 확인하려면 Supabase OAuth로 Google을 연결하세요.",
@@ -247,6 +257,13 @@ const copy = {
     protocolPlaceholder: "프로토콜 링크 자리",
     conflictAvoided: "피한 충돌",
     duration: "소요 시간",
+    warningMessages: {
+      "calendar-conflict": "캘린더 충돌을 피하기 위해 이동했습니다.",
+      "duration-exceeds-workday": "소요 시간이 하루 근무시간보다 깁니다.",
+      "invalid-duration": "잘못된 소요 시간을 1분으로 조정했습니다.",
+      "weekend-shift": "주말 작업을 피하기 위해 이동했습니다.",
+      "workday-overflow": "근무시간을 초과해 다음 근무일로 이동했습니다.",
+    },
     categories: {
       "Hands-on": "작업",
       Incubation: "배양/대기",
@@ -284,6 +301,13 @@ function formatDuration(minutes: number, language: Language) {
   }
 
   return remainder ? `${hours}h ${remainder}m` : `${hours}h`;
+}
+
+function formatWarning(
+  warning: ScheduleWarningCode,
+  messages: Record<ScheduleWarningCode, string>,
+) {
+  return messages[warning];
 }
 
 function formatDateInput(date: Date) {
@@ -344,6 +368,10 @@ export default function Home() {
 
   const shiftedCount = schedule.filter((step) => step.shifted).length;
   const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
+  const warningCount = schedule.reduce(
+    (total, step) => total + step.warnings.length,
+    0,
+  );
   const canConnectGoogle = hasSupabaseBrowserConfig();
   const draftEvents = useMemo<DraftEvent[]>(() => {
     return schedule.map((step, index) => {
@@ -540,6 +568,10 @@ export default function Home() {
               <strong className="mt-1 block text-2xl">
                 {formatDuration(handsOnMinutes, language)}
               </strong>
+            </div>
+            <div className="border border-[#d8e2d4] bg-white px-4 py-3">
+              <span className="block text-[#637568]">{t.warnings}</span>
+              <strong className="mt-1 block text-2xl">{warningCount}</strong>
             </div>
             <div className="border border-[#d8e2d4] bg-white px-4 py-3">
               <span className="block text-[#637568]">{t.adjusted}</span>
@@ -741,6 +773,11 @@ export default function Home() {
                               <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5 text-xs text-[#55675c]">
                                 {t.categories[event.category]}
                               </span>
+                              {event.warnings.length ? (
+                                <span className="mt-2 block text-xs font-medium text-[#8a4b16]">
+                                  {t.warnings}: {event.warnings.length}
+                                </span>
+                              ) : null}
                             </button>
                           ))}
                         </div>
@@ -823,6 +860,20 @@ export default function Home() {
                           <p className="font-medium text-[#8a4b16]">
                             {t.conflictAvoided}: {selectedEvent.conflict}
                           </p>
+                        ) : null}
+                        {selectedEvent.warnings.length ? (
+                          <div className="mt-2 border-t border-[#d8e2d4] pt-2">
+                            <p className="font-semibold text-[#8a4b16]">
+                              {t.warnings}
+                            </p>
+                            <ul className="mt-1 space-y-1">
+                              {selectedEvent.warnings.map((warning) => (
+                                <li key={warning}>
+                                  {formatWarning(warning, t.warningMessages)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         ) : null}
                       </div>
                     </div>
