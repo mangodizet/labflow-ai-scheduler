@@ -143,6 +143,9 @@ Completed:
 - Removed hardcoded mock calendar conflicts from the UI scheduling flow
 - Added Google Calendar busy-block loading for connected users
 - Added date-based conflict detection so real busy blocks can shift generated schedule steps
+- Added Supabase persistence after Google Calendar sync
+- Calendar sync now creates an `experiment_runs` record and stores synced `scheduled_events.google_event_id`
+- Added UI warning text for cases where Google events are created but Supabase sync records fail to save
 
 Validated:
 
@@ -157,6 +160,7 @@ Validated:
 - Draft calendar view and event edit panel verified in the local browser
 - Calendar API route builds successfully, but live Google sync still requires Supabase and Google OAuth environment configuration
 - Real busy-block conflict detection is wired in code and will activate after Google OAuth is configured and connected
+- Supabase sync persistence is wired in code and will activate after the migration is applied
 
 Known dependency note:
 
@@ -256,10 +260,11 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 3. Apply the initial Supabase migration
 4. Add production environment variables in Vercel after Supabase and Google OAuth are configured
 5. Reconnect Google Calendar from local and deployed app to verify provider token scopes
-6. Save created Google event IDs back to Supabase scheduled events
-7. Add a real experiment-template editor so researchers can define workflows without code changes
-8. Add drag/drop or direct calendar resizing for draft schedule editing
-9. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
+6. Test that created Google event IDs are saved to Supabase scheduled events
+7. Add duplicate-sync prevention using saved Google event IDs
+8. Add a real experiment-template editor so researchers can define workflows without code changes
+9. Add drag/drop or direct calendar resizing for draft schedule editing
+10. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
 
 ## Git and Deployment
 

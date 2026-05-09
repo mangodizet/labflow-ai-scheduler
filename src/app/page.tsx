@@ -189,6 +189,8 @@ const copy = {
     syncingCalendar: "Syncing...",
     calendarSyncComplete: "events were added to Google Calendar.",
     calendarSyncFailed: "Unable to sync Google Calendar.",
+    calendarPersistenceWarning:
+      "Calendar events were created, but Supabase could not save the sync record.",
     connectBeforeSync: "Connect Google Calendar before syncing events.",
     noTimeline: "No timeline generated yet",
     noTimelineDescription:
@@ -261,6 +263,8 @@ const copy = {
     syncingCalendar: "동기화 중...",
     calendarSyncComplete: "개의 이벤트를 Google Calendar에 추가했습니다.",
     calendarSyncFailed: "Google Calendar 동기화에 실패했습니다.",
+    calendarPersistenceWarning:
+      "캘린더 이벤트는 생성됐지만 Supabase에 동기화 기록을 저장하지 못했습니다.",
     connectBeforeSync: "이벤트를 동기화하려면 먼저 Google Calendar를 연결하세요.",
     noTimeline: "아직 생성된 일정이 없습니다",
     noTimelineDescription:
@@ -644,12 +648,20 @@ export default function Home() {
         body: JSON.stringify({
           events: draftEvents.map((event) => ({
             category: event.category,
+            conflict: event.conflict,
             date: formatLocalDateTime(event.date),
+            dayOffset: event.dayOffset,
             durationMinutes: event.durationMinutes,
             id: event.id,
             name: event.name,
             protocol: event.protocol,
           })),
+          run: {
+            avoidWeekends,
+            preferredStartTime: workStart,
+            startDate,
+            templateName: template?.name ?? "Untitled experiment",
+          },
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
@@ -660,10 +672,14 @@ export default function Home() {
       }
 
       const createdCount = data?.createdEvents?.length ?? draftEvents.length;
-      setSyncStatus(
+      const successMessage =
         language === "ko"
           ? `${createdCount}${t.calendarSyncComplete}`
-          : `${createdCount} ${t.calendarSyncComplete}`,
+          : `${createdCount} ${t.calendarSyncComplete}`;
+      setSyncStatus(
+        data?.persistenceWarning
+          ? `${successMessage} ${t.calendarPersistenceWarning}`
+          : successMessage,
       );
     } catch (error) {
       setSyncStatus(

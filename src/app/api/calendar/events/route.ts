@@ -8,6 +8,8 @@ type CalendarDraftEvent = {
   date: string;
   durationMinutes: number;
   category: string;
+  conflict: string | null;
+  dayOffset: number;
   protocol: string;
 };
 
@@ -15,6 +17,13 @@ type GoogleCalendarEvent = {
   id: string;
   htmlLink: string;
   summary: string;
+};
+
+type CalendarSyncRun = {
+  avoidWeekends: boolean;
+  preferredStartTime: string;
+  startDate: string;
+  templateName: string;
 };
 
 async function createSupabaseRouteClient() {
@@ -47,13 +56,15 @@ async function createSupabaseRouteClient() {
   };
 }
 
-async function getGoogleAccessToken() {
+async function getGoogleSession() {
   const { error, supabase } = await createSupabaseRouteClient();
 
   if (error || !supabase) {
     return {
       error: error ?? "Unable to create Supabase client.",
+      supabase: null,
       token: null,
+      userId: null,
     };
   }
 
@@ -65,20 +76,26 @@ async function getGoogleAccessToken() {
   if (sessionError) {
     return {
       error: sessionError.message,
+      supabase,
       token: null,
+      userId: null,
     };
   }
 
   if (!session?.provider_token) {
     return {
       error: "Google Calendar is not connected. Please connect Google again.",
+      supabase,
       token: null,
+      userId: session?.user.id ?? null,
     };
   }
 
   return {
     error: null,
+    supabase,
     token: session.provider_token,
+    userId: session.user.id,
   };
 }
 
@@ -114,7 +131,7 @@ export async function GET(request: Request) {
   const timeMax =
     searchParams.get("timeMax") ??
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-  const { error, token } = await getGoogleAccessToken();
+  const { error, token } = await getGoogleSession();
 
   if (error || !token) {
     return createCalendarError(error ?? "Missing Google access token.", 401);
@@ -151,7 +168,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error, token } = await getGoogleAccessToken();
+  const { error, supabase, token, userId } = await getGoogleSession();
 
   if (error || !token) {
     return createCalendarError(error ?? "Missing Google access token.", 401);
@@ -159,6 +176,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const events = body?.events as CalendarDraftEvent[] | undefined;
+  const run = body?.run as CalendarSyncRun | undefined;
   const timeZone =
     typeof body?.timeZone === "string" && body.timeZone
       ? body.timeZone
@@ -166,6 +184,10 @@ export async function POST(request: Request) {
 
   if (!events?.length) {
     return createCalendarError("No calendar events were provided.");
+  }
+
+  if (!run?.startDate || !run.preferredStartTime || !run.templateName) {
+    return createCalendarError("Missing experiment run details.");
   }
 
   const createdEvents: GoogleCalendarEvent[] = [];
@@ -219,7 +241,48 @@ export async function POST(request: Request) {
     });
   }
 
+  let persistenceWarning: string | null = null;
+
+  if (supabase && userId) {
+    const { data: experimentRun, error: runError } = await supabase
+      .from("experiment_runs")
+      .insert({
+        avoid_weekends: run.avoidWeekends,
+        name: run.templateName,
+        preferred_start_time: run.preferredStartTime,
+        start_date: run.startDate,
+        status: "scheduled",
+        user_id: userId,
+      })
+      .select("id")
+      .single();
+
+    if (runError || !experimentRun) {
+      persistenceWarning =
+        runError?.message ?? "Unable to save the experiment run in Supabase.";
+    } else {
+      const { error: eventsError } = await supabase.from("scheduled_events").insert(
+        events.map((event, index) => ({
+          category: event.category,
+          conflict_label: event.conflict,
+          day_offset: event.dayOffset,
+          duration_minutes: event.durationMinutes,
+          google_event_id: createdEvents[index]?.id ?? null,
+          run_id: experimentRun.id,
+          starts_at: new Date(event.date).toISOString(),
+          step_name: event.name,
+          user_id: userId,
+        })),
+      );
+
+      if (eventsError) {
+        persistenceWarning = eventsError.message;
+      }
+    }
+  }
+
   return NextResponse.json({
     createdEvents,
+    persistenceWarning,
   });
 }
