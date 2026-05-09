@@ -8,7 +8,7 @@
 - Deployed URL: `https://labflow-ai-scheduler.vercel.app/`
 - GitHub repository: `https://github.com/mangodizet/labflow-ai-scheduler`
 - Stack: Next.js, TypeScript, Tailwind CSS
-- Current phase: Scheduler stabilization / calendar integration preparation
+- Current phase: Google Calendar integration wiring
 
 ## Original MVP Scenario
 
@@ -137,6 +137,9 @@ Completed:
 - Added working-hours overflow handling that moves tasks to the next valid workday
 - Added scheduler warning codes and localized UI warning messages
 - Added unit tests for sequential placement, working-hours overflow, invalid inputs, and invalid durations
+- Replaced the Calendar API placeholder with Google Calendar free/busy reads and primary-calendar event creation
+- Connected the draft calendar sync button to the Calendar API route
+- Added localized Google Calendar sync success, progress, and failure messages
 
 Validated:
 
@@ -149,6 +152,7 @@ Validated:
 - Vercel deployment title verified as `LabFlow AI Scheduler`
 - English/Korean language toggle verified in the local browser
 - Draft calendar view and event edit panel verified in the local browser
+- Calendar API route builds successfully, but live Google sync still requires Supabase and Google OAuth environment configuration
 
 Known dependency note:
 
@@ -246,10 +250,10 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 1. Configure Supabase project values in `.env.local`
 2. Configure Google OAuth consent screen, OAuth client, and Calendar API
 3. Apply the initial Supabase migration
-4. Implement real Google Calendar event reads in `/api/calendar/events`
-5. Replace mock conflicts with real calendar busy blocks
-6. Add calendar event creation flow
-7. Add production environment variables in Vercel after Supabase and Google OAuth are configured
+4. Add production environment variables in Vercel after Supabase and Google OAuth are configured
+5. Reconnect Google Calendar from local and deployed app to verify provider token scopes
+6. Replace mock conflicts with real calendar busy blocks in the schedule generator flow
+7. Save created Google event IDs back to Supabase scheduled events
 8. Add a real experiment-template editor so researchers can define workflows without code changes
 9. Add drag/drop or direct calendar resizing for draft schedule editing
 

@@ -181,9 +181,11 @@ const copy = {
     eventTime: "Time",
     eventDuration: "Duration minutes",
     selectEventToEdit: "Select a calendar event to edit its draft details.",
-    prepareCalendarSync: "Prepare Calendar Sync",
-    readyForCalendar:
-      "events are ready. Connect Google Calendar in the next integration step.",
+    prepareCalendarSync: "Sync to Google Calendar",
+    syncingCalendar: "Syncing...",
+    calendarSyncComplete: "events were added to Google Calendar.",
+    calendarSyncFailed: "Unable to sync Google Calendar.",
+    connectBeforeSync: "Connect Google Calendar before syncing events.",
     noTimeline: "No timeline generated yet",
     noTimelineDescription:
       "Select an experiment template, start date, and preferred start time to preview the schedule.",
@@ -247,9 +249,11 @@ const copy = {
     eventTime: "시간",
     eventDuration: "소요 시간(분)",
     selectEventToEdit: "수정할 캘린더 일정을 선택하세요.",
-    prepareCalendarSync: "캘린더 동기화 준비",
-    readyForCalendar:
-      "개의 이벤트가 준비되었습니다. 다음 연동 단계에서 Google Calendar를 연결하세요.",
+    prepareCalendarSync: "구글 캘린더에 동기화",
+    syncingCalendar: "동기화 중...",
+    calendarSyncComplete: "개의 이벤트를 Google Calendar에 추가했습니다.",
+    calendarSyncFailed: "Google Calendar 동기화에 실패했습니다.",
+    connectBeforeSync: "이벤트를 동기화하려면 먼저 Google Calendar를 연결하세요.",
     noTimeline: "아직 생성된 일정이 없습니다",
     noTimelineDescription:
       "실험 템플릿, 시작 날짜, 희망 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
@@ -325,6 +329,10 @@ function formatTimeInput(date: Date) {
   return `${hours}:${minutes}`;
 }
 
+function formatLocalDateTime(date: Date) {
+  return `${formatDateInput(date)}T${formatTimeInput(date)}:00`;
+}
+
 function combineDateAndTime(dateValue: string, timeValue: string) {
   return new Date(`${dateValue}T${timeValue || "00:00"}:00`);
 }
@@ -343,6 +351,7 @@ export default function Home() {
   const [workStart, setWorkStart] = useState("");
   const [avoidWeekends, setAvoidWeekends] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
   const [authStatus, setAuthStatus] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [draftEdits, setDraftEdits] = useState<Record<string, DraftEventEdit>>({});
@@ -516,6 +525,54 @@ export default function Home() {
       };
     });
     setSyncStatus("");
+  }
+
+  async function handleCalendarSync() {
+    if (!userEmail) {
+      setSyncStatus(t.connectBeforeSync);
+      return;
+    }
+
+    setIsSyncing(true);
+    setSyncStatus(t.syncingCalendar);
+
+    try {
+      const response = await fetch("/api/calendar/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          events: draftEvents.map((event) => ({
+            category: event.category,
+            date: formatLocalDateTime(event.date),
+            durationMinutes: event.durationMinutes,
+            id: event.id,
+            name: event.name,
+            protocol: event.protocol,
+          })),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? t.calendarSyncFailed);
+      }
+
+      const createdCount = data?.createdEvents?.length ?? draftEvents.length;
+      setSyncStatus(
+        language === "ko"
+          ? `${createdCount}${t.calendarSyncComplete}`
+          : `${createdCount} ${t.calendarSyncComplete}`,
+      );
+    } catch (error) {
+      setSyncStatus(
+        error instanceof Error ? error.message : t.calendarSyncFailed,
+      );
+    } finally {
+      setIsSyncing(false);
+    }
   }
 
   return (
@@ -715,17 +772,11 @@ export default function Home() {
                 <p className="text-sm text-[#66756b]">{t.previewBeforeCalendar}</p>
               </div>
               <button
-                onClick={() =>
-                  setSyncStatus(
-                    language === "ko"
-                      ? `${draftEvents.length}${t.readyForCalendar}`
-                      : `${draftEvents.length} ${t.readyForCalendar}`,
-                  )
-                }
-                disabled={!canGenerateSchedule}
+                onClick={handleCalendarSync}
+                disabled={!canGenerateSchedule || isSyncing}
                 className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b] sm:w-auto"
               >
-                {t.prepareCalendarSync}
+                {isSyncing ? t.syncingCalendar : t.prepareCalendarSync}
               </button>
             </div>
             {syncStatus ? (

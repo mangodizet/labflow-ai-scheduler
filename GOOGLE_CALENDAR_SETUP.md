@@ -1,6 +1,6 @@
 # Google Calendar Integration Setup
 
-This project is ready for Supabase Google OAuth wiring, but real Google Calendar reads and writes require external console setup first.
+This project includes Supabase Google OAuth wiring plus Google Calendar read/write API routes. Real calendar sync requires the external console setup below.
 
 ## 1. Create a Supabase Project
 
@@ -84,8 +84,22 @@ These scopes allow the app to identify the user, read calendar events for confli
 
 ## 7. Next Code Step
 
-After OAuth works, replace the placeholder implementation in:
+The Calendar API route is implemented in:
 
 - `src/app/api/calendar/events/route.ts`
 
-with real Google Calendar event reads and writes using the provider access token from the Supabase session.
+Current behavior:
+
+- `GET /api/calendar/events?timeMin=<iso>&timeMax=<iso>` reads primary-calendar busy blocks through Google Calendar `freeBusy`.
+- `POST /api/calendar/events` creates draft schedule events in the user's primary Google Calendar.
+
+The main UI now sends edited draft calendar events to `POST /api/calendar/events` when the user clicks `Sync to Google Calendar`.
+
+## 8. Production Checklist
+
+Before testing on Vercel:
+
+1. Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL=https://labflow-ai-scheduler.vercel.app` to Vercel environment variables.
+2. Add the deployed app URL to Supabase Auth > URL Configuration.
+3. Confirm the Google provider is enabled in Supabase.
+4. Reconnect Google Calendar from the deployed app so the session has a fresh provider token with Calendar scopes.
