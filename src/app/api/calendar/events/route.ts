@@ -20,6 +20,19 @@ type GoogleCalendarEvent = {
   summary: string;
 };
 
+type GoogleCalendarListEvent = {
+  description?: string;
+  end?: {
+    date?: string;
+    dateTime?: string;
+  };
+  start?: {
+    date?: string;
+    dateTime?: string;
+  };
+  summary?: string;
+};
+
 type CalendarSyncRun = {
   avoidWeekends: boolean;
   preferredStartTime: string;
@@ -189,18 +202,18 @@ export async function GET(request: Request) {
   }
 
   const googleResponse = await fetch(
-    "https://www.googleapis.com/calendar/v3/freeBusy",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        items: [{ id: "primary" }],
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${new URLSearchParams(
+      {
+        orderBy: "startTime",
+        singleEvents: "true",
         timeMax,
         timeMin,
-      }),
+      },
+    ).toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     },
   );
 
@@ -213,9 +226,20 @@ export async function GET(request: Request) {
   }
 
   const data = await googleResponse.json();
+  const busy = ((data.items ?? []) as GoogleCalendarListEvent[])
+    .filter(
+      (event) =>
+        !event.description?.includes("Created by LabFlow AI Scheduler."),
+    )
+    .map((event) => ({
+      end: event.end?.dateTime ?? event.end?.date,
+      start: event.start?.dateTime ?? event.start?.date,
+      summary: event.summary,
+    }))
+    .filter((event) => event.start && event.end);
 
   return NextResponse.json({
-    busy: data.calendars?.primary?.busy ?? [],
+    busy,
   });
 }
 

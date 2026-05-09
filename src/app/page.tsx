@@ -111,6 +111,12 @@ const languageStorageKey = "labflow-language";
 type CalendarBusyBlock = {
   start: string;
   end: string;
+  summary?: string;
+};
+
+type CalendarConflictResult = {
+  busySignature: string;
+  conflicts: CalendarConflict[];
 };
 
 type DraftEvent = ScheduledStep & {
@@ -163,6 +169,8 @@ const copy = {
     calendarConflictsLoaded: "Google Calendar conflicts loaded.",
     calendarConflictsUnavailable:
       "Google Calendar conflicts are unavailable. The schedule can still be edited manually.",
+    calendarConflictsChanged:
+      "Calendar conflicts changed. Review the updated draft before syncing.",
     refreshCalendarConflicts: "Refresh conflicts",
     experimentTemplate: "Experiment template",
     selectExperiment: "Select experiment",
@@ -240,6 +248,8 @@ const copy = {
     calendarConflictsLoaded: "Google Calendar 충돌 정보를 불러왔습니다.",
     calendarConflictsUnavailable:
       "Google Calendar 충돌 정보를 불러올 수 없습니다. 일정은 직접 수정할 수 있습니다.",
+    calendarConflictsChanged:
+      "캘린더 충돌 정보가 변경되었습니다. 업데이트된 초안 일정을 확인한 뒤 다시 동기화하세요.",
     refreshCalendarConflicts: "충돌 정보 새로고침",
     experimentTemplate: "실험 템플릿",
     selectExperiment: "실험 선택",
@@ -389,6 +399,43 @@ function getInitialLanguage(): Language {
   return window.localStorage.getItem(languageStorageKey) === "ko" ? "ko" : "en";
 }
 
+async function fetchCalendarConflicts(
+  template: (typeof templates)[number],
+  startDate: string,
+  language: Language,
+): Promise<CalendarConflictResult> {
+  const range = getScheduleTimeRange(template, startDate);
+  const response = await fetch(
+    `/api/calendar/events?timeMin=${encodeURIComponent(
+      range.timeMin,
+    )}&timeMax=${encodeURIComponent(range.timeMax)}`,
+  );
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(data?.error ?? "Google Calendar conflicts are unavailable.");
+  }
+
+  const busyBlocks = (data?.busy ?? []) as CalendarBusyBlock[];
+
+  return {
+    busySignature: JSON.stringify(busyBlocks),
+    conflicts: busyBlocks.map((block) => {
+      const start = new Date(block.start);
+      const end = new Date(block.end);
+      const timeLabel = `${formatTime(start, language)} - ${formatTime(
+        end,
+        language,
+      )}`;
+
+      return {
+        date: formatDateInput(start),
+        label: block.summary ? `${block.summary}, ${timeLabel}` : timeLabel,
+      };
+    }),
+  };
+}
+
 export default function Home() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [templateId, setTemplateId] = useState("");
@@ -507,40 +554,18 @@ export default function Home() {
       setCalendarStatus(t.loadingCalendarConflicts);
 
       try {
-        const range = getScheduleTimeRange(template, startDate);
-        const response = await fetch(
-          `/api/calendar/events?timeMin=${encodeURIComponent(
-            range.timeMin,
-          )}&timeMax=${encodeURIComponent(range.timeMax)}`,
-        );
-        const data = await response.json().catch(() => null);
-
-        if (!response.ok) {
-          throw new Error(data?.error ?? t.calendarConflictsUnavailable);
-        }
-
-        const busySignature = JSON.stringify(data?.busy ?? []);
-        const conflicts = ((data?.busy ?? []) as CalendarBusyBlock[]).map(
-          (block) => {
-            const start = new Date(block.start);
-            const end = new Date(block.end);
-
-            return {
-              date: formatDateInput(start),
-              label: `${formatTime(start, language)} - ${formatTime(
-                end,
-                language,
-              )}`,
-            };
-          },
+        const result = await fetchCalendarConflicts(
+          template,
+          startDate,
+          language,
         );
 
         if (isMounted) {
-          setCalendarConflicts(conflicts);
+          setCalendarConflicts(result.conflicts);
           setCalendarStatus(t.calendarConflictsLoaded);
 
-          if (previousBusySignature.current !== busySignature) {
-            previousBusySignature.current = busySignature;
+          if (previousBusySignature.current !== result.busySignature) {
+            previousBusySignature.current = result.busySignature;
             setDraftEdits({});
             setSelectedEventId("");
           }
@@ -695,6 +720,24 @@ export default function Home() {
     setSyncStatus(t.syncingCalendar);
 
     try {
+      if (template) {
+        const result = await fetchCalendarConflicts(
+          template,
+          startDate,
+          language,
+        );
+
+        if (result.busySignature !== previousBusySignature.current) {
+          previousBusySignature.current = result.busySignature;
+          setCalendarConflicts(result.conflicts);
+          setCalendarStatus(t.calendarConflictsLoaded);
+          setDraftEdits({});
+          setSelectedEventId("");
+          setSyncStatus(t.calendarConflictsChanged);
+          return;
+        }
+      }
+
       const response = await fetch("/api/calendar/events", {
         method: "POST",
         headers: {

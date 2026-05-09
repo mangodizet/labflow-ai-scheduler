@@ -154,6 +154,8 @@ Completed:
 - Fixed scheduler conflict avoidance so it keeps moving through consecutive busy calendar dates
 - Added manual, focus-based, and periodic Google Calendar conflict refresh
 - Persisted the selected EN/KO language in local storage so OAuth redirects keep the user's language
+- Changed Google Calendar conflict loading from free/busy-only reads to event-list reads so LabFlow-created events are excluded from future conflict checks
+- Added a pre-sync calendar refresh guard that updates the draft and stops sync when external calendar conflicts changed
 
 Validated:
 
@@ -172,6 +174,7 @@ Validated:
 - Duplicate sync prevention requires the `0002_add_calendar_sync_signature.sql` migration
 - Browser check confirmed the local scheduler form generates a draft calendar without console errors
 - Added test coverage for consecutive Google Calendar busy days
+- Google Calendar sync no longer treats events created by LabFlow AI Scheduler as external conflicts
 
 Known dependency note:
 
