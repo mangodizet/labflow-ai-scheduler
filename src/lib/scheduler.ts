@@ -7,7 +7,8 @@ export type Step = {
 };
 
 export type CalendarConflict = {
-  dayOffset: number;
+  dayOffset?: number;
+  date?: string;
   label: string;
 };
 
@@ -110,6 +111,22 @@ function dateKey(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function findCalendarConflict({
+  conflicts,
+  dayOffset,
+  date,
+}: {
+  conflicts: CalendarConflict[];
+  dayOffset: number;
+  date: Date;
+}) {
+  const scheduledDateKey = dateKey(date);
+
+  return conflicts.find(
+    (item) => item.dayOffset === dayOffset || item.date === scheduledDateKey,
+  );
 }
 
 function movePastWeekend(date: Date) {
@@ -242,7 +259,6 @@ export function generateSchedule({
   return steps.map((step) => {
     const warnings: ScheduleWarningCode[] = [];
     const originalDate = withTime(addDays(baseDate, step.dayOffset), parsedWorkStart);
-    const conflict = conflicts.find((item) => item.dayOffset === step.dayOffset);
     const durationMinutes =
       Number.isFinite(step.durationMinutes) && step.durationMinutes > 0
         ? step.durationMinutes
@@ -259,6 +275,12 @@ export function generateSchedule({
     if (weekendResult.shiftedWeekend) {
       addWarning(warnings, "weekend-shift");
     }
+
+    const conflict = findCalendarConflict({
+      conflicts,
+      date: candidateDate,
+      dayOffset: step.dayOffset,
+    });
 
     if (conflict) {
       addWarning(warnings, "calendar-conflict");

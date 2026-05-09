@@ -104,12 +104,12 @@ const templates = [
   },
 ];
 
-const mockCalendarConflicts: CalendarConflict[] = [
-  { dayOffset: 6, label: "Lab seminar, 1:30 PM - 2:30 PM" },
-  { dayOffset: 7, label: "PI meeting, 11:00 AM - 12:00 PM" },
-];
-
 type Language = "en" | "ko";
+
+type CalendarBusyBlock = {
+  start: string;
+  end: string;
+};
 
 type DraftEvent = ScheduledStep & {
   id: string;
@@ -142,14 +142,14 @@ const copy = {
     languageLabel: "Language",
     appTitle: "Experiment Scheduler",
     appDescription:
-      "Build a rule-based research timeline, avoid weekend work, check simulated calendar conflicts, and prepare events for Google Calendar sync.",
+      "Build a rule-based research timeline, avoid weekend work, check Google Calendar conflicts, and sync final events.",
     steps: "Steps",
     handsOn: "Hands-on",
     adjusted: "Adjusted",
     warnings: "Warnings",
     googleCalendar: "Google Calendar",
     googleCalendarDescription:
-      "Connect Google through Supabase OAuth before replacing mock conflicts with real calendar events.",
+      "Connect Google through Supabase OAuth to read busy blocks and sync approved experiment events.",
     connectedAs: "Connected as",
     disconnect: "Disconnect",
     connectGoogle: "Connect Google Calendar",
@@ -157,6 +157,10 @@ const copy = {
       "Add Supabase environment variables before connecting Google Calendar.",
     readConnectionError: "Unable to read the current Google connection.",
     disconnected: "Google Calendar disconnected.",
+    loadingCalendarConflicts: "Checking Google Calendar conflicts...",
+    calendarConflictsLoaded: "Google Calendar conflicts loaded.",
+    calendarConflictsUnavailable:
+      "Google Calendar conflicts are unavailable. The schedule can still be edited manually.",
     experimentTemplate: "Experiment template",
     selectExperiment: "Select experiment",
     chooseTemplate:
@@ -210,14 +214,14 @@ const copy = {
     languageLabel: "언어",
     appTitle: "실험 스케줄러",
     appDescription:
-      "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 캘린더 충돌을 피한 뒤 Google Calendar 연동을 준비합니다.",
+      "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 Google Calendar 충돌을 피한 뒤 최종 일정을 동기화합니다.",
     steps: "단계",
     handsOn: "작업 시간",
     adjusted: "조정됨",
     warnings: "주의사항",
     googleCalendar: "구글 캘린더",
     googleCalendarDescription:
-      "기존 캘린더 일정과의 충돌을 확인하려면 Supabase OAuth로 Google을 연결하세요.",
+      "Supabase OAuth로 Google을 연결하면 기존 캘린더 busy block을 읽고 승인된 실험 일정을 동기화합니다.",
     connectedAs: "연결된 계정",
     disconnect: "연결 해제",
     connectGoogle: "구글 캘린더 연결",
@@ -225,6 +229,10 @@ const copy = {
       "구글 캘린더를 연결하려면 먼저 Supabase 환경변수를 추가하세요.",
     readConnectionError: "현재 구글 연결 상태를 읽을 수 없습니다.",
     disconnected: "구글 캘린더 연결이 해제되었습니다.",
+    loadingCalendarConflicts: "Google Calendar 충돌을 확인하는 중입니다...",
+    calendarConflictsLoaded: "Google Calendar 충돌 정보를 불러왔습니다.",
+    calendarConflictsUnavailable:
+      "Google Calendar 충돌 정보를 불러올 수 없습니다. 일정은 직접 수정할 수 있습니다.",
     experimentTemplate: "실험 템플릿",
     selectExperiment: "실험 선택",
     chooseTemplate:
@@ -337,6 +345,23 @@ function combineDateAndTime(dateValue: string, timeValue: string) {
   return new Date(`${dateValue}T${timeValue || "00:00"}:00`);
 }
 
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+
+  return nextDate;
+}
+
+function getScheduleTimeRange(template: (typeof templates)[number], startDate: string) {
+  const baseDate = combineDateAndTime(startDate, "00:00");
+  const lastOffset = Math.max(...template.steps.map((step) => step.dayOffset), 0);
+
+  return {
+    timeMax: addDays(baseDate, lastOffset + 14).toISOString(),
+    timeMin: baseDate.toISOString(),
+  };
+}
+
 function getTemplateSummary(templateId: string, language: Language, fallback: string) {
   return (
     templateCopy[language][templateId as keyof (typeof templateCopy)[Language]] ??
@@ -353,6 +378,8 @@ export default function Home() {
   const [syncStatus, setSyncStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [authStatus, setAuthStatus] = useState("");
+  const [calendarStatus, setCalendarStatus] = useState("");
+  const [calendarConflicts, setCalendarConflicts] = useState<CalendarConflict[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [draftEdits, setDraftEdits] = useState<Record<string, DraftEventEdit>>({});
   const [selectedEventId, setSelectedEventId] = useState("");
@@ -371,9 +398,9 @@ export default function Home() {
       startDate,
       workStart,
       avoidWeekends,
-      conflicts: mockCalendarConflicts,
+      conflicts: calendarConflicts,
     });
-  }, [avoidWeekends, startDate, template, workStart]);
+  }, [avoidWeekends, calendarConflicts, startDate, template, workStart]);
 
   const shiftedCount = schedule.filter((step) => step.shifted).length;
   const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
@@ -441,6 +468,76 @@ export default function Home() {
     };
   }, [canConnectGoogle, t.readConnectionError]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCalendarConflicts() {
+      if (!template || !startDate || !workStart || !userEmail) {
+        setCalendarConflicts([]);
+        setCalendarStatus("");
+        return;
+      }
+
+      setCalendarStatus(t.loadingCalendarConflicts);
+
+      try {
+        const range = getScheduleTimeRange(template, startDate);
+        const response = await fetch(
+          `/api/calendar/events?timeMin=${encodeURIComponent(
+            range.timeMin,
+          )}&timeMax=${encodeURIComponent(range.timeMax)}`,
+        );
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(data?.error ?? t.calendarConflictsUnavailable);
+        }
+
+        const conflicts = ((data?.busy ?? []) as CalendarBusyBlock[]).map(
+          (block) => {
+            const start = new Date(block.start);
+            const end = new Date(block.end);
+
+            return {
+              date: formatDateInput(start),
+              label: `${formatTime(start, language)} - ${formatTime(
+                end,
+                language,
+              )}`,
+            };
+          },
+        );
+
+        if (isMounted) {
+          setCalendarConflicts(conflicts);
+          setCalendarStatus(t.calendarConflictsLoaded);
+          setDraftEdits({});
+          setSelectedEventId("");
+        }
+      } catch {
+        if (isMounted) {
+          setCalendarConflicts([]);
+          setCalendarStatus(t.calendarConflictsUnavailable);
+        }
+      }
+    }
+
+    void loadCalendarConflicts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    language,
+    startDate,
+    t.calendarConflictsLoaded,
+    t.calendarConflictsUnavailable,
+    t.loadingCalendarConflicts,
+    template,
+    userEmail,
+    workStart,
+  ]);
+
   async function handleGoogleConnect() {
     if (!canConnectGoogle) {
       setAuthStatus(
@@ -470,6 +567,8 @@ export default function Home() {
 
     setUserEmail(null);
     setAuthStatus(t.disconnected);
+    setCalendarConflicts([]);
+    setCalendarStatus("");
   }
 
   function handleTemplateSelection(value: string) {
@@ -667,6 +766,11 @@ export default function Home() {
               {authStatus ? (
                 <p className="mt-3 text-sm font-medium text-[#8a4b16]" role="status">
                   {authStatus}
+                </p>
+              ) : null}
+              {calendarStatus ? (
+                <p className="mt-3 text-sm font-medium text-[#2f6f4e]" role="status">
+                  {calendarStatus}
                 </p>
               ) : null}
             </div>

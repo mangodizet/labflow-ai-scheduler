@@ -140,6 +140,9 @@ Completed:
 - Replaced the Calendar API placeholder with Google Calendar free/busy reads and primary-calendar event creation
 - Connected the draft calendar sync button to the Calendar API route
 - Added localized Google Calendar sync success, progress, and failure messages
+- Removed hardcoded mock calendar conflicts from the UI scheduling flow
+- Added Google Calendar busy-block loading for connected users
+- Added date-based conflict detection so real busy blocks can shift generated schedule steps
 
 Validated:
 
@@ -153,6 +156,7 @@ Validated:
 - English/Korean language toggle verified in the local browser
 - Draft calendar view and event edit panel verified in the local browser
 - Calendar API route builds successfully, but live Google sync still requires Supabase and Google OAuth environment configuration
+- Real busy-block conflict detection is wired in code and will activate after Google OAuth is configured and connected
 
 Known dependency note:
 
@@ -252,10 +256,10 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 3. Apply the initial Supabase migration
 4. Add production environment variables in Vercel after Supabase and Google OAuth are configured
 5. Reconnect Google Calendar from local and deployed app to verify provider token scopes
-6. Replace mock conflicts with real calendar busy blocks in the schedule generator flow
-7. Save created Google event IDs back to Supabase scheduled events
-8. Add a real experiment-template editor so researchers can define workflows without code changes
-9. Add drag/drop or direct calendar resizing for draft schedule editing
+6. Save created Google event IDs back to Supabase scheduled events
+7. Add a real experiment-template editor so researchers can define workflows without code changes
+8. Add drag/drop or direct calendar resizing for draft schedule editing
+9. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
 
 ## Git and Deployment
 

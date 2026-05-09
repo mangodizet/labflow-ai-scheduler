@@ -80,6 +80,21 @@ describe("generateSchedule", () => {
     expect(schedule[2].shifted).toBe(false);
   });
 
+  it("can detect conflicts by scheduled calendar date", () => {
+    const schedule = generateSchedule({
+      steps,
+      startDate: "2026-05-11",
+      workStart: "09:00",
+      avoidWeekends: true,
+      conflicts: [{ date: "2026-05-15", label: "Calendar busy block" }],
+    });
+
+    expect(isoDate(schedule[1].date)).toBe("2026-05-18");
+    expect(schedule[1].conflict).toBe("Calendar busy block");
+    expect(schedule[1].warnings).toContain("calendar-conflict");
+    expect(schedule[1].warnings).toContain("weekend-shift");
+  });
+
   it("places multiple steps on the same day sequentially", () => {
     const schedule = generateSchedule({
       steps: [
