@@ -109,6 +109,19 @@ function createCalendarError(message: string, status = 400) {
   );
 }
 
+async function readGoogleError(response: Response) {
+  const body = await response.json().catch(() => null);
+  const message =
+    body?.error?.message ??
+    body?.error_description ??
+    body?.error ??
+    response.statusText;
+
+  return typeof message === "string" && message
+    ? message
+    : `Google API request failed with status ${response.status}.`;
+}
+
 function toGoogleDateTime(dateValue: string, durationMinutes: number) {
   const start = new Date(dateValue);
 
@@ -192,8 +205,9 @@ export async function GET(request: Request) {
   );
 
   if (!googleResponse.ok) {
+    const googleError = await readGoogleError(googleResponse);
     return createCalendarError(
-      `Unable to read Google Calendar busy blocks. (${googleResponse.status})`,
+      `Unable to read Google Calendar busy blocks. ${googleError} (${googleResponse.status})`,
       googleResponse.status,
     );
   }
@@ -304,8 +318,9 @@ export async function POST(request: Request) {
     }
 
     if (!googleResponse.ok) {
+      const googleError = await readGoogleError(googleResponse);
       return createCalendarError(
-        `Unable to create Google Calendar event "${event.name}". (${googleResponse.status})`,
+        `Unable to create Google Calendar event "${event.name}". ${googleError} (${googleResponse.status})`,
         googleResponse.status,
       );
     }

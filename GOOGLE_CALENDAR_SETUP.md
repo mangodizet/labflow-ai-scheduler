@@ -72,7 +72,7 @@ openid
 email
 profile
 https://www.googleapis.com/auth/calendar.events
-https://www.googleapis.com/auth/calendar.events.readonly
+https://www.googleapis.com/auth/calendar.events.freebusy
 ```
 
 These scopes allow the app to identify the user, read calendar events for conflict detection, and create experiment events after user approval.

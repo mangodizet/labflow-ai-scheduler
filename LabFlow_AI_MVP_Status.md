@@ -149,6 +149,8 @@ Completed:
 - Added duplicate Google Calendar sync prevention using an experiment run sync signature
 - Added Supabase migration `0002_add_calendar_sync_signature.sql`
 - Added deterministic Google Calendar event IDs so duplicate event creation is also blocked even if Supabase persistence is not ready
+- Changed Google OAuth busy-read scope to `calendar.events.freebusy` to match Google Cloud data access setup
+- Added detailed Google Calendar API error messages for busy-block reads and event creation failures
 
 Validated:
 

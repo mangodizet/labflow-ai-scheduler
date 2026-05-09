@@ -5,7 +5,7 @@ const googleCalendarScopes = [
   "email",
   "profile",
   "https://www.googleapis.com/auth/calendar.events",
-  "https://www.googleapis.com/auth/calendar.events.readonly",
+  "https://www.googleapis.com/auth/calendar.events.freebusy",
 ].join(" ");
 
 export async function signInWithGoogleCalendar() {
