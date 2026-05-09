@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   generateSchedule,
@@ -106,6 +106,8 @@ const templates = [
 
 type Language = "en" | "ko";
 
+const languageStorageKey = "labflow-language";
+
 type CalendarBusyBlock = {
   start: string;
   end: string;
@@ -161,6 +163,7 @@ const copy = {
     calendarConflictsLoaded: "Google Calendar conflicts loaded.",
     calendarConflictsUnavailable:
       "Google Calendar conflicts are unavailable. The schedule can still be edited manually.",
+    refreshCalendarConflicts: "Refresh conflicts",
     experimentTemplate: "Experiment template",
     selectExperiment: "Select experiment",
     chooseTemplate:
@@ -237,6 +240,7 @@ const copy = {
     calendarConflictsLoaded: "Google Calendar 충돌 정보를 불러왔습니다.",
     calendarConflictsUnavailable:
       "Google Calendar 충돌 정보를 불러올 수 없습니다. 일정은 직접 수정할 수 있습니다.",
+    refreshCalendarConflicts: "충돌 정보 새로고침",
     experimentTemplate: "실험 템플릿",
     selectExperiment: "실험 선택",
     chooseTemplate:
@@ -377,8 +381,16 @@ function getTemplateSummary(templateId: string, language: Language, fallback: st
   );
 }
 
+function getInitialLanguage(): Language {
+  if (typeof window === "undefined") {
+    return "en";
+  }
+
+  return window.localStorage.getItem(languageStorageKey) === "ko" ? "ko" : "en";
+}
+
 export default function Home() {
-  const [language, setLanguage] = useState<Language>("en");
+  const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [templateId, setTemplateId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [workStart, setWorkStart] = useState("");
@@ -388,9 +400,11 @@ export default function Home() {
   const [authStatus, setAuthStatus] = useState("");
   const [calendarStatus, setCalendarStatus] = useState("");
   const [calendarConflicts, setCalendarConflicts] = useState<CalendarConflict[]>([]);
+  const [calendarRefreshToken, setCalendarRefreshToken] = useState(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [draftEdits, setDraftEdits] = useState<Record<string, DraftEventEdit>>({});
   const [selectedEventId, setSelectedEventId] = useState("");
+  const previousBusySignature = useRef("");
   const t = copy[language];
 
   const template = templates.find((item) => item.id === templateId);
@@ -477,6 +491,10 @@ export default function Home() {
   }, [canConnectGoogle, t.readConnectionError]);
 
   useEffect(() => {
+    window.localStorage.setItem(languageStorageKey, language);
+  }, [language]);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function loadCalendarConflicts() {
@@ -501,6 +519,7 @@ export default function Home() {
           throw new Error(data?.error ?? t.calendarConflictsUnavailable);
         }
 
+        const busySignature = JSON.stringify(data?.busy ?? []);
         const conflicts = ((data?.busy ?? []) as CalendarBusyBlock[]).map(
           (block) => {
             const start = new Date(block.start);
@@ -519,8 +538,12 @@ export default function Home() {
         if (isMounted) {
           setCalendarConflicts(conflicts);
           setCalendarStatus(t.calendarConflictsLoaded);
-          setDraftEdits({});
-          setSelectedEventId("");
+
+          if (previousBusySignature.current !== busySignature) {
+            previousBusySignature.current = busySignature;
+            setDraftEdits({});
+            setSelectedEventId("");
+          }
         }
       } catch {
         if (isMounted) {
@@ -536,6 +559,7 @@ export default function Home() {
       isMounted = false;
     };
   }, [
+    calendarRefreshToken,
     language,
     startDate,
     t.calendarConflictsLoaded,
@@ -545,6 +569,27 @@ export default function Home() {
     userEmail,
     workStart,
   ]);
+
+  useEffect(() => {
+    if (!template || !startDate || !workStart || !userEmail) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setCalendarRefreshToken((current) => current + 1);
+    }, 60_000);
+
+    function refreshOnFocus() {
+      setCalendarRefreshToken((current) => current + 1);
+    }
+
+    window.addEventListener("focus", refreshOnFocus);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
+  }, [startDate, template, userEmail, workStart]);
 
   async function handleGoogleConnect() {
     if (!canConnectGoogle) {
@@ -577,6 +622,12 @@ export default function Home() {
     setAuthStatus(t.disconnected);
     setCalendarConflicts([]);
     setCalendarStatus("");
+    previousBusySignature.current = "";
+  }
+
+  function handleLanguageSelection(nextLanguage: Language) {
+    setLanguage(nextLanguage);
+    window.localStorage.setItem(languageStorageKey, nextLanguage);
   }
 
   function handleTemplateSelection(value: string) {
@@ -721,7 +772,7 @@ export default function Home() {
                       ? "border-[#2f6f4e] bg-[#2f6f4e] text-white"
                       : "border-[#d8e2d4] text-[#405347]"
                   }`}
-                  onClick={() => setLanguage("en")}
+                  onClick={() => handleLanguageSelection("en")}
                 >
                   EN
                 </button>
@@ -731,7 +782,7 @@ export default function Home() {
                       ? "border-[#2f6f4e] bg-[#2f6f4e] text-white"
                       : "border-[#d8e2d4] text-[#405347]"
                   }`}
-                  onClick={() => setLanguage("ko")}
+                  onClick={() => handleLanguageSelection("ko")}
                 >
                   KO
                 </button>
@@ -776,6 +827,16 @@ export default function Home() {
                   >
                     {t.disconnect}
                   </button>
+                  {canGenerateSchedule ? (
+                    <button
+                      onClick={() =>
+                        setCalendarRefreshToken((current) => current + 1)
+                      }
+                      className="w-full border border-[#bfd0c4] bg-white px-4 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    >
+                      {t.refreshCalendarConflicts}
+                    </button>
+                  ) : null}
                 </div>
               ) : (
                 <button

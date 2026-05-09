@@ -151,6 +151,9 @@ Completed:
 - Added deterministic Google Calendar event IDs so duplicate event creation is also blocked even if Supabase persistence is not ready
 - Changed Google OAuth busy-read scope to `calendar.events.freebusy` to match Google Cloud data access setup
 - Added detailed Google Calendar API error messages for busy-block reads and event creation failures
+- Fixed scheduler conflict avoidance so it keeps moving through consecutive busy calendar dates
+- Added manual, focus-based, and periodic Google Calendar conflict refresh
+- Persisted the selected EN/KO language in local storage so OAuth redirects keep the user's language
 
 Validated:
 
@@ -168,6 +171,7 @@ Validated:
 - Supabase sync persistence is wired in code and will activate after the migration is applied
 - Duplicate sync prevention requires the `0002_add_calendar_sync_signature.sql` migration
 - Browser check confirmed the local scheduler form generates a draft calendar without console errors
+- Added test coverage for consecutive Google Calendar busy days
 
 Known dependency note:
 

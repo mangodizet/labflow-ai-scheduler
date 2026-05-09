@@ -117,15 +117,19 @@ function findCalendarConflict({
   conflicts,
   dayOffset,
   date,
+  includeDayOffset,
 }: {
   conflicts: CalendarConflict[];
   dayOffset: number;
   date: Date;
+  includeDayOffset: boolean;
 }) {
   const scheduledDateKey = dateKey(date);
 
   return conflicts.find(
-    (item) => item.dayOffset === dayOffset || item.date === scheduledDateKey,
+    (item) =>
+      item.date === scheduledDateKey ||
+      (includeDayOffset && item.dayOffset === dayOffset),
   );
 }
 
@@ -174,7 +178,9 @@ function addWarning(
 }
 
 function fitWithinWorkday({
+  conflicts,
   date,
+  dayOffset,
   durationMinutes,
   workStart,
   workEnd,
@@ -182,7 +188,9 @@ function fitWithinWorkday({
   cursorsByDate,
   warnings,
 }: {
+  conflicts: CalendarConflict[];
   date: Date;
+  dayOffset: number;
   durationMinutes: number;
   workStart: ParsedTime;
   workEnd: ParsedTime;
@@ -191,6 +199,8 @@ function fitWithinWorkday({
   warnings: ScheduleWarningCode[];
 }) {
   let scheduledDate = date;
+  let conflictLabel: string | null = null;
+  let shouldCheckDayOffsetConflict = true;
   const workdayCapacity = workEnd.totalMinutes - workStart.totalMinutes;
 
   if (durationMinutes > workdayCapacity) {
@@ -203,6 +213,21 @@ function fitWithinWorkday({
 
     if (weekendResult.shiftedWeekend) {
       addWarning(warnings, "weekend-shift");
+    }
+
+    const conflict = findCalendarConflict({
+      conflicts,
+      date: scheduledDate,
+      dayOffset,
+      includeDayOffset: shouldCheckDayOffsetConflict,
+    });
+    shouldCheckDayOffsetConflict = false;
+
+    if (conflict) {
+      addWarning(warnings, "calendar-conflict");
+      conflictLabel ??= conflict.label;
+      scheduledDate = withTime(addDays(scheduledDate, 1), workStart);
+      continue;
     }
 
     const dayStart = withTime(scheduledDate, workStart);
@@ -222,7 +247,10 @@ function fitWithinWorkday({
 
     if (durationMinutes > workdayCapacity || !isAfter(scheduledEnd, dayEnd)) {
       cursorsByDate.set(dateKey(scheduledDate), scheduledEnd);
-      return scheduledDate;
+      return {
+        conflict: conflictLabel,
+        date: scheduledDate,
+      };
     }
 
     addWarning(warnings, "workday-overflow");
@@ -230,7 +258,10 @@ function fitWithinWorkday({
   }
 
   cursorsByDate.set(dateKey(scheduledDate), addMinutes(scheduledDate, durationMinutes));
-  return scheduledDate;
+  return {
+    conflict: conflictLabel,
+    date: scheduledDate,
+  };
 }
 
 export function generateSchedule({
@@ -276,19 +307,10 @@ export function generateSchedule({
       addWarning(warnings, "weekend-shift");
     }
 
-    const conflict = findCalendarConflict({
+    const placement = fitWithinWorkday({
       conflicts,
       date: candidateDate,
       dayOffset: step.dayOffset,
-    });
-
-    if (conflict) {
-      addWarning(warnings, "calendar-conflict");
-      candidateDate = addDays(candidateDate, 1);
-    }
-
-    const date = fitWithinWorkday({
-      date: candidateDate,
       durationMinutes,
       workStart: parsedWorkStart,
       workEnd: parsedWorkEnd,
@@ -300,11 +322,11 @@ export function generateSchedule({
     return {
       ...step,
       durationMinutes,
-      date,
+      date: placement.date,
       shifted:
-        date.getTime() !== originalDate.getTime() ||
+        placement.date.getTime() !== originalDate.getTime() ||
         durationMinutes !== step.durationMinutes,
-      conflict: conflict?.label ?? null,
+      conflict: placement.conflict,
       warnings,
     };
   });

@@ -95,6 +95,32 @@ describe("generateSchedule", () => {
     expect(schedule[1].warnings).toContain("weekend-shift");
   });
 
+  it("keeps moving when consecutive calendar dates are busy", () => {
+    const schedule = generateSchedule({
+      steps: [
+        {
+          name: "IL4 / IL13 Treatment",
+          dayOffset: 3,
+          durationMinutes: 30,
+          category: "Hands-on",
+          protocol: "M2 Polarization Protocol",
+        },
+      ],
+      startDate: "2026-05-14",
+      workStart: "09:00",
+      avoidWeekends: true,
+      conflicts: [
+        { date: "2026-05-18", label: "Busy on Monday" },
+        { date: "2026-05-19", label: "Busy on Tuesday" },
+      ],
+    });
+
+    expect(isoDate(schedule[0].date)).toBe("2026-05-20");
+    expect(schedule[0].conflict).toBe("Busy on Monday");
+    expect(schedule[0].warnings).toContain("calendar-conflict");
+    expect(schedule[0].warnings).toContain("weekend-shift");
+  });
+
   it("places multiple steps on the same day sequentially", () => {
     const schedule = generateSchedule({
       steps: [
