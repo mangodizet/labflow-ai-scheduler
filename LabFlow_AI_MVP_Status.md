@@ -172,6 +172,55 @@ Conflict handling now re-runs weekend validation after moving a conflicted task.
 
 The `Hands-on` summary now filters to steps with `category === "Hands-on"`.
 
+## Future Expansion After Scheduler MVP
+
+These ideas are intentionally deferred until the core scheduler and Google Calendar integration are working reliably.
+
+### Research Note and Result Entry
+
+Add an experiment run detail page where researchers can record:
+
+- Experiment objective
+- Experimental conditions
+- Observations
+- Result notes
+- Image or Google Drive links
+- Assay values such as viability, fluorescence intensity, or pass/fail status
+- Issues encountered during the experiment
+- Ideas for the next run
+
+### AI Experiment Summary
+
+After notes and results are entered, AI can help generate:
+
+- A concise experiment summary
+- Key observations
+- Possible failure points
+- A short report for a supervisor or collaborator
+
+The AI should avoid making unsupported scientific conclusions and should frame interpretation as hypotheses or items to verify.
+
+### AI Result Interpretation
+
+Potential future support:
+
+- Suggest possible reasons for low viability
+- Highlight timing or workflow issues
+- Compare planned steps with observed outcomes
+- Identify missing controls or follow-up measurements
+
+This feature should be treated as decision support, not as an authoritative biological conclusion.
+
+### Next Experiment Planning
+
+AI may later suggest a next experiment plan based on notes and results, for example:
+
+- Add or modify control groups
+- Adjust timepoints
+- Compare alternative treatment conditions
+- Recommend repeat runs
+- Generate a draft schedule from the suggested follow-up experiment
+
 ## Next Development Steps
 
 1. Configure Supabase project values in `.env.local`
