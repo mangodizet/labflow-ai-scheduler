@@ -181,13 +181,13 @@ const copy = {
     languageLabel: "언어",
     appTitle: "실험 스케줄러",
     appDescription:
-      "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 캘린더 충돌을 피한 뒤 Google Calendar 동기화를 준비합니다.",
+      "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 캘린더 충돌을 피한 뒤 Google Calendar 연동을 준비합니다.",
     steps: "단계",
-    handsOn: "실작업",
+    handsOn: "작업 시간",
     adjusted: "조정됨",
     googleCalendar: "구글 캘린더",
     googleCalendarDescription:
-      "실제 캘린더 이벤트로 충돌을 확인하려면 Supabase OAuth로 Google을 연결하세요.",
+      "기존 캘린더 일정과의 충돌을 확인하려면 Supabase OAuth로 Google을 연결하세요.",
     connectedAs: "연결된 계정",
     disconnect: "연결 해제",
     connectGoogle: "구글 캘린더 연결",
@@ -198,9 +198,9 @@ const copy = {
     experimentTemplate: "실험 템플릿",
     selectExperiment: "실험 선택",
     chooseTemplate:
-      "실험 템플릿을 선택한 뒤 시작 날짜와 선호 시작 시간을 설정하면 일정이 생성됩니다.",
+      "실험 템플릿을 선택한 뒤 시작 날짜와 희망 시작 시간을 설정하면 일정이 생성됩니다.",
     startDate: "시작 날짜",
-    preferredStartTime: "선호 시작 시간",
+    preferredStartTime: "희망 시작 시간",
     avoidWeekendWork: "주말 작업 피하기",
     mvpBuildOrder: "MVP 개발 순서",
     buildOrder: [
@@ -211,19 +211,19 @@ const copy = {
       "프로토콜과 노트 링크",
     ],
     generatedTimeline: "생성된 일정",
-    previewBeforeCalendar: "Google Calendar에 만들기 전에 일정을 미리 확인합니다.",
+    previewBeforeCalendar: "Google Calendar에 등록하기 전에 일정을 미리 확인합니다.",
     prepareCalendarSync: "캘린더 동기화 준비",
     readyForCalendar:
       "개의 이벤트가 준비되었습니다. 다음 연동 단계에서 Google Calendar를 연결하세요.",
     noTimeline: "아직 생성된 일정이 없습니다",
     noTimelineDescription:
-      "실험 템플릿, 시작 날짜, 선호 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
+      "실험 템플릿, 시작 날짜, 희망 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
     day: "Day",
     protocolPlaceholder: "프로토콜 링크 자리",
     conflictAvoided: "피한 충돌",
     duration: "소요 시간",
     categories: {
-      "Hands-on": "실작업",
+      "Hands-on": "작업",
       Incubation: "배양/대기",
       Assay: "분석",
     },
