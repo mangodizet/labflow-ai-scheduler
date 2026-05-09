@@ -145,6 +145,23 @@ function createSyncSignature(run: CalendarSyncRun, events: CalendarDraftEvent[])
     .digest("hex");
 }
 
+function createGoogleEventId(syncSignature: string, event: CalendarDraftEvent) {
+  return createHash("sha256")
+    .update(
+      JSON.stringify({
+        date: event.date,
+        dayOffset: event.dayOffset,
+        durationMinutes: event.durationMinutes,
+        id: event.id,
+        name: event.name,
+        protocol: event.protocol,
+        syncSignature,
+      }),
+    )
+    .digest("hex")
+    .slice(0, 48);
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const timeMin =
@@ -269,10 +286,22 @@ export async function POST(request: Request) {
             dateTime: dateTime.start.toISOString(),
             timeZone,
           },
+          id: createGoogleEventId(syncSignature, event),
           summary: event.name,
         }),
       },
     );
+
+    if (googleResponse.status === 409) {
+      return NextResponse.json(
+        {
+          duplicate: true,
+          error:
+            "This schedule has already been synced. Edit the draft schedule before syncing again.",
+        },
+        { status: 409 },
+      );
+    }
 
     if (!googleResponse.ok) {
       return createCalendarError(

@@ -148,6 +148,7 @@ Completed:
 - Added UI warning text for cases where Google events are created but Supabase sync records fail to save
 - Added duplicate Google Calendar sync prevention using an experiment run sync signature
 - Added Supabase migration `0002_add_calendar_sync_signature.sql`
+- Added deterministic Google Calendar event IDs so duplicate event creation is also blocked even if Supabase persistence is not ready
 
 Validated:
 
@@ -164,6 +165,7 @@ Validated:
 - Real busy-block conflict detection is wired in code and will activate after Google OAuth is configured and connected
 - Supabase sync persistence is wired in code and will activate after the migration is applied
 - Duplicate sync prevention requires the `0002_add_calendar_sync_signature.sql` migration
+- Browser check confirmed the local scheduler form generates a draft calendar without console errors
 
 Known dependency note:
 
