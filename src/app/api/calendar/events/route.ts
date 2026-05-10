@@ -171,17 +171,19 @@ function createSyncSignature(run: CalendarSyncRun, events: CalendarDraftEvent[])
     .digest("hex");
 }
 
-function createGoogleEventId(syncSignature: string, event: CalendarDraftEvent) {
+function createGoogleEventId(userId: string, run: CalendarSyncRun, event: CalendarDraftEvent) {
   return createHash("sha256")
     .update(
       JSON.stringify({
+        userId,
         date: event.date,
         dayOffset: event.dayOffset,
         durationMinutes: event.durationMinutes,
         id: event.id,
         name: event.name,
         protocol: event.protocol,
-        syncSignature,
+        startDate: run.startDate,
+        templateName: run.templateName,
       }),
     )
     .digest("hex")
@@ -268,6 +270,7 @@ export async function POST(request: Request) {
 
   const syncSignature = createSyncSignature(run, events);
   let persistenceWarning: string | null = null;
+  let existingRunId: string | null = null;
 
   if (supabase && userId) {
     const { data: existingRun, error: existingRunError } = await supabase
@@ -278,14 +281,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (existingRun) {
-      return NextResponse.json(
-        {
-          duplicate: true,
-          error:
-            "This schedule has already been synced. Edit the draft schedule before syncing again.",
-        },
-        { status: 409 },
-      );
+      existingRunId = existingRun.id;
     }
 
     if (existingRunError) {
@@ -324,21 +320,19 @@ export async function POST(request: Request) {
             dateTime: dateTime.start.toISOString(),
             timeZone,
           },
-          id: createGoogleEventId(syncSignature, event),
+          id: createGoogleEventId(userId ?? "anonymous", run, event),
           summary: event.name,
         }),
       },
     );
 
     if (googleResponse.status === 409) {
-      return NextResponse.json(
-        {
-          duplicate: true,
-          error:
-            "This schedule has already been synced. Edit the draft schedule before syncing again.",
-        },
-        { status: 409 },
-      );
+      createdEvents.push({
+        id: createGoogleEventId(userId ?? "anonymous", run, event),
+        htmlLink: "",
+        summary: event.name,
+      });
+      continue;
     }
 
     if (!googleResponse.ok) {
@@ -357,7 +351,7 @@ export async function POST(request: Request) {
     });
   }
 
-  if (supabase && userId) {
+  if (supabase && userId && !existingRunId) {
     const { data: experimentRun, error: runError } = await supabase
       .from("experiment_runs")
       .insert({
