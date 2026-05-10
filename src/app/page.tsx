@@ -197,12 +197,19 @@ const copy = {
     eventDuration: "Duration minutes",
     selectEventToEdit: "Select a calendar event to edit its draft details.",
     prepareCalendarSync: "Sync to Google Calendar",
+    deleteCalendarSync: "Delete synced events",
     syncingCalendar: "Syncing...",
+    deletingCalendar: "Deleting...",
     calendarSyncComplete: "events were added to Google Calendar.",
     calendarSyncSkipped: "events already existed and were skipped.",
     calendarSyncFailed: "Unable to sync Google Calendar.",
+    calendarDeleteComplete: "events were deleted from Google Calendar.",
+    calendarDeleteSkipped: "events were already missing.",
+    calendarDeleteFailed: "Unable to delete synced Google Calendar events.",
     calendarPersistenceWarning:
       "Calendar events were created, but Supabase could not save the sync record.",
+    calendarDeletePersistenceWarning:
+      "Calendar events were deleted, but Supabase could not remove the sync record.",
     connectBeforeSync: "Connect Google Calendar before syncing events.",
     duplicateSync:
       "This schedule has already been synced. Edit the draft schedule before syncing again.",
@@ -277,12 +284,19 @@ const copy = {
     eventDuration: "소요 시간(분)",
     selectEventToEdit: "수정할 캘린더 일정을 선택하세요.",
     prepareCalendarSync: "구글 캘린더에 동기화",
+    deleteCalendarSync: "동기화된 일정 삭제",
     syncingCalendar: "동기화 중...",
+    deletingCalendar: "삭제 중...",
     calendarSyncComplete: "개의 이벤트를 Google Calendar에 추가했습니다.",
     calendarSyncSkipped: "개의 기존 이벤트는 건너뛰었습니다.",
     calendarSyncFailed: "Google Calendar 동기화에 실패했습니다.",
+    calendarDeleteComplete: "개의 이벤트를 Google Calendar에서 삭제했습니다.",
+    calendarDeleteSkipped: "개의 이벤트는 이미 삭제되어 있었습니다.",
+    calendarDeleteFailed: "동기화된 Google Calendar 이벤트 삭제에 실패했습니다.",
     calendarPersistenceWarning:
       "캘린더 이벤트는 생성됐지만 Supabase에 동기화 기록을 저장하지 못했습니다.",
+    calendarDeletePersistenceWarning:
+      "캘린더 이벤트는 삭제됐지만 Supabase 동기화 기록을 삭제하지 못했습니다.",
     connectBeforeSync: "이벤트를 동기화하려면 먼저 Google Calendar를 연결하세요.",
     duplicateSync:
       "이미 동기화된 일정입니다. 다시 동기화하려면 초안 일정을 수정하세요.",
@@ -446,6 +460,7 @@ export default function Home() {
   const [avoidWeekends, setAvoidWeekends] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isDeletingSync, setIsDeletingSync] = useState(false);
   const [authStatus, setAuthStatus] = useState("");
   const [calendarStatus, setCalendarStatus] = useState("");
   const [calendarConflicts, setCalendarConflicts] = useState<CalendarConflict[]>([]);
@@ -712,6 +727,28 @@ export default function Home() {
     setSyncStatus("");
   }
 
+  function createCalendarPayload() {
+    return {
+      events: draftEvents.map((event) => ({
+        category: event.category,
+        conflict: event.conflict,
+        date: formatLocalDateTime(event.date),
+        dayOffset: event.dayOffset,
+        durationMinutes: event.durationMinutes,
+        id: event.id,
+        name: event.name,
+        protocol: event.protocol,
+      })),
+      run: {
+        avoidWeekends,
+        preferredStartTime: workStart,
+        startDate,
+        templateName: template?.name ?? "Untitled experiment",
+      },
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    };
+  }
+
   async function handleCalendarSync() {
     if (!userEmail) {
       setSyncStatus(t.connectBeforeSync);
@@ -745,25 +782,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          events: draftEvents.map((event) => ({
-            category: event.category,
-            conflict: event.conflict,
-            date: formatLocalDateTime(event.date),
-            dayOffset: event.dayOffset,
-            durationMinutes: event.durationMinutes,
-            id: event.id,
-            name: event.name,
-            protocol: event.protocol,
-          })),
-          run: {
-            avoidWeekends,
-            preferredStartTime: workStart,
-            startDate,
-            templateName: template?.name ?? "Untitled experiment",
-          },
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        }),
+        body: JSON.stringify(createCalendarPayload()),
       });
       const data = await response.json().catch(() => null);
 
@@ -798,6 +817,57 @@ export default function Home() {
       );
     } finally {
       setIsSyncing(false);
+    }
+  }
+
+  async function handleCalendarDelete() {
+    if (!userEmail) {
+      setSyncStatus(t.connectBeforeSync);
+      return;
+    }
+
+    setIsDeletingSync(true);
+    setSyncStatus(t.deletingCalendar);
+
+    try {
+      const response = await fetch("/api/calendar/events", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createCalendarPayload()),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? t.calendarDeleteFailed);
+      }
+
+      const deletedCount =
+        typeof data?.deletedCount === "number" ? data.deletedCount : 0;
+      const skippedCount =
+        typeof data?.skippedCount === "number" ? data.skippedCount : 0;
+      const successMessage =
+        language === "ko"
+          ? `${deletedCount}${t.calendarDeleteComplete}${
+              skippedCount ? ` ${skippedCount}${t.calendarDeleteSkipped}` : ""
+            }`
+          : `${deletedCount} ${t.calendarDeleteComplete}${
+              skippedCount ? ` ${skippedCount} ${t.calendarDeleteSkipped}` : ""
+            }`;
+
+      setSyncStatus(
+        data?.persistenceWarning
+          ? `${successMessage} ${t.calendarDeletePersistenceWarning}`
+          : successMessage,
+      );
+      setCalendarRefreshToken((current) => current + 1);
+    } catch (error) {
+      setSyncStatus(
+        error instanceof Error ? error.message : t.calendarDeleteFailed,
+      );
+    } finally {
+      setIsDeletingSync(false);
     }
   }
 
@@ -1007,18 +1077,27 @@ export default function Home() {
           </aside>
 
           <section className="border border-[#d8e2d4] bg-white">
-            <div className="flex flex-col gap-2 border-b border-[#d8e2d4] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-b border-[#d8e2d4] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-[#17211b]">{t.generatedTimeline}</h2>
                 <p className="text-sm text-[#66756b]">{t.previewBeforeCalendar}</p>
               </div>
-              <button
-                onClick={handleCalendarSync}
-                disabled={!canGenerateSchedule || isSyncing}
-                className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b] sm:w-auto"
-              >
-                {isSyncing ? t.syncingCalendar : t.prepareCalendarSync}
-              </button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <button
+                  onClick={handleCalendarDelete}
+                  disabled={!canGenerateSchedule || isSyncing || isDeletingSync}
+                  className="w-full border border-[#bfd0c4] bg-white px-4 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:border-[#d8e2d4] disabled:bg-[#f1f4ef] disabled:text-[#8a968e] sm:w-auto"
+                >
+                  {isDeletingSync ? t.deletingCalendar : t.deleteCalendarSync}
+                </button>
+                <button
+                  onClick={handleCalendarSync}
+                  disabled={!canGenerateSchedule || isSyncing || isDeletingSync}
+                  className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b] sm:w-auto"
+                >
+                  {isSyncing ? t.syncingCalendar : t.prepareCalendarSync}
+                </button>
+              </div>
             </div>
             {syncStatus ? (
               <p

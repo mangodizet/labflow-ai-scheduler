@@ -222,6 +222,10 @@ Invalid date/time inputs now return an empty generated schedule, and invalid ste
 
 Google Calendar sync now reports newly created events separately from events that already existed and were skipped.
 
+### Added: Delete synced calendar events
+
+Users can delete the synced Google Calendar events for the current draft schedule in one action. The delete flow also removes the matching Supabase sync record when available, so the same draft can be synced again cleanly.
+
 ### Stabilization: Calendar sync API input guardrails
 
 The calendar sync route now requires an authenticated user ID, limits each sync to 50 events, rejects missing event names or IDs, and bounds event duration to 1-1440 minutes before calling Google Calendar.

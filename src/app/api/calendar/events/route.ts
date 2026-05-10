@@ -444,3 +444,87 @@ export async function POST(request: Request) {
     skippedEvents,
   });
 }
+
+export async function DELETE(request: Request) {
+  const { error, supabase, token, userId } = await getGoogleSession();
+
+  if (error || !token) {
+    return createCalendarError(error ?? "Missing Google access token.", 401);
+  }
+
+  if (!userId) {
+    return createCalendarError("Unable to identify the authenticated user.", 401);
+  }
+
+  const body = await request.json().catch(() => null);
+  const events = body?.events as CalendarDraftEvent[] | undefined;
+  const run = body?.run as CalendarSyncRun | undefined;
+
+  if (!events?.length) {
+    return createCalendarError("No calendar events were provided.");
+  }
+
+  const eventValidationError = validateDraftEvents(events);
+
+  if (eventValidationError) {
+    return createCalendarError(eventValidationError);
+  }
+
+  if (!run?.startDate || !run.preferredStartTime || !run.templateName) {
+    return createCalendarError("Missing experiment run details.");
+  }
+
+  const syncSignature = createSyncSignature(run, events);
+  let persistenceWarning: string | null = null;
+  let deletedCount = 0;
+  let skippedCount = 0;
+
+  for (const event of events) {
+    const googleEventId = createGoogleEventId(userId, run, event);
+    const googleResponse = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (googleResponse.status === 204) {
+      deletedCount += 1;
+      continue;
+    }
+
+    if (googleResponse.status === 404 || googleResponse.status === 410) {
+      skippedCount += 1;
+      continue;
+    }
+
+    if (!googleResponse.ok) {
+      const googleError = await readGoogleError(googleResponse);
+      return createCalendarError(
+        `Unable to delete Google Calendar event "${event.name}". ${googleError} (${googleResponse.status})`,
+        googleResponse.status,
+      );
+    }
+  }
+
+  if (supabase) {
+    const { error: deleteRunError } = await supabase
+      .from("experiment_runs")
+      .delete()
+      .eq("user_id", userId)
+      .eq("sync_signature", syncSignature);
+
+    if (deleteRunError) {
+      persistenceWarning = deleteRunError.message;
+    }
+  }
+
+  return NextResponse.json({
+    deletedCount,
+    persistenceWarning,
+    skippedCount,
+  });
+}
