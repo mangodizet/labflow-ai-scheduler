@@ -218,6 +218,24 @@ The scheduler now moves tasks that do not fit within the configured working day 
 
 Invalid date/time inputs now return an empty generated schedule, and invalid step durations are clamped with a warning.
 
+### Resolved: Calendar resync feedback is ambiguous
+
+Google Calendar sync now reports newly created events separately from events that already existed and were skipped.
+
+### Stabilization: Calendar sync API input guardrails
+
+The calendar sync route now requires an authenticated user ID, limits each sync to 50 events, rejects missing event names or IDs, and bounds event duration to 1-1440 minutes before calling Google Calendar.
+
+### Security Review Notes
+
+- No local secret environment file is tracked in Git.
+- `.env.local.example` contains placeholders only.
+- Supabase uses the public publishable key in the browser and server route; no service-role key is used in application code.
+- Google provider tokens are read only inside the server API route from the Supabase session and are not returned to the browser.
+- Supabase tables have RLS enabled with `auth.uid() = user_id` policies.
+- `0003_grant_authenticated_table_access.sql` grants table access to authenticated users while relying on RLS policies for row isolation.
+- `npm audit --audit-level=moderate` currently reports a moderate PostCSS advisory through Next.js. Next.js `16.2.6` is the latest stable version available, and the suggested `npm audit fix --force` downgrade path is not safe to apply.
+
 ## Future Expansion After Scheduler MVP
 
 These ideas are intentionally deferred until the core scheduler and Google Calendar integration are working reliably.
@@ -269,16 +287,13 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 
 ## Next Development Steps
 
-1. Configure Supabase project values in `.env.local`
-2. Configure Google OAuth consent screen, OAuth client, and Calendar API
-3. Apply the initial Supabase migration
-4. Add production environment variables in Vercel after Supabase and Google OAuth are configured
-5. Reconnect Google Calendar from local and deployed app to verify provider token scopes
-6. Apply both Supabase migrations in order
-7. Test that created Google event IDs are saved to Supabase scheduled events
-8. Add a real experiment-template editor so researchers can define workflows without code changes
-9. Add drag/drop or direct calendar resizing for draft schedule editing
-10. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
+1. Confirm the latest Vercel deployment after each push
+2. Add a real experiment-template editor so researchers can define workflows without code changes
+3. Add drag/drop or direct calendar resizing for draft schedule editing
+4. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
+5. Add an in-app sync history view backed by Supabase
+6. Replace MVP example schedules with validated lab protocols provided by the user or collaborator
+7. Add a guided workflow import flow for pasting protocol text and turning it into editable schedule steps
 
 ## Git and Deployment
 
@@ -311,4 +326,4 @@ https://labflow-ai-scheduler.vercel.app/
 
 ## Status Date
 
-- Last updated: 2026-05-09
+- Last updated: 2026-05-10

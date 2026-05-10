@@ -199,6 +199,7 @@ const copy = {
     prepareCalendarSync: "Sync to Google Calendar",
     syncingCalendar: "Syncing...",
     calendarSyncComplete: "events were added to Google Calendar.",
+    calendarSyncSkipped: "events already existed and were skipped.",
     calendarSyncFailed: "Unable to sync Google Calendar.",
     calendarPersistenceWarning:
       "Calendar events were created, but Supabase could not save the sync record.",
@@ -278,6 +279,7 @@ const copy = {
     prepareCalendarSync: "구글 캘린더에 동기화",
     syncingCalendar: "동기화 중...",
     calendarSyncComplete: "개의 이벤트를 Google Calendar에 추가했습니다.",
+    calendarSyncSkipped: "개의 기존 이벤트는 건너뛰었습니다.",
     calendarSyncFailed: "Google Calendar 동기화에 실패했습니다.",
     calendarPersistenceWarning:
       "캘린더 이벤트는 생성됐지만 Supabase에 동기화 기록을 저장하지 못했습니다.",
@@ -771,11 +773,20 @@ export default function Home() {
         );
       }
 
-      const createdCount = data?.createdEvents?.length ?? draftEvents.length;
+      const createdCount =
+        typeof data?.createdCount === "number"
+          ? data.createdCount
+          : data?.createdEvents?.length ?? draftEvents.length;
+      const skippedCount =
+        typeof data?.skippedCount === "number" ? data.skippedCount : 0;
       const successMessage =
         language === "ko"
-          ? `${createdCount}${t.calendarSyncComplete}`
-          : `${createdCount} ${t.calendarSyncComplete}`;
+          ? `${createdCount}${t.calendarSyncComplete}${
+              skippedCount ? ` ${skippedCount}${t.calendarSyncSkipped}` : ""
+            }`
+          : `${createdCount} ${t.calendarSyncComplete}${
+              skippedCount ? ` ${skippedCount} ${t.calendarSyncSkipped}` : ""
+            }`;
       setSyncStatus(
         data?.persistenceWarning
           ? `${successMessage} ${t.calendarPersistenceWarning}`

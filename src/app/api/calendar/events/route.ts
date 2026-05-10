@@ -40,6 +40,9 @@ type CalendarSyncRun = {
   templateName: string;
 };
 
+const maxEventsPerSync = 50;
+const maxEventDurationMinutes = 24 * 60;
+
 async function createSupabaseRouteClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -151,6 +154,32 @@ function toGoogleDateTime(dateValue: string, durationMinutes: number) {
   };
 }
 
+function validateDraftEvents(events: CalendarDraftEvent[]) {
+  if (events.length > maxEventsPerSync) {
+    return `A maximum of ${maxEventsPerSync} events can be synced at once.`;
+  }
+
+  for (const event of events) {
+    if (!event.id || !event.name?.trim()) {
+      return "Every calendar event needs an ID and name.";
+    }
+
+    if (
+      !Number.isFinite(event.durationMinutes) ||
+      event.durationMinutes < 1 ||
+      event.durationMinutes > maxEventDurationMinutes
+    ) {
+      return `Event durations must be between 1 and ${maxEventDurationMinutes} minutes.`;
+    }
+
+    if (!toGoogleDateTime(event.date, event.durationMinutes)) {
+      return `Invalid date for event: ${event.name}`;
+    }
+  }
+
+  return null;
+}
+
 function createSyncSignature(run: CalendarSyncRun, events: CalendarDraftEvent[]) {
   const normalizedEvents = events.map((event) => ({
     category: event.category,
@@ -252,6 +281,10 @@ export async function POST(request: Request) {
     return createCalendarError(error ?? "Missing Google access token.", 401);
   }
 
+  if (!userId) {
+    return createCalendarError("Unable to identify the authenticated user.", 401);
+  }
+
   const body = await request.json().catch(() => null);
   const events = body?.events as CalendarDraftEvent[] | undefined;
   const run = body?.run as CalendarSyncRun | undefined;
@@ -262,6 +295,12 @@ export async function POST(request: Request) {
 
   if (!events?.length) {
     return createCalendarError("No calendar events were provided.");
+  }
+
+  const eventValidationError = validateDraftEvents(events);
+
+  if (eventValidationError) {
+    return createCalendarError(eventValidationError);
   }
 
   if (!run?.startDate || !run.preferredStartTime || !run.templateName) {
@@ -290,9 +329,12 @@ export async function POST(request: Request) {
   }
 
   const createdEvents: GoogleCalendarEvent[] = [];
+  const skippedEvents: GoogleCalendarEvent[] = [];
+  const syncedEvents: GoogleCalendarEvent[] = [];
 
   for (const event of events) {
     const dateTime = toGoogleDateTime(event.date, event.durationMinutes);
+    const googleEventId = createGoogleEventId(userId, run, event);
 
     if (!dateTime) {
       return createCalendarError(`Invalid date for event: ${event.name}`);
@@ -320,18 +362,20 @@ export async function POST(request: Request) {
             dateTime: dateTime.start.toISOString(),
             timeZone,
           },
-          id: createGoogleEventId(userId ?? "anonymous", run, event),
+          id: googleEventId,
           summary: event.name,
         }),
       },
     );
 
     if (googleResponse.status === 409) {
-      createdEvents.push({
-        id: createGoogleEventId(userId ?? "anonymous", run, event),
+      const skippedEvent = {
+        id: googleEventId,
         htmlLink: "",
         summary: event.name,
-      });
+      };
+      skippedEvents.push(skippedEvent);
+      syncedEvents.push(skippedEvent);
       continue;
     }
 
@@ -344,11 +388,13 @@ export async function POST(request: Request) {
     }
 
     const created = await googleResponse.json();
-    createdEvents.push({
+    const createdEvent = {
       id: created.id,
       htmlLink: created.htmlLink,
       summary: created.summary,
-    });
+    };
+    createdEvents.push(createdEvent);
+    syncedEvents.push(createdEvent);
   }
 
   if (supabase && userId && !existingRunId) {
@@ -376,7 +422,7 @@ export async function POST(request: Request) {
           conflict_label: event.conflict,
           day_offset: event.dayOffset,
           duration_minutes: event.durationMinutes,
-          google_event_id: createdEvents[index]?.id ?? null,
+          google_event_id: syncedEvents[index]?.id ?? null,
           run_id: experimentRun.id,
           starts_at: new Date(event.date).toISOString(),
           step_name: event.name,
@@ -391,7 +437,10 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
+    createdCount: createdEvents.length,
     createdEvents,
     persistenceWarning,
+    skippedCount: skippedEvents.length,
+    skippedEvents,
   });
 }
