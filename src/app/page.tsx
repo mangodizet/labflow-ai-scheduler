@@ -612,27 +612,6 @@ export default function Home() {
     workStart,
   ]);
 
-  useEffect(() => {
-    if (!template || !startDate || !workStart || !userEmail) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      setCalendarRefreshToken((current) => current + 1);
-    }, 60_000);
-
-    function refreshOnFocus() {
-      setCalendarRefreshToken((current) => current + 1);
-    }
-
-    window.addEventListener("focus", refreshOnFocus);
-
-    return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener("focus", refreshOnFocus);
-    };
-  }, [startDate, template, userEmail, workStart]);
-
   async function handleGoogleConnect() {
     if (!canConnectGoogle) {
       setAuthStatus(
