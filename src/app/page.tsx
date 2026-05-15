@@ -206,6 +206,8 @@ const copy = {
     calendarDeleteComplete: "events were deleted from Google Calendar.",
     calendarDeleteSkipped: "events were already missing.",
     calendarDeleteFailed: "Unable to delete synced Google Calendar events.",
+    calendarDeleteRefreshHint:
+      "Google Calendar may take a moment to update the visible calendar.",
     calendarPersistenceWarning:
       "Calendar events were created, but Supabase could not save the sync record.",
     calendarDeletePersistenceWarning:
@@ -293,6 +295,8 @@ const copy = {
     calendarDeleteComplete: "개의 이벤트를 Google Calendar에서 삭제했습니다.",
     calendarDeleteSkipped: "개의 이벤트는 이미 삭제되어 있었습니다.",
     calendarDeleteFailed: "동기화된 Google Calendar 이벤트 삭제에 실패했습니다.",
+    calendarDeleteRefreshHint:
+      "Google Calendar 화면 반영에는 잠시 걸릴 수 있습니다.",
     calendarPersistenceWarning:
       "캘린더 이벤트는 생성됐지만 Supabase에 동기화 기록을 저장하지 못했습니다.",
     calendarDeletePersistenceWarning:
@@ -837,10 +841,9 @@ export default function Home() {
 
       setSyncStatus(
         data?.persistenceWarning
-          ? `${successMessage} ${t.calendarDeletePersistenceWarning}`
-          : successMessage,
+          ? `${successMessage} ${t.calendarDeletePersistenceWarning} ${t.calendarDeleteRefreshHint}`
+          : `${successMessage} ${t.calendarDeleteRefreshHint}`,
       );
-      setCalendarRefreshToken((current) => current + 1);
     } catch (error) {
       setSyncStatus(
         error instanceof Error ? error.message : t.calendarDeleteFailed,

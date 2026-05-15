@@ -226,6 +226,10 @@ Google Calendar sync now reports newly created events separately from events tha
 
 Users can delete the synced Google Calendar events for the current draft schedule in one action. The delete flow also removes the matching Supabase sync record when available, so the same draft can be synced again cleanly.
 
+### Stabilization: Calendar sync and delete responsiveness
+
+Google Calendar event creation and deletion now run in parallel for the current draft schedule instead of waiting for each event one by one. The delete flow avoids an immediate conflict refresh and tells users that Google Calendar's visible UI may take a moment to reflect deletion.
+
 ### Stabilization: Calendar conflict refresh cadence
 
 Calendar conflicts are checked when schedule inputs are ready, when the user clicks refresh, and immediately before syncing. The previous interval/focus refresh behavior was removed to reduce Google Calendar API traffic and make refresh timing easier to understand.

@@ -219,6 +219,134 @@ function createGoogleEventId(userId: string, run: CalendarSyncRun, event: Calend
     .slice(0, 48);
 }
 
+async function createGoogleCalendarEvent({
+  event,
+  googleEventId,
+  timeZone,
+  token,
+}: {
+  event: CalendarDraftEvent;
+  googleEventId: string;
+  timeZone: string;
+  token: string;
+}) {
+  const dateTime = toGoogleDateTime(event.date, event.durationMinutes);
+
+  if (!dateTime) {
+    return {
+      error: `Invalid date for event: ${event.name}`,
+      event,
+    };
+  }
+
+  const googleResponse = await fetch(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        description: [
+          `Category: ${event.category}`,
+          `Protocol: ${event.protocol}`,
+          "Created by LabFlow AI Scheduler.",
+        ].join("\n"),
+        end: {
+          dateTime: dateTime.end.toISOString(),
+          timeZone,
+        },
+        start: {
+          dateTime: dateTime.start.toISOString(),
+          timeZone,
+        },
+        id: googleEventId,
+        summary: event.name,
+      }),
+    },
+  );
+
+  if (googleResponse.status === 409) {
+    return {
+      event,
+      googleEvent: {
+        id: googleEventId,
+        htmlLink: "",
+        summary: event.name,
+      },
+      status: "skipped" as const,
+    };
+  }
+
+  if (!googleResponse.ok) {
+    const googleError = await readGoogleError(googleResponse);
+    return {
+      error: `Unable to create Google Calendar event "${event.name}". ${googleError} (${googleResponse.status})`,
+      event,
+    };
+  }
+
+  const created = await googleResponse.json();
+
+  return {
+    event,
+    googleEvent: {
+      id: created.id,
+      htmlLink: created.htmlLink,
+      summary: created.summary,
+    },
+    status: "created" as const,
+  };
+}
+
+async function deleteGoogleCalendarEvent({
+  event,
+  googleEventId,
+  token,
+}: {
+  event: CalendarDraftEvent;
+  googleEventId: string;
+  token: string;
+}) {
+  const googleResponse = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (googleResponse.status === 204) {
+    return {
+      event,
+      status: "deleted" as const,
+    };
+  }
+
+  if (googleResponse.status === 404 || googleResponse.status === 410) {
+    return {
+      event,
+      status: "skipped" as const,
+    };
+  }
+
+  if (!googleResponse.ok) {
+    const googleError = await readGoogleError(googleResponse);
+    return {
+      error: `Unable to delete Google Calendar event "${event.name}". ${googleError} (${googleResponse.status})`,
+      event,
+    };
+  }
+
+  return {
+    event,
+    status: "deleted" as const,
+  };
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const timeMin =
@@ -332,69 +460,34 @@ export async function POST(request: Request) {
   const skippedEvents: GoogleCalendarEvent[] = [];
   const syncedEvents: GoogleCalendarEvent[] = [];
 
-  for (const event of events) {
-    const dateTime = toGoogleDateTime(event.date, event.durationMinutes);
-    const googleEventId = createGoogleEventId(userId, run, event);
+  const createResults = await Promise.all(
+    events.map((event) =>
+      createGoogleCalendarEvent({
+        event,
+        googleEventId: createGoogleEventId(userId, run, event),
+        timeZone,
+        token,
+      }),
+    ),
+  );
+  const createError = createResults.find((result) => result.error);
 
-    if (!dateTime) {
-      return createCalendarError(`Invalid date for event: ${event.name}`);
-    }
+  if (createError?.error) {
+    return createCalendarError(createError.error);
+  }
 
-    const googleResponse = await fetch(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          description: [
-            `Category: ${event.category}`,
-            `Protocol: ${event.protocol}`,
-            "Created by LabFlow AI Scheduler.",
-          ].join("\n"),
-          end: {
-            dateTime: dateTime.end.toISOString(),
-            timeZone,
-          },
-          start: {
-            dateTime: dateTime.start.toISOString(),
-            timeZone,
-          },
-          id: googleEventId,
-          summary: event.name,
-        }),
-      },
-    );
-
-    if (googleResponse.status === 409) {
-      const skippedEvent = {
-        id: googleEventId,
-        htmlLink: "",
-        summary: event.name,
-      };
-      skippedEvents.push(skippedEvent);
-      syncedEvents.push(skippedEvent);
+  for (const result of createResults) {
+    if (!result.googleEvent) {
       continue;
     }
 
-    if (!googleResponse.ok) {
-      const googleError = await readGoogleError(googleResponse);
-      return createCalendarError(
-        `Unable to create Google Calendar event "${event.name}". ${googleError} (${googleResponse.status})`,
-        googleResponse.status,
-      );
+    if (result.status === "skipped") {
+      skippedEvents.push(result.googleEvent);
+    } else {
+      createdEvents.push(result.googleEvent);
     }
 
-    const created = await googleResponse.json();
-    const createdEvent = {
-      id: created.id,
-      htmlLink: created.htmlLink,
-      summary: created.summary,
-    };
-    createdEvents.push(createdEvent);
-    syncedEvents.push(createdEvent);
+    syncedEvents.push(result.googleEvent);
   }
 
   if (supabase && userId && !existingRunId) {
@@ -476,39 +569,26 @@ export async function DELETE(request: Request) {
 
   const syncSignature = createSyncSignature(run, events);
   let persistenceWarning: string | null = null;
-  let deletedCount = 0;
-  let skippedCount = 0;
+  const deleteResults = await Promise.all(
+    events.map((event) =>
+      deleteGoogleCalendarEvent({
+        event,
+        googleEventId: createGoogleEventId(userId, run, event),
+        token,
+      }),
+    ),
+  );
+  const deleteError = deleteResults.find((result) => result.error);
 
-  for (const event of events) {
-    const googleEventId = createGoogleEventId(userId, run, event);
-    const googleResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-
-    if (googleResponse.status === 204) {
-      deletedCount += 1;
-      continue;
-    }
-
-    if (googleResponse.status === 404 || googleResponse.status === 410) {
-      skippedCount += 1;
-      continue;
-    }
-
-    if (!googleResponse.ok) {
-      const googleError = await readGoogleError(googleResponse);
-      return createCalendarError(
-        `Unable to delete Google Calendar event "${event.name}". ${googleError} (${googleResponse.status})`,
-        googleResponse.status,
-      );
-    }
+  if (deleteError?.error) {
+    return createCalendarError(deleteError.error);
   }
+  const deletedCount = deleteResults.filter(
+    (result) => result.status === "deleted",
+  ).length;
+  const skippedCount = deleteResults.filter(
+    (result) => result.status === "skipped",
+  ).length;
 
   if (supabase) {
     const { error: deleteRunError } = await supabase
