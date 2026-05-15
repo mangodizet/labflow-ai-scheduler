@@ -17,7 +17,18 @@ import {
 } from "@/lib/supabase/auth";
 import { hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
-const templates = [
+type ExperimentTemplate = {
+  id: string;
+  name: string;
+  summary: string;
+  steps: Step[];
+};
+
+type TemplateDraftStep = Step & {
+  id: string;
+};
+
+const templates: ExperimentTemplate[] = [
   {
     id: "thp1-m2",
     name: "THP-1 M2 Polarization",
@@ -107,6 +118,7 @@ const templates = [
 type Language = "en" | "ko";
 
 const languageStorageKey = "labflow-language";
+const customTemplateStorageKey = "labflow-custom-templates";
 
 type CalendarBusyBlock = {
   start: string;
@@ -128,6 +140,12 @@ type DraftEventEdit = {
   date: string;
   time: string;
   durationMinutes: number;
+};
+
+type TemplateBuilderState = {
+  name: string;
+  summary: string;
+  steps: TemplateDraftStep[];
 };
 
 const templateCopy = {
@@ -176,6 +194,18 @@ const copy = {
     selectExperiment: "Select experiment",
     chooseTemplate:
       "Choose an experiment template, then set a start date and preferred time to generate the timeline.",
+    templateBuilder: "Template builder",
+    templateName: "Template name",
+    templateSummary: "Template summary",
+    addTemplateStep: "Add step",
+    saveTemplate: "Save template",
+    templateSaved: "Template saved.",
+    templateNeedsName: "Add a template name and at least one step name.",
+    removeStep: "Remove",
+    stepName: "Step name",
+    dayOffset: "Day offset",
+    category: "Category",
+    protocol: "Protocol",
     startDate: "Start date",
     preferredStartTime: "Preferred start time",
     avoidWeekendWork: "Avoid weekend work",
@@ -265,6 +295,18 @@ const copy = {
     selectExperiment: "실험 선택",
     chooseTemplate:
       "실험 템플릿을 선택한 뒤 시작 날짜와 희망 시작 시간을 설정하면 일정이 생성됩니다.",
+    templateBuilder: "템플릿 만들기",
+    templateName: "템플릿 이름",
+    templateSummary: "템플릿 설명",
+    addTemplateStep: "단계 추가",
+    saveTemplate: "템플릿 저장",
+    templateSaved: "템플릿을 저장했습니다.",
+    templateNeedsName: "템플릿 이름과 단계 이름을 하나 이상 입력하세요.",
+    removeStep: "삭제",
+    stepName: "단계 이름",
+    dayOffset: "Day offset",
+    category: "카테고리",
+    protocol: "프로토콜",
     startDate: "시작 날짜",
     preferredStartTime: "희망 시작 시간",
     avoidWeekendWork: "주말 작업 피하기",
@@ -394,7 +436,7 @@ function addDays(date: Date, days: number) {
   return nextDate;
 }
 
-function getScheduleTimeRange(template: (typeof templates)[number], startDate: string) {
+function getScheduleTimeRange(template: ExperimentTemplate, startDate: string) {
   const baseDate = combineDateAndTime(startDate, "00:00");
   const lastOffset = Math.max(...template.steps.map((step) => step.dayOffset), 0);
 
@@ -419,8 +461,56 @@ function getInitialLanguage(): Language {
   return window.localStorage.getItem(languageStorageKey) === "ko" ? "ko" : "en";
 }
 
+function createTemplateDraftStep(): TemplateDraftStep {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : String(Date.now()),
+    name: "",
+    dayOffset: 0,
+    durationMinutes: 30,
+    category: "Hands-on",
+    protocol: "",
+  };
+}
+
+function createInitialTemplateBuilder(): TemplateBuilderState {
+  return {
+    name: "",
+    summary: "",
+    steps: [createTemplateDraftStep()],
+  };
+}
+
+function readCustomTemplates(): ExperimentTemplate[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(customTemplateStorageKey) ?? "[]",
+    );
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter(
+      (template): template is ExperimentTemplate =>
+        typeof template?.id === "string" &&
+        typeof template.name === "string" &&
+        typeof template.summary === "string" &&
+        Array.isArray(template.steps),
+    );
+  } catch {
+    return [];
+  }
+}
+
 async function fetchCalendarConflicts(
-  template: (typeof templates)[number],
+  template: ExperimentTemplate,
   startDate: string,
   language: Language,
 ): Promise<CalendarConflictResult> {
@@ -458,6 +548,12 @@ async function fetchCalendarConflicts(
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [customTemplates, setCustomTemplates] = useState<ExperimentTemplate[]>([]);
+  const [customTemplatesLoaded, setCustomTemplatesLoaded] = useState(false);
+  const [templateBuilder, setTemplateBuilder] = useState<TemplateBuilderState>(
+    createInitialTemplateBuilder,
+  );
+  const [templateBuilderStatus, setTemplateBuilderStatus] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [workStart, setWorkStart] = useState("");
@@ -475,7 +571,11 @@ export default function Home() {
   const previousBusySignature = useRef("");
   const t = copy[language];
 
-  const template = templates.find((item) => item.id === templateId);
+  const allTemplates = useMemo(
+    () => [...templates, ...customTemplates],
+    [customTemplates],
+  );
+  const template = allTemplates.find((item) => item.id === templateId);
   const canGenerateSchedule = Boolean(template && startDate && workStart);
 
   const schedule = useMemo<ScheduledStep[]>(() => {
@@ -531,6 +631,17 @@ export default function Home() {
   const draftDates = Object.keys(groupedDraftEvents).sort();
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setCustomTemplates(readCustomTemplates());
+      setCustomTemplatesLoaded(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function loadUser() {
@@ -561,6 +672,17 @@ export default function Home() {
   useEffect(() => {
     window.localStorage.setItem(languageStorageKey, language);
   }, [language]);
+
+  useEffect(() => {
+    if (!customTemplatesLoaded) {
+      return;
+    }
+
+    window.localStorage.setItem(
+      customTemplateStorageKey,
+      JSON.stringify(customTemplates),
+    );
+  }, [customTemplates, customTemplatesLoaded]);
 
   useEffect(() => {
     let isMounted = true;
@@ -678,6 +800,84 @@ export default function Home() {
 
   function handleWeekendPreferenceInput(checked: boolean) {
     setAvoidWeekends(checked);
+    setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
+  }
+
+  function updateTemplateBuilder(patch: Partial<TemplateBuilderState>) {
+    setTemplateBuilder((current) => ({
+      ...current,
+      ...patch,
+    }));
+    setTemplateBuilderStatus("");
+  }
+
+  function updateTemplateBuilderStep(
+    id: string,
+    patch: Partial<Omit<TemplateDraftStep, "id">>,
+  ) {
+    setTemplateBuilder((current) => ({
+      ...current,
+      steps: current.steps.map((step) =>
+        step.id === id
+          ? {
+              ...step,
+              ...patch,
+            }
+          : step,
+      ),
+    }));
+    setTemplateBuilderStatus("");
+  }
+
+  function addTemplateBuilderStep() {
+    setTemplateBuilder((current) => ({
+      ...current,
+      steps: [...current.steps, createTemplateDraftStep()],
+    }));
+    setTemplateBuilderStatus("");
+  }
+
+  function removeTemplateBuilderStep(id: string) {
+    setTemplateBuilder((current) => ({
+      ...current,
+      steps:
+        current.steps.length > 1
+          ? current.steps.filter((step) => step.id !== id)
+          : current.steps,
+    }));
+    setTemplateBuilderStatus("");
+  }
+
+  function saveTemplateBuilder() {
+    const name = templateBuilder.name.trim();
+    const steps = templateBuilder.steps
+      .filter((step) => step.name.trim())
+      .map((step) => ({
+        name: step.name.trim(),
+        dayOffset: Math.max(0, Math.floor(Number(step.dayOffset) || 0)),
+        durationMinutes: Math.max(1, Math.floor(Number(step.durationMinutes) || 1)),
+        category: step.category,
+        protocol: step.protocol.trim() || step.name.trim(),
+      }));
+
+    if (!name || !steps.length) {
+      setTemplateBuilderStatus(t.templateNeedsName);
+      return;
+    }
+
+    const newTemplate: ExperimentTemplate = {
+      id: `custom-${Date.now()}`,
+      name,
+      summary: templateBuilder.summary.trim() || `${steps.length} custom steps.`,
+      steps,
+    };
+
+    setCustomTemplates((current) => [...current, newTemplate]);
+    setTemplateId(newTemplate.id);
+    setTemplateBuilder(createInitialTemplateBuilder());
+    setTemplateBuilderStatus(t.templateSaved);
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -980,7 +1180,7 @@ export default function Home() {
                 className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
               >
                 <option value="">{t.selectExperiment}</option>
-                {templates.map((item) => (
+                {allTemplates.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
                   </option>
@@ -991,6 +1191,151 @@ export default function Home() {
                   ? getTemplateSummary(template.id, language, template.summary)
                   : t.chooseTemplate}
               </p>
+            </div>
+
+            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+              <h2 className="text-sm font-semibold text-[#26382d]">
+                {t.templateBuilder}
+              </h2>
+              <div className="mt-3 space-y-3">
+                <label className="block text-xs font-semibold text-[#405347]">
+                  {t.templateName}
+                  <input
+                    className="mt-1 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                    value={templateBuilder.name}
+                    onChange={(event) =>
+                      updateTemplateBuilder({ name: event.currentTarget.value })
+                    }
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-[#405347]">
+                  {t.templateSummary}
+                  <textarea
+                    className="mt-1 min-h-20 w-full resize-y border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                    value={templateBuilder.summary}
+                    onChange={(event) =>
+                      updateTemplateBuilder({ summary: event.currentTarget.value })
+                    }
+                  />
+                </label>
+                <div className="space-y-3">
+                  {templateBuilder.steps.map((step, index) => (
+                    <div key={step.id} className="border border-[#d8e2d4] bg-white p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[#2f6f4e]">
+                          {t.day} {index + 1}
+                        </span>
+                        <button
+                          className="border border-[#d8e2d4] px-2 py-1 text-xs font-semibold text-[#66756b] transition hover:bg-[#eef5ef]"
+                          onClick={() => removeTemplateBuilderStep(step.id)}
+                          type="button"
+                        >
+                          {t.removeStep}
+                        </button>
+                      </div>
+                      <label className="mt-3 block text-xs font-semibold text-[#405347]">
+                        {t.stepName}
+                        <input
+                          className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
+                          value={step.name}
+                          onChange={(event) =>
+                            updateTemplateBuilderStep(step.id, {
+                              name: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </label>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        <label className="block text-xs font-semibold text-[#405347]">
+                          {t.dayOffset}
+                          <input
+                            className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
+                            min="0"
+                            type="number"
+                            value={step.dayOffset}
+                            onChange={(event) =>
+                              updateTemplateBuilderStep(step.id, {
+                                dayOffset: Math.max(
+                                  0,
+                                  Number(event.currentTarget.value),
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                        <label className="block text-xs font-semibold text-[#405347]">
+                          {t.eventDuration}
+                          <input
+                            className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
+                            min="1"
+                            type="number"
+                            value={step.durationMinutes}
+                            onChange={(event) =>
+                              updateTemplateBuilderStep(step.id, {
+                                durationMinutes: Math.max(
+                                  1,
+                                  Number(event.currentTarget.value),
+                                ),
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+                      <div className="mt-3 grid grid-cols-1 gap-2">
+                        <label className="block text-xs font-semibold text-[#405347]">
+                          {t.category}
+                          <select
+                            className="mt-1 w-full border border-[#bfd0c4] bg-white px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
+                            value={step.category}
+                            onChange={(event) =>
+                              updateTemplateBuilderStep(step.id, {
+                                category: event.currentTarget.value as Step["category"],
+                              })
+                            }
+                          >
+                            <option value="Hands-on">{t.categories["Hands-on"]}</option>
+                            <option value="Incubation">{t.categories.Incubation}</option>
+                            <option value="Assay">{t.categories.Assay}</option>
+                          </select>
+                        </label>
+                        <label className="block text-xs font-semibold text-[#405347]">
+                          {t.protocol}
+                          <input
+                            className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
+                            value={step.protocol}
+                            onChange={(event) =>
+                              updateTemplateBuilderStep(step.id, {
+                                protocol: event.currentTarget.value,
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    onClick={addTemplateBuilderStep}
+                    type="button"
+                  >
+                    {t.addTemplateStep}
+                  </button>
+                  <button
+                    className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                    onClick={saveTemplateBuilder}
+                    type="button"
+                  >
+                    {t.saveTemplate}
+                  </button>
+                </div>
+                {templateBuilderStatus ? (
+                  <p className="text-sm font-medium text-[#2f6f4e]" role="status">
+                    {templateBuilderStatus}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">

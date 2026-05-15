@@ -230,6 +230,10 @@ Users can delete the synced Google Calendar events for the current draft schedul
 
 Google Calendar event creation and deletion now run in parallel for the current draft schedule instead of waiting for each event one by one. The delete flow avoids an immediate conflict refresh and tells users that Google Calendar's visible UI may take a moment to reflect deletion.
 
+### Added: Manual experiment template builder
+
+Users can create a custom experiment template in the app by entering a template name, summary, and editable steps with day offset, duration, category, and protocol notes. Custom templates are stored in browser local storage and can be selected immediately in the scheduler.
+
 ### Stabilization: Calendar conflict refresh cadence
 
 Calendar conflicts are checked when schedule inputs are ready, when the user clicks refresh, and immediately before syncing. The previous interval/focus refresh behavior was removed to reduce Google Calendar API traffic and make refresh timing easier to understand.
@@ -300,12 +304,13 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 ## Next Development Steps
 
 1. Confirm the latest Vercel deployment after each push
-2. Add a real experiment-template editor so researchers can define workflows without code changes
-3. Add drag/drop or direct calendar resizing for draft schedule editing
-4. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
-5. Add an in-app sync history view backed by Supabase
-6. Replace MVP example schedules with validated lab protocols provided by the user or collaborator
-7. Add a guided workflow import flow for pasting protocol text and turning it into editable schedule steps
+2. Move custom experiment templates from browser local storage to Supabase so they persist across devices
+3. Add edit/delete controls for saved custom templates
+4. Add drag/drop or direct calendar resizing for draft schedule editing
+5. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
+6. Add an in-app sync history view backed by Supabase
+7. Replace MVP example schedules with validated lab protocols provided by the user or collaborator
+8. Add a guided workflow import flow for pasting protocol text and turning it into editable schedule steps
 
 ## Git and Deployment
 
