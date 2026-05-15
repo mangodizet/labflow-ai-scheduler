@@ -11,17 +11,21 @@ import {
   type Step,
 } from "@/lib/scheduler";
 import {
-  getCurrentUserEmail,
+  getCurrentUserProfile,
   signInWithGoogleCalendar,
   signOut,
 } from "@/lib/supabase/auth";
-import { hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  hasSupabaseBrowserConfig,
+} from "@/lib/supabase/client";
 
 type ExperimentTemplate = {
   id: string;
   name: string;
   summary: string;
   steps: Step[];
+  source?: "local" | "supabase";
 };
 
 type TemplateDraftStep = Step & {
@@ -148,6 +152,22 @@ type TemplateBuilderState = {
   steps: TemplateDraftStep[];
 };
 
+type ExperimentTemplateRow = {
+  id: string;
+  name: string;
+  summary: string | null;
+};
+
+type WorkflowStepRow = {
+  category: string;
+  day_offset: number;
+  duration_minutes: number;
+  name: string;
+  protocol_label: string | null;
+  sort_order: number;
+  template_id: string;
+};
+
 const templateCopy = {
   en: {
     "thp1-m2":
@@ -203,9 +223,13 @@ const copy = {
     editSelectedTemplate: "Edit selected",
     deleteSelectedTemplate: "Delete selected",
     cancelTemplateEdit: "Cancel edit",
+    templateSyncFailed:
+      "Unable to load saved templates. Local templates are still available.",
     templateSaved: "Template saved.",
     templateUpdated: "Template updated.",
     templateDeleted: "Template deleted.",
+    templateSaveFailed: "Unable to save the template.",
+    templateDeleteFailed: "Unable to delete the template.",
     templateNeedsName: "Add a template name and at least one step name.",
     removeStep: "Remove",
     stepName: "Step name",
@@ -310,9 +334,13 @@ const copy = {
     editSelectedTemplate: "선택 템플릿 수정",
     deleteSelectedTemplate: "선택 템플릿 삭제",
     cancelTemplateEdit: "수정 취소",
+    templateSyncFailed:
+      "저장된 템플릿을 불러오지 못했습니다. 로컬 템플릿은 계속 사용할 수 있습니다.",
     templateSaved: "템플릿을 저장했습니다.",
     templateUpdated: "템플릿을 수정했습니다.",
     templateDeleted: "템플릿을 삭제했습니다.",
+    templateSaveFailed: "템플릿 저장에 실패했습니다.",
+    templateDeleteFailed: "템플릿 삭제에 실패했습니다.",
     templateNeedsName: "템플릿 이름과 단계 이름을 하나 이상 입력하세요.",
     removeStep: "삭제",
     stepName: "단계 이름",
@@ -495,6 +523,31 @@ function createInitialTemplateBuilder(): TemplateBuilderState {
   };
 }
 
+function isStepCategory(value: unknown): value is Step["category"] {
+  return value === "Hands-on" || value === "Incubation" || value === "Assay";
+}
+
+function normalizeStoredTemplate(template: ExperimentTemplate): ExperimentTemplate {
+  return {
+    id: template.id,
+    name: template.name,
+    source: "local",
+    steps: template.steps
+      .filter((step) => typeof step?.name === "string")
+      .map((step) => ({
+        category: isStepCategory(step.category) ? step.category : "Hands-on",
+        dayOffset: Math.max(0, Math.floor(Number(step.dayOffset) || 0)),
+        durationMinutes: Math.max(1, Math.floor(Number(step.durationMinutes) || 1)),
+        name: step.name.trim(),
+        protocol:
+          typeof step.protocol === "string" && step.protocol.trim()
+            ? step.protocol.trim()
+            : step.name.trim(),
+      })),
+    summary: template.summary,
+  };
+}
+
 function readCustomTemplates(): ExperimentTemplate[] {
   if (typeof window === "undefined") {
     return [];
@@ -515,9 +568,176 @@ function readCustomTemplates(): ExperimentTemplate[] {
         typeof template.name === "string" &&
         typeof template.summary === "string" &&
         Array.isArray(template.steps),
-    );
+    ).map(normalizeStoredTemplate);
   } catch {
     return [];
+  }
+}
+
+function writeLocalTemplates(customTemplates: ExperimentTemplate[]) {
+  const localTemplates = customTemplates
+    .filter((template) => template.source !== "supabase")
+    .map((template) => ({
+      id: template.id,
+      name: template.name,
+      source: "local",
+      steps: template.steps,
+      summary: template.summary,
+    }));
+
+  window.localStorage.setItem(
+    customTemplateStorageKey,
+    JSON.stringify(localTemplates),
+  );
+}
+
+async function loadSupabaseTemplates(): Promise<ExperimentTemplate[]> {
+  const supabase = createSupabaseBrowserClient();
+  const { data: templateRows, error: templateError } = await supabase
+    .from("experiment_templates")
+    .select("id, name, summary")
+    .order("created_at", { ascending: true });
+
+  if (templateError) {
+    throw templateError;
+  }
+
+  const templatesById = new Map<string, ExperimentTemplate>(
+    ((templateRows ?? []) as ExperimentTemplateRow[]).map((template) => [
+      template.id,
+      {
+        id: template.id,
+        name: template.name,
+        source: "supabase",
+        steps: [],
+        summary: template.summary ?? "",
+      },
+    ]),
+  );
+
+  if (!templatesById.size) {
+    return [];
+  }
+
+  const { data: stepRows, error: stepError } = await supabase
+    .from("workflow_steps")
+    .select(
+      "template_id, name, day_offset, duration_minutes, category, protocol_label, sort_order",
+    )
+    .in("template_id", [...templatesById.keys()])
+    .order("sort_order", { ascending: true });
+
+  if (stepError) {
+    throw stepError;
+  }
+
+  for (const step of (stepRows ?? []) as WorkflowStepRow[]) {
+    const template = templatesById.get(step.template_id);
+
+    if (!template) {
+      continue;
+    }
+
+    template.steps.push({
+      category: isStepCategory(step.category) ? step.category : "Hands-on",
+      dayOffset: step.day_offset,
+      durationMinutes: step.duration_minutes,
+      name: step.name,
+      protocol: step.protocol_label ?? step.name,
+    });
+  }
+
+  return [...templatesById.values()].filter((template) => template.steps.length);
+}
+
+async function saveSupabaseTemplate(
+  template: ExperimentTemplate,
+  userId: string,
+  templateId?: string,
+): Promise<ExperimentTemplate> {
+  const supabase = createSupabaseBrowserClient();
+  let savedTemplateId = templateId;
+
+  if (savedTemplateId) {
+    const { error } = await supabase
+      .from("experiment_templates")
+      .update({
+        name: template.name,
+        summary: template.summary,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", savedTemplateId)
+      .eq("user_id", userId);
+
+    if (error) {
+      throw error;
+    }
+  } else {
+    const { data, error } = await supabase
+      .from("experiment_templates")
+      .insert({
+        name: template.name,
+        summary: template.summary,
+        user_id: userId,
+      })
+      .select("id")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    savedTemplateId = data.id as string;
+  }
+
+  if (!savedTemplateId) {
+    throw new Error("Template save did not return an id.");
+  }
+
+  const { error: deleteStepsError } = await supabase
+    .from("workflow_steps")
+    .delete()
+    .eq("template_id", savedTemplateId)
+    .eq("user_id", userId);
+
+  if (deleteStepsError) {
+    throw deleteStepsError;
+  }
+
+  const { error: insertStepsError } = await supabase.from("workflow_steps").insert(
+    template.steps.map((step, index) => ({
+      category: step.category,
+      day_offset: step.dayOffset,
+      duration_minutes: step.durationMinutes,
+      name: step.name,
+      protocol_label: step.protocol,
+      sort_order: index,
+      template_id: savedTemplateId,
+      user_id: userId,
+    })),
+  );
+
+  if (insertStepsError) {
+    throw insertStepsError;
+  }
+
+  return {
+    ...template,
+    id: savedTemplateId,
+    source: "supabase",
+  };
+}
+
+async function deleteSupabaseTemplate(templateId: string, userId: string) {
+  const supabase = createSupabaseBrowserClient();
+  const { error } = await supabase
+    .from("experiment_templates")
+    .delete()
+    .eq("id", templateId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw error;
   }
 }
 
@@ -579,6 +799,7 @@ export default function Home() {
   const [calendarConflicts, setCalendarConflicts] = useState<CalendarConflict[]>([]);
   const [calendarRefreshToken, setCalendarRefreshToken] = useState(0);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [draftEdits, setDraftEdits] = useState<Record<string, DraftEventEdit>>({});
   const [selectedEventId, setSelectedEventId] = useState("");
   const previousBusySignature = useRef("");
@@ -648,7 +869,11 @@ export default function Home() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setCustomTemplates(readCustomTemplates());
+      const localTemplates = readCustomTemplates();
+      setCustomTemplates((current) => [
+        ...current.filter((template) => template.source === "supabase"),
+        ...localTemplates,
+      ]);
       setCustomTemplatesLoaded(true);
     }, 0);
 
@@ -666,10 +891,11 @@ export default function Home() {
       }
 
       try {
-        const email = await getCurrentUserEmail();
+        const profile = await getCurrentUserProfile();
 
         if (isMounted) {
-          setUserEmail(email);
+          setUserEmail(profile?.email ?? null);
+          setUserId(profile?.id ?? null);
         }
       } catch {
         if (isMounted) {
@@ -694,11 +920,42 @@ export default function Home() {
       return;
     }
 
-    window.localStorage.setItem(
-      customTemplateStorageKey,
-      JSON.stringify(customTemplates),
-    );
+    writeLocalTemplates(customTemplates);
   }, [customTemplates, customTemplatesLoaded]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSavedTemplates() {
+      if (!userId) {
+        setCustomTemplates((current) =>
+          current.filter((template) => template.source !== "supabase"),
+        );
+        return;
+      }
+
+      try {
+        const savedTemplates = await loadSupabaseTemplates();
+
+        if (isMounted) {
+          setCustomTemplates((current) => [
+            ...current.filter((template) => template.source !== "supabase"),
+            ...savedTemplates,
+          ]);
+        }
+      } catch {
+        if (isMounted) {
+          setTemplateBuilderStatus(t.templateSyncFailed);
+        }
+      }
+    }
+
+    void loadSavedTemplates();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [t.templateSyncFailed, userId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -782,6 +1039,7 @@ export default function Home() {
     }
 
     setUserEmail(null);
+    setUserId(null);
     setAuthStatus(t.disconnected);
     setCalendarConflicts([]);
     setCalendarStatus("");
@@ -894,10 +1152,19 @@ export default function Home() {
     setTemplateBuilderStatus("");
   }
 
-  function deleteSelectedTemplate() {
+  async function deleteSelectedTemplate() {
     const selectedTemplate = customTemplates.find((item) => item.id === templateId);
 
     if (!selectedTemplate) {
+      return;
+    }
+
+    try {
+      if (selectedTemplate.source === "supabase" && userId) {
+        await deleteSupabaseTemplate(selectedTemplate.id, userId);
+      }
+    } catch {
+      setTemplateBuilderStatus(t.templateDeleteFailed);
       return;
     }
 
@@ -915,7 +1182,7 @@ export default function Home() {
     setSelectedEventId("");
   }
 
-  function saveTemplateBuilder() {
+  async function saveTemplateBuilder() {
     const name = templateBuilder.name.trim();
     const steps = templateBuilder.steps
       .filter((step) => step.name.trim())
@@ -935,16 +1202,36 @@ export default function Home() {
     const newTemplate: ExperimentTemplate = {
       id: editingTemplateId ?? `custom-${Date.now()}`,
       name,
+      source: "local",
       summary: templateBuilder.summary.trim() || `${steps.length} custom steps.`,
       steps,
     };
 
+    const editingTemplate = customTemplates.find(
+      (item) => item.id === editingTemplateId,
+    );
+
+    let savedTemplate = newTemplate;
+
+    try {
+      if (userId) {
+        savedTemplate = await saveSupabaseTemplate(
+          newTemplate,
+          userId,
+          editingTemplate?.source === "supabase" ? editingTemplate.id : undefined,
+        );
+      }
+    } catch {
+      setTemplateBuilderStatus(t.templateSaveFailed);
+      return;
+    }
+
     setCustomTemplates((current) =>
       editingTemplateId
-        ? current.map((item) => (item.id === editingTemplateId ? newTemplate : item))
-        : [...current, newTemplate],
+        ? current.map((item) => (item.id === editingTemplateId ? savedTemplate : item))
+        : [...current, savedTemplate],
     );
-    setTemplateId(newTemplate.id);
+    setTemplateId(savedTemplate.id);
     setTemplateBuilder(createInitialTemplateBuilder());
     setTemplateBuilderStatus(
       editingTemplateId ? t.templateUpdated : t.templateSaved,

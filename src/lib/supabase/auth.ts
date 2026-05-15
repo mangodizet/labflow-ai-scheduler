@@ -25,7 +25,7 @@ export async function signInWithGoogleCalendar() {
   });
 }
 
-export async function getCurrentUserEmail() {
+export async function getCurrentUserProfile() {
   const supabase = createSupabaseBrowserClient();
   const {
     data: { user },
@@ -36,7 +36,18 @@ export async function getCurrentUserEmail() {
     throw error;
   }
 
-  return user?.email ?? null;
+  return user
+    ? {
+        email: user.email ?? null,
+        id: user.id,
+      }
+    : null;
+}
+
+export async function getCurrentUserEmail() {
+  const profile = await getCurrentUserProfile();
+
+  return profile?.email ?? null;
 }
 
 export async function signOut() {

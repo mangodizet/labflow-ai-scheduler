@@ -8,7 +8,7 @@
 - Deployed URL: `https://labflow-ai-scheduler.vercel.app/`
 - GitHub repository: `https://github.com/mangodizet/labflow-ai-scheduler`
 - Stack: Next.js, TypeScript, Tailwind CSS
-- Current phase: Google Calendar integration wiring
+- Current phase: Custom workflow template persistence and scheduler stabilization
 
 ## Original MVP Scenario
 
@@ -156,6 +156,9 @@ Completed:
 - Persisted the selected EN/KO language in local storage so OAuth redirects keep the user's language
 - Changed Google Calendar conflict loading from free/busy-only reads to event-list reads so LabFlow-created events are excluded from future conflict checks
 - Added a pre-sync calendar refresh guard that updates the draft and stops sync when external calendar conflicts changed
+- Added Supabase-backed custom template persistence for connected users
+- Custom templates now load from Supabase after sign-in, while browser local storage remains as a fallback before sign-in
+- Saving, updating, and deleting custom templates now writes to the user's Supabase `experiment_templates` and `workflow_steps` rows when authenticated
 
 Validated:
 
@@ -189,7 +192,7 @@ Known dependency note:
 - `src/lib/supabase/client.ts`: Supabase browser client setup
 - `src/lib/supabase/auth.ts`: Google OAuth sign-in, current user, and sign-out helpers
 - `src/app/auth/callback/route.ts`: Supabase OAuth callback handler
-- `src/app/api/calendar/events/route.ts`: Calendar integration API placeholder
+- `src/app/api/calendar/events/route.ts`: Google Calendar conflict read, event sync, and synced event deletion API
 - `GOOGLE_CALENDAR_SETUP.md`: Supabase and Google Cloud setup guide
 - `supabase/migrations/0001_initial_labflow_schema.sql`: Initial database schema and RLS policies
 - `src/app/layout.tsx`: App metadata and root layout
@@ -237,6 +240,10 @@ Users can create a custom experiment template in the app by entering a template 
 ### Added: Custom template edit and delete controls
 
 Saved custom templates can be selected, loaded back into the builder, updated, or deleted from browser local storage.
+
+### Added: Supabase-backed custom template storage
+
+Connected users can save, update, delete, and reload custom experiment templates through Supabase. Local storage remains as a fallback for templates created before sign-in or when Supabase is not configured.
 
 ### Stabilization: Calendar conflict refresh cadence
 
@@ -308,12 +315,12 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 ## Next Development Steps
 
 1. Confirm the latest Vercel deployment after each push
-2. Move custom experiment templates from browser local storage to Supabase so they persist across devices
-3. Add drag/drop or direct calendar resizing for draft schedule editing
-4. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
-5. Add an in-app sync history view backed by Supabase
-6. Replace MVP example schedules with validated lab protocols provided by the user or collaborator
-7. Add a guided workflow import flow for pasting protocol text and turning it into editable schedule steps
+2. Add drag/drop or direct calendar resizing for draft schedule editing
+3. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
+4. Add an in-app sync history view backed by Supabase
+5. Replace MVP example schedules with validated lab protocols provided by the user or collaborator
+6. Add a guided workflow import flow for pasting protocol text and turning it into editable schedule steps
+7. Add a template import/export or sharing flow after the private template storage is stable
 
 ## Git and Deployment
 
@@ -346,4 +353,4 @@ https://labflow-ai-scheduler.vercel.app/
 
 ## Status Date
 
-- Last updated: 2026-05-10
+- Last updated: 2026-05-15
