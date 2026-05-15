@@ -199,7 +199,13 @@ const copy = {
     templateSummary: "Template summary",
     addTemplateStep: "Add step",
     saveTemplate: "Save template",
+    updateTemplate: "Update template",
+    editSelectedTemplate: "Edit selected",
+    deleteSelectedTemplate: "Delete selected",
+    cancelTemplateEdit: "Cancel edit",
     templateSaved: "Template saved.",
+    templateUpdated: "Template updated.",
+    templateDeleted: "Template deleted.",
     templateNeedsName: "Add a template name and at least one step name.",
     removeStep: "Remove",
     stepName: "Step name",
@@ -300,7 +306,13 @@ const copy = {
     templateSummary: "템플릿 설명",
     addTemplateStep: "단계 추가",
     saveTemplate: "템플릿 저장",
+    updateTemplate: "템플릿 수정 저장",
+    editSelectedTemplate: "선택 템플릿 수정",
+    deleteSelectedTemplate: "선택 템플릿 삭제",
+    cancelTemplateEdit: "수정 취소",
     templateSaved: "템플릿을 저장했습니다.",
+    templateUpdated: "템플릿을 수정했습니다.",
+    templateDeleted: "템플릿을 삭제했습니다.",
     templateNeedsName: "템플릿 이름과 단계 이름을 하나 이상 입력하세요.",
     removeStep: "삭제",
     stepName: "단계 이름",
@@ -554,6 +566,7 @@ export default function Home() {
     createInitialTemplateBuilder,
   );
   const [templateBuilderStatus, setTemplateBuilderStatus] = useState("");
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [templateId, setTemplateId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [workStart, setWorkStart] = useState("");
@@ -576,6 +589,9 @@ export default function Home() {
     [customTemplates],
   );
   const template = allTemplates.find((item) => item.id === templateId);
+  const isCustomTemplateSelected = Boolean(
+    templateId && customTemplates.some((item) => item.id === templateId),
+  );
   const canGenerateSchedule = Boolean(template && startDate && workStart);
 
   const schedule = useMemo<ScheduledStep[]>(() => {
@@ -850,6 +866,55 @@ export default function Home() {
     setTemplateBuilderStatus("");
   }
 
+  function editSelectedTemplate() {
+    const selectedTemplate = customTemplates.find((item) => item.id === templateId);
+
+    if (!selectedTemplate) {
+      return;
+    }
+
+    setEditingTemplateId(selectedTemplate.id);
+    setTemplateBuilder({
+      name: selectedTemplate.name,
+      summary: selectedTemplate.summary,
+      steps: selectedTemplate.steps.map((step) => ({
+        ...step,
+        id:
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `${selectedTemplate.id}-${step.dayOffset}-${step.name}`,
+      })),
+    });
+    setTemplateBuilderStatus("");
+  }
+
+  function cancelTemplateEdit() {
+    setEditingTemplateId(null);
+    setTemplateBuilder(createInitialTemplateBuilder());
+    setTemplateBuilderStatus("");
+  }
+
+  function deleteSelectedTemplate() {
+    const selectedTemplate = customTemplates.find((item) => item.id === templateId);
+
+    if (!selectedTemplate) {
+      return;
+    }
+
+    setCustomTemplates((current) =>
+      current.filter((item) => item.id !== selectedTemplate.id),
+    );
+    setTemplateId("");
+    setEditingTemplateId((current) =>
+      current === selectedTemplate.id ? null : current,
+    );
+    setTemplateBuilder(createInitialTemplateBuilder());
+    setTemplateBuilderStatus(t.templateDeleted);
+    setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
+  }
+
   function saveTemplateBuilder() {
     const name = templateBuilder.name.trim();
     const steps = templateBuilder.steps
@@ -868,16 +933,23 @@ export default function Home() {
     }
 
     const newTemplate: ExperimentTemplate = {
-      id: `custom-${Date.now()}`,
+      id: editingTemplateId ?? `custom-${Date.now()}`,
       name,
       summary: templateBuilder.summary.trim() || `${steps.length} custom steps.`,
       steps,
     };
 
-    setCustomTemplates((current) => [...current, newTemplate]);
+    setCustomTemplates((current) =>
+      editingTemplateId
+        ? current.map((item) => (item.id === editingTemplateId ? newTemplate : item))
+        : [...current, newTemplate],
+    );
     setTemplateId(newTemplate.id);
     setTemplateBuilder(createInitialTemplateBuilder());
-    setTemplateBuilderStatus(t.templateSaved);
+    setTemplateBuilderStatus(
+      editingTemplateId ? t.templateUpdated : t.templateSaved,
+    );
+    setEditingTemplateId(null);
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1191,6 +1263,24 @@ export default function Home() {
                   ? getTemplateSummary(template.id, language, template.summary)
                   : t.chooseTemplate}
               </p>
+              {isCustomTemplateSelected ? (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    onClick={editSelectedTemplate}
+                    type="button"
+                  >
+                    {t.editSelectedTemplate}
+                  </button>
+                  <button
+                    className="border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#8a4b16] transition hover:bg-[#fff7ed]"
+                    onClick={deleteSelectedTemplate}
+                    type="button"
+                  >
+                    {t.deleteSelectedTemplate}
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
@@ -1327,9 +1417,18 @@ export default function Home() {
                     onClick={saveTemplateBuilder}
                     type="button"
                   >
-                    {t.saveTemplate}
+                    {editingTemplateId ? t.updateTemplate : t.saveTemplate}
                   </button>
                 </div>
+                {editingTemplateId ? (
+                  <button
+                    className="w-full border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#66756b] transition hover:bg-[#eef5ef]"
+                    onClick={cancelTemplateEdit}
+                    type="button"
+                  >
+                    {t.cancelTemplateEdit}
+                  </button>
+                ) : null}
                 {templateBuilderStatus ? (
                   <p className="text-sm font-medium text-[#2f6f4e]" role="status">
                     {templateBuilderStatus}
