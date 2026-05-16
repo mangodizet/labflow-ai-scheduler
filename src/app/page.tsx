@@ -220,8 +220,10 @@ const copy = {
     addTemplateStep: "Add step",
     saveTemplate: "Save template",
     updateTemplate: "Update template",
+    savingTemplate: "Saving...",
     editSelectedTemplate: "Edit selected",
     deleteSelectedTemplate: "Delete selected",
+    deletingTemplate: "Deleting...",
     cancelTemplateEdit: "Cancel edit",
     templateSyncFailed:
       "Unable to load saved templates. Local templates are still available.",
@@ -331,8 +333,10 @@ const copy = {
     addTemplateStep: "단계 추가",
     saveTemplate: "템플릿 저장",
     updateTemplate: "템플릿 수정 저장",
+    savingTemplate: "저장 중...",
     editSelectedTemplate: "선택 템플릿 수정",
     deleteSelectedTemplate: "선택 템플릿 삭제",
+    deletingTemplate: "삭제 중...",
     cancelTemplateEdit: "수정 취소",
     templateSyncFailed:
       "저장된 템플릿을 불러오지 못했습니다. 로컬 템플릿은 계속 사용할 수 있습니다.",
@@ -787,6 +791,8 @@ export default function Home() {
   );
   const [templateBuilderStatus, setTemplateBuilderStatus] = useState("");
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
   const [templateId, setTemplateId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [workStart, setWorkStart] = useState("");
@@ -1153,11 +1159,18 @@ export default function Home() {
   }
 
   async function deleteSelectedTemplate() {
+    if (isDeletingTemplate) {
+      return;
+    }
+
     const selectedTemplate = customTemplates.find((item) => item.id === templateId);
 
     if (!selectedTemplate) {
       return;
     }
+
+    setIsDeletingTemplate(true);
+    setTemplateBuilderStatus(t.deletingTemplate);
 
     try {
       if (selectedTemplate.source === "supabase" && userId) {
@@ -1166,6 +1179,8 @@ export default function Home() {
     } catch {
       setTemplateBuilderStatus(t.templateDeleteFailed);
       return;
+    } finally {
+      setIsDeletingTemplate(false);
     }
 
     setCustomTemplates((current) =>
@@ -1183,6 +1198,10 @@ export default function Home() {
   }
 
   async function saveTemplateBuilder() {
+    if (isSavingTemplate) {
+      return;
+    }
+
     const name = templateBuilder.name.trim();
     const steps = templateBuilder.steps
       .filter((step) => step.name.trim())
@@ -1213,6 +1232,9 @@ export default function Home() {
 
     let savedTemplate = newTemplate;
 
+    setIsSavingTemplate(true);
+    setTemplateBuilderStatus(t.savingTemplate);
+
     try {
       if (userId) {
         savedTemplate = await saveSupabaseTemplate(
@@ -1224,6 +1246,8 @@ export default function Home() {
     } catch {
       setTemplateBuilderStatus(t.templateSaveFailed);
       return;
+    } finally {
+      setIsSavingTemplate(false);
     }
 
     setCustomTemplates((current) =>
@@ -1554,17 +1578,19 @@ export default function Home() {
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={editSelectedTemplate}
                     type="button"
                   >
                     {t.editSelectedTemplate}
                   </button>
                   <button
-                    className="border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#8a4b16] transition hover:bg-[#fff7ed]"
+                    className="border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#8a4b16] transition hover:bg-[#fff7ed] disabled:cursor-not-allowed disabled:bg-[#f1f4ef] disabled:text-[#8a968e]"
+                    disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={deleteSelectedTemplate}
                     type="button"
                   >
-                    {t.deleteSelectedTemplate}
+                    {isDeletingTemplate ? t.deletingTemplate : t.deleteSelectedTemplate}
                   </button>
                 </div>
               ) : null}
@@ -1693,23 +1719,30 @@ export default function Home() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:bg-[#f1f4ef] disabled:text-[#8a968e]"
+                    disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={addTemplateBuilderStep}
                     type="button"
                   >
                     {t.addTemplateStep}
                   </button>
                   <button
-                    className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                    className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b]"
+                    disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={saveTemplateBuilder}
                     type="button"
                   >
-                    {editingTemplateId ? t.updateTemplate : t.saveTemplate}
+                    {isSavingTemplate
+                      ? t.savingTemplate
+                      : editingTemplateId
+                        ? t.updateTemplate
+                        : t.saveTemplate}
                   </button>
                 </div>
                 {editingTemplateId ? (
                   <button
-                    className="w-full border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#66756b] transition hover:bg-[#eef5ef]"
+                    className="w-full border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#66756b] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:bg-[#f1f4ef] disabled:text-[#8a968e]"
+                    disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={cancelTemplateEdit}
                     type="button"
                   >
