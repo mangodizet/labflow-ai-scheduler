@@ -412,20 +412,72 @@ const copy = {
   },
 } as const;
 
+function readBrowserStorage(key: string) {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeBrowserStorage(key: string, value: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Some browsers disable localStorage in private or embedded contexts.
+  }
+}
+
+function createStableClientId(fallback: string) {
+  try {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+  } catch {
+    // Fall through to a timestamp-based id for older or restricted browsers.
+  }
+
+  return `${fallback}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getClientTimeZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
 function formatDate(date: Date, language: Language) {
-  return new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
+  try {
+    return new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date);
+  } catch {
+    return formatDateInput(date);
+  }
 }
 
 function formatTime(date: Date, language: Language) {
-  return new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  try {
+    return new Intl.DateTimeFormat(language === "ko" ? "ko-KR" : "en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return formatTimeInput(date);
+  }
 }
 
 function formatDuration(minutes: number, language: Language) {
@@ -502,15 +554,12 @@ function getInitialLanguage(): Language {
     return "en";
   }
 
-  return window.localStorage.getItem(languageStorageKey) === "ko" ? "ko" : "en";
+  return readBrowserStorage(languageStorageKey) === "ko" ? "ko" : "en";
 }
 
 function createTemplateDraftStep(): TemplateDraftStep {
   return {
-    id:
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : String(Date.now()),
+    id: createStableClientId("step"),
     name: "",
     dayOffset: 0,
     durationMinutes: 30,
@@ -558,9 +607,7 @@ function readCustomTemplates(): ExperimentTemplate[] {
   }
 
   try {
-    const parsed = JSON.parse(
-      window.localStorage.getItem(customTemplateStorageKey) ?? "[]",
-    );
+    const parsed = JSON.parse(readBrowserStorage(customTemplateStorageKey) ?? "[]");
 
     if (!Array.isArray(parsed)) {
       return [];
@@ -589,10 +636,7 @@ function writeLocalTemplates(customTemplates: ExperimentTemplate[]) {
       summary: template.summary,
     }));
 
-  window.localStorage.setItem(
-    customTemplateStorageKey,
-    JSON.stringify(localTemplates),
-  );
+  writeBrowserStorage(customTemplateStorageKey, JSON.stringify(localTemplates));
 }
 
 async function loadSupabaseTemplates(): Promise<ExperimentTemplate[]> {
@@ -918,7 +962,7 @@ export default function Home() {
   }, [canConnectGoogle, t.readConnectionError]);
 
   useEffect(() => {
-    window.localStorage.setItem(languageStorageKey, language);
+    writeBrowserStorage(languageStorageKey, language);
   }, [language]);
 
   useEffect(() => {
@@ -1054,7 +1098,7 @@ export default function Home() {
 
   function handleLanguageSelection(nextLanguage: Language) {
     setLanguage(nextLanguage);
-    window.localStorage.setItem(languageStorageKey, nextLanguage);
+    writeBrowserStorage(languageStorageKey, nextLanguage);
   }
 
   function handleTemplateSelection(value: string) {
@@ -1143,10 +1187,9 @@ export default function Home() {
       summary: selectedTemplate.summary,
       steps: selectedTemplate.steps.map((step) => ({
         ...step,
-        id:
-          typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `${selectedTemplate.id}-${step.dayOffset}-${step.name}`,
+        id: createStableClientId(
+          `${selectedTemplate.id}-${step.dayOffset}-${step.name}`,
+        ),
       })),
     });
     setTemplateBuilderStatus("");
@@ -1311,7 +1354,7 @@ export default function Home() {
         startDate,
         templateName: template?.name ?? "Untitled experiment",
       },
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeZone: getClientTimeZone(),
     };
   }
 
