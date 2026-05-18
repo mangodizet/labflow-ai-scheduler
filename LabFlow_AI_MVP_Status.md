@@ -165,6 +165,7 @@ Completed:
 - Preferred start time now accepts compact numeric input such as `0900` or `930` and normalizes it to `09:00` or `09:30`
 - 24-hour compact entries such as `1700` now automatically switch to PM and display as `05:00`
 - Preferred start time normalization now runs on Enter or when the input loses focus, so typing is not interrupted
+- `2400` is accepted as midnight and 3-4 digit compact entries now infer AM/PM from 24-hour time
 
 Validated:
 
@@ -264,6 +265,8 @@ The typed field accepts compact values such as `0900`, `900`, `0930`, or `9:30` 
 It also accepts 24-hour compact values such as `1300` or `1700`, switches the AM/PM selector automatically, and displays the equivalent 12-hour time.
 
 Normalization is committed on Enter or blur instead of during every keystroke, so users can finish typing values such as `1700` without the field changing mid-entry.
+
+`2400` is accepted as midnight (`AM 12:00`, internal `00:00`), and 3-4 digit values such as `1115` infer AM/PM from 24-hour time even after a previous PM input.
 
 ### Stabilization: Calendar conflict refresh cadence
 

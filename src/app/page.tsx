@@ -569,15 +569,24 @@ function sanitizePreferredTimeInput(value: string) {
 function buildPreferredTimeResult({
   currentPeriod,
   displayText,
+  inferPeriodFromHour = false,
   hour24,
   minute,
 }: {
   currentPeriod: DayPeriod;
   displayText: string;
+  inferPeriodFromHour?: boolean;
   hour24: number;
   minute: number;
 }) {
-  if (hour24 < 0 || hour24 > 23 || minute < 0 || minute > 59) {
+  const normalizedHour24 = hour24 === 24 && minute === 0 ? 0 : hour24;
+
+  if (
+    normalizedHour24 < 0 ||
+    normalizedHour24 > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
     return {
       complete: false,
       period: currentPeriod,
@@ -587,23 +596,23 @@ function buildPreferredTimeResult({
   }
 
   const converted =
-    hour24 > 12 || hour24 === 0
-      ? convertHour24ToPreferredTime(hour24, minute)
+    inferPeriodFromHour || normalizedHour24 > 12 || normalizedHour24 === 0
+      ? convertHour24ToPreferredTime(normalizedHour24, minute)
       : {
           period: currentPeriod,
-          text: formatPreferredTimeText(hour24, minute),
+          text: formatPreferredTimeText(normalizedHour24, minute),
         };
 
   const valueHour =
     converted.period === "AM"
-      ? hour24 === 12
+      ? normalizedHour24 === 12
         ? 0
-        : hour24
-      : hour24 > 12
-        ? hour24
-        : hour24 === 12
+        : normalizedHour24
+      : normalizedHour24 > 12
+        ? normalizedHour24
+        : normalizedHour24 === 12
           ? 12
-          : hour24 + 12;
+          : normalizedHour24 + 12;
 
   return {
     complete: true,
@@ -665,6 +674,7 @@ function resolvePreferredTimeInput(value: string, currentPeriod: DayPeriod = "AM
   return buildPreferredTimeResult({
     currentPeriod,
     displayText: text,
+    inferPeriodFromHour: true,
     hour24: hour,
     minute,
   });
