@@ -548,27 +548,6 @@ function formatTimeInput(date: Date) {
   return `${hours}:${minutes}`;
 }
 
-function parsePreferredTimeInput(value: string, period: DayPeriod) {
-  const normalizedValue = normalizePreferredTimeInput(value);
-  const match = /^(\d{1,2}):(\d{2})$/.exec(normalizedValue);
-
-  if (!match) {
-    return null;
-  }
-
-  const hour12 = Number(match[1]);
-  const minute = match[2] ? Number(match[2]) : 0;
-
-  if (hour12 < 1 || hour12 > 12 || minute < 0 || minute > 59) {
-    return null;
-  }
-
-  const hour24 =
-    period === "AM" ? (hour12 === 12 ? 0 : hour12) : hour12 === 12 ? 12 : hour12 + 12;
-
-  return `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-}
-
 function formatPreferredTimeText(hour12: number, minute: number) {
   return `${String(hour12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
@@ -583,34 +562,99 @@ function convertHour24ToPreferredTime(hour24: number, minute: number) {
   };
 }
 
-function normalizePreferredTimeInput(
-  value: string,
-  currentPeriod?: DayPeriod,
-): string {
-  return normalizePreferredTimeSelection(value, currentPeriod).text;
+function sanitizePreferredTimeInput(value: string) {
+  return value.replace(/[^\d:]/g, "").slice(0, 5);
 }
 
-function normalizePreferredTimeSelection(value: string, currentPeriod: DayPeriod = "AM") {
-  const digits = value.replace(/\D/g, "").slice(0, 4);
+function buildPreferredTimeResult({
+  currentPeriod,
+  displayText,
+  hour24,
+  minute,
+}: {
+  currentPeriod: DayPeriod;
+  displayText: string;
+  hour24: number;
+  minute: number;
+}) {
+  if (hour24 < 0 || hour24 > 23 || minute < 0 || minute > 59) {
+    return {
+      complete: false,
+      period: currentPeriod,
+      text: displayText,
+      value: null,
+    };
+  }
+
+  const converted =
+    hour24 > 12 || hour24 === 0
+      ? convertHour24ToPreferredTime(hour24, minute)
+      : {
+          period: currentPeriod,
+          text: formatPreferredTimeText(hour24, minute),
+        };
+
+  const valueHour =
+    converted.period === "AM"
+      ? hour24 === 12
+        ? 0
+        : hour24
+      : hour24 > 12
+        ? hour24
+        : hour24 === 12
+          ? 12
+          : hour24 + 12;
+
+  return {
+    complete: true,
+    period: converted.period,
+    text: converted.text,
+    value: `${String(valueHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+  };
+}
+
+function resolvePreferredTimeInput(value: string, currentPeriod: DayPeriod = "AM") {
+  const text = sanitizePreferredTimeInput(value);
+  const digits = text.replace(/\D/g, "").slice(0, 4);
 
   if (!digits) {
     return {
+      complete: false,
       period: currentPeriod,
       text: "",
+      value: null,
     };
+  }
+
+  if (text.includes(":")) {
+    const [hourText, minuteText = ""] = text.split(":");
+
+    if (!hourText || minuteText.length !== 2) {
+      return {
+        complete: false,
+        period: currentPeriod,
+        text,
+        value: null,
+      };
+    }
+
+    return buildPreferredTimeResult({
+      currentPeriod,
+      displayText: text,
+      hour24: Number(hourText),
+      minute: Number(minuteText),
+    });
   }
 
   if (digits.length <= 2) {
     const hour = Number(digits);
 
-    if (hour >= 0 && hour <= 23 && digits.length === 2 && hour > 12) {
-      return convertHour24ToPreferredTime(hour, 0);
-    }
-
-    return {
-      period: currentPeriod,
-      text: hour >= 1 && hour <= 12 ? String(hour).padStart(2, "0") : digits,
-    };
+    return buildPreferredTimeResult({
+      currentPeriod,
+      displayText: text,
+      hour24: hour,
+      minute: 0,
+    });
   }
 
   const hourDigits = digits.length === 3 ? digits.slice(0, 1) : digits.slice(0, 2);
@@ -618,32 +662,12 @@ function normalizePreferredTimeSelection(value: string, currentPeriod: DayPeriod
   const hour = Number(hourDigits);
   const minute = Number(minuteDigits);
 
-  if (minute > 59) {
-    return {
-      period: currentPeriod,
-      text: value.replace(/[^\d:]/g, "").slice(0, 5),
-    };
-  }
-
-  if (hour >= 13 && hour <= 23) {
-    return convertHour24ToPreferredTime(hour, minute);
-  }
-
-  if (hour === 0) {
-    return convertHour24ToPreferredTime(0, minute);
-  }
-
-  if (hour < 1 || hour > 12) {
-    return {
-      period: currentPeriod,
-      text: value.replace(/[^\d:]/g, "").slice(0, 5),
-    };
-  }
-
-  return {
-    period: currentPeriod,
-    text: formatPreferredTimeText(hour, minute),
-  };
+  return buildPreferredTimeResult({
+    currentPeriod,
+    displayText: text,
+    hour24: hour,
+    minute,
+  });
 }
 
 function formatLocalDateTime(date: Date) {
@@ -1370,17 +1394,38 @@ export default function Home() {
   }
 
   function handlePreferredTimeTextInput(value: string) {
-    const nextSelection = normalizePreferredTimeSelection(value, preferredPeriod);
-    setPreferredPeriod(nextSelection.period);
-    setPreferredTimeText(nextSelection.text);
-    handleWorkStartInput(
-      parsePreferredTimeInput(nextSelection.text, nextSelection.period) ?? "",
-    );
+    const nextText = sanitizePreferredTimeInput(value);
+
+    setPreferredTimeText(nextText);
+    handleWorkStartInput("");
   }
 
   function handlePreferredPeriodInput(period: DayPeriod) {
     setPreferredPeriod(period);
-    handleWorkStartInput(parsePreferredTimeInput(preferredTimeText, period) ?? "");
+    const nextSelection = resolvePreferredTimeInput(preferredTimeText, period);
+    handleWorkStartInput(nextSelection.value ?? "");
+  }
+
+  function commitPreferredTimeInput() {
+    const nextSelection = resolvePreferredTimeInput(
+      preferredTimeText,
+      preferredPeriod,
+    );
+
+    if (!nextSelection.complete) {
+      return;
+    }
+
+    setPreferredPeriod(nextSelection.period);
+    setPreferredTimeText(nextSelection.text);
+    handleWorkStartInput(nextSelection.value ?? "");
+  }
+
+  function handlePreferredTimeKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.currentTarget.blur();
+      commitPreferredTimeInput();
+    }
   }
 
   function handleWeekendPreferenceInput(checked: boolean) {
@@ -2155,6 +2200,8 @@ export default function Home() {
                     onChange={(event) => {
                       handlePreferredTimeTextInput(event.currentTarget.value);
                     }}
+                    onBlur={commitPreferredTimeInput}
+                    onKeyDown={handlePreferredTimeKeyDown}
                     className="w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
                   />
                 </div>

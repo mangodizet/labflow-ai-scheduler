@@ -164,6 +164,7 @@ Completed:
 - Replaced the preferred start time browser time picker with an AM/PM selector and typed time field for easier input
 - Preferred start time now accepts compact numeric input such as `0900` or `930` and normalizes it to `09:00` or `09:30`
 - 24-hour compact entries such as `1700` now automatically switch to PM and display as `05:00`
+- Preferred start time normalization now runs on Enter or when the input loses focus, so typing is not interrupted
 
 Validated:
 
@@ -261,6 +262,8 @@ The preferred start time now uses an AM/PM selector plus a typed time field, avo
 The typed field accepts compact values such as `0900`, `900`, `0930`, or `9:30` and normalizes valid inputs automatically.
 
 It also accepts 24-hour compact values such as `1300` or `1700`, switches the AM/PM selector automatically, and displays the equivalent 12-hour time.
+
+Normalization is committed on Enter or blur instead of during every keystroke, so users can finish typing values such as `1700` without the field changing mid-entry.
 
 ### Stabilization: Calendar conflict refresh cadence
 
