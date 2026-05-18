@@ -162,6 +162,7 @@ Completed:
 - Added a protocol quick builder that can turn pasted protocol text into an editable template draft
 - Added a THP-1 2D differentiation and M2 polarization sample based on the provided PDF protocol
 - Replaced the preferred start time browser time picker with an AM/PM selector and typed time field for easier input
+- Preferred start time now accepts compact numeric input such as `0900` or `930` and normalizes it to `09:00` or `09:30`
 
 Validated:
 
@@ -255,6 +256,8 @@ Users can paste rough protocol text and generate an editable schedule draft. The
 ### UX Improvement: Preferred start time input
 
 The preferred start time now uses an AM/PM selector plus a typed time field, avoiding browser-specific time picker drag controls while preserving the internal 24-hour scheduler value.
+
+The typed field accepts compact values such as `0900`, `900`, `0930`, or `9:30` and normalizes valid inputs automatically.
 
 ### Stabilization: Calendar conflict refresh cadence
 

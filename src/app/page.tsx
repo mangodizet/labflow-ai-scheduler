@@ -549,7 +549,8 @@ function formatTimeInput(date: Date) {
 }
 
 function parsePreferredTimeInput(value: string, period: DayPeriod) {
-  const match = /^(\d{1,2})(?::(\d{0,2}))?$/.exec(value.trim());
+  const normalizedValue = normalizePreferredTimeInput(value);
+  const match = /^(\d{1,2}):(\d{2})$/.exec(normalizedValue);
 
   if (!match) {
     return null;
@@ -569,7 +570,28 @@ function parsePreferredTimeInput(value: string, period: DayPeriod) {
 }
 
 function normalizePreferredTimeInput(value: string) {
-  return value.replace(/[^\d:]/g, "").slice(0, 5);
+  const digits = value.replace(/\D/g, "").slice(0, 4);
+
+  if (!digits) {
+    return "";
+  }
+
+  if (digits.length <= 2) {
+    const hour = Number(digits);
+
+    return hour >= 1 && hour <= 12 ? String(hour).padStart(2, "0") : digits;
+  }
+
+  const hourDigits = digits.length === 3 ? digits.slice(0, 1) : digits.slice(0, 2);
+  const minuteDigits = digits.length === 3 ? digits.slice(1) : digits.slice(2);
+  const hour = Number(hourDigits);
+  const minute = Number(minuteDigits);
+
+  if (hour < 1 || hour > 12 || minute > 59) {
+    return value.replace(/[^\d:]/g, "").slice(0, 5);
+  }
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
 function formatLocalDateTime(date: Date) {
