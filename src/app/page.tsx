@@ -120,6 +120,7 @@ const templates: ExperimentTemplate[] = [
 ];
 
 type Language = "en" | "ko";
+type DayPeriod = "AM" | "PM";
 
 const languageStorageKey = "labflow-language";
 const customTemplateStorageKey = "labflow-custom-templates";
@@ -260,6 +261,7 @@ const copy = {
     protocol: "Protocol",
     startDate: "Start date",
     preferredStartTime: "Preferred start time",
+    preferredTimePlaceholder: "9:00",
     avoidWeekendWork: "Avoid weekend work",
     mvpBuildOrder: "MVP build order",
     buildOrder: [
@@ -381,6 +383,7 @@ const copy = {
     protocol: "프로토콜",
     startDate: "시작 날짜",
     preferredStartTime: "희망 시작 시간",
+    preferredTimePlaceholder: "9:00",
     avoidWeekendWork: "주말 작업 피하기",
     mvpBuildOrder: "MVP 개발 순서",
     buildOrder: [
@@ -543,6 +546,30 @@ function formatTimeInput(date: Date) {
   const minutes = String(date.getMinutes()).padStart(2, "0");
 
   return `${hours}:${minutes}`;
+}
+
+function parsePreferredTimeInput(value: string, period: DayPeriod) {
+  const match = /^(\d{1,2})(?::(\d{0,2}))?$/.exec(value.trim());
+
+  if (!match) {
+    return null;
+  }
+
+  const hour12 = Number(match[1]);
+  const minute = match[2] ? Number(match[2]) : 0;
+
+  if (hour12 < 1 || hour12 > 12 || minute < 0 || minute > 59) {
+    return null;
+  }
+
+  const hour24 =
+    period === "AM" ? (hour12 === 12 ? 0 : hour12) : hour12 === 12 ? 12 : hour12 + 12;
+
+  return `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function normalizePreferredTimeInput(value: string) {
+  return value.replace(/[^\d:]/g, "").slice(0, 5);
 }
 
 function formatLocalDateTime(date: Date) {
@@ -983,6 +1010,8 @@ export default function Home() {
   const [protocolText, setProtocolText] = useState(thp1ProtocolSample);
   const [templateId, setTemplateId] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [preferredPeriod, setPreferredPeriod] = useState<DayPeriod>("AM");
+  const [preferredTimeText, setPreferredTimeText] = useState("");
   const [workStart, setWorkStart] = useState("");
   const [avoidWeekends, setAvoidWeekends] = useState(true);
   const [syncStatus, setSyncStatus] = useState("");
@@ -1264,6 +1293,17 @@ export default function Home() {
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
+  }
+
+  function handlePreferredTimeTextInput(value: string) {
+    const nextText = normalizePreferredTimeInput(value);
+    setPreferredTimeText(nextText);
+    handleWorkStartInput(parsePreferredTimeInput(nextText, preferredPeriod) ?? "");
+  }
+
+  function handlePreferredPeriodInput(period: DayPeriod) {
+    setPreferredPeriod(period);
+    handleWorkStartInput(parsePreferredTimeInput(preferredTimeText, period) ?? "");
   }
 
   function handleWeekendPreferenceInput(checked: boolean) {
@@ -2013,18 +2053,34 @@ export default function Home() {
                 <label className="text-sm font-semibold text-[#26382d]" htmlFor="workStart">
                   {t.preferredStartTime}
                 </label>
-                <input
-                  id="workStart"
-                  type="time"
-                  value={workStart}
-                  onChange={(event) => {
-                    handleWorkStartInput(event.currentTarget.value);
-                  }}
-                  onInput={(event) => {
-                    handleWorkStartInput(event.currentTarget.value);
-                  }}
-                  className="mt-2 w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
-                />
+                <div className="mt-2 grid grid-cols-[auto_1fr] gap-2">
+                  <div className="grid grid-cols-2 border border-[#bfd0c4] bg-white">
+                    {(["AM", "PM"] as const).map((period) => (
+                      <button
+                        key={period}
+                        className={`px-3 py-2 text-sm font-semibold transition ${
+                          preferredPeriod === period
+                            ? "bg-[#2f6f4e] text-white"
+                            : "text-[#405347] hover:bg-[#eef5ef]"
+                        }`}
+                        onClick={() => handlePreferredPeriodInput(period)}
+                        type="button"
+                      >
+                        {period}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    id="workStart"
+                    inputMode="numeric"
+                    placeholder={t.preferredTimePlaceholder}
+                    value={preferredTimeText}
+                    onChange={(event) => {
+                      handlePreferredTimeTextInput(event.currentTarget.value);
+                    }}
+                    className="w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                  />
+                </div>
               </div>
             </div>
 

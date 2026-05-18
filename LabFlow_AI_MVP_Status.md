@@ -161,6 +161,7 @@ Completed:
 - Saving, updating, and deleting custom templates now writes to the user's Supabase `experiment_templates` and `workflow_steps` rows when authenticated
 - Added a protocol quick builder that can turn pasted protocol text into an editable template draft
 - Added a THP-1 2D differentiation and M2 polarization sample based on the provided PDF protocol
+- Replaced the preferred start time browser time picker with an AM/PM selector and typed time field for easier input
 
 Validated:
 
@@ -250,6 +251,10 @@ Connected users can save, update, delete, and reload custom experiment templates
 ### Added: Protocol quick builder
 
 Users can paste rough protocol text and generate an editable schedule draft. The first sample is based on the provided THP-1 2D differentiation and polarization PDF, using the M0 differentiation plus M2 polarization path.
+
+### UX Improvement: Preferred start time input
+
+The preferred start time now uses an AM/PM selector plus a typed time field, avoiding browser-specific time picker drag controls while preserving the internal 24-hour scheduler value.
 
 ### Stabilization: Calendar conflict refresh cadence
 
