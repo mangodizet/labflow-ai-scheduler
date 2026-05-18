@@ -569,17 +569,48 @@ function parsePreferredTimeInput(value: string, period: DayPeriod) {
   return `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function normalizePreferredTimeInput(value: string) {
+function formatPreferredTimeText(hour12: number, minute: number) {
+  return `${String(hour12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function convertHour24ToPreferredTime(hour24: number, minute: number) {
+  const period: DayPeriod = hour24 >= 12 ? "PM" : "AM";
+  const hour12 = hour24 % 12 || 12;
+
+  return {
+    period,
+    text: formatPreferredTimeText(hour12, minute),
+  };
+}
+
+function normalizePreferredTimeInput(
+  value: string,
+  currentPeriod?: DayPeriod,
+): string {
+  return normalizePreferredTimeSelection(value, currentPeriod).text;
+}
+
+function normalizePreferredTimeSelection(value: string, currentPeriod: DayPeriod = "AM") {
   const digits = value.replace(/\D/g, "").slice(0, 4);
 
   if (!digits) {
-    return "";
+    return {
+      period: currentPeriod,
+      text: "",
+    };
   }
 
   if (digits.length <= 2) {
     const hour = Number(digits);
 
-    return hour >= 1 && hour <= 12 ? String(hour).padStart(2, "0") : digits;
+    if (hour >= 0 && hour <= 23 && digits.length === 2 && hour > 12) {
+      return convertHour24ToPreferredTime(hour, 0);
+    }
+
+    return {
+      period: currentPeriod,
+      text: hour >= 1 && hour <= 12 ? String(hour).padStart(2, "0") : digits,
+    };
   }
 
   const hourDigits = digits.length === 3 ? digits.slice(0, 1) : digits.slice(0, 2);
@@ -587,11 +618,32 @@ function normalizePreferredTimeInput(value: string) {
   const hour = Number(hourDigits);
   const minute = Number(minuteDigits);
 
-  if (hour < 1 || hour > 12 || minute > 59) {
-    return value.replace(/[^\d:]/g, "").slice(0, 5);
+  if (minute > 59) {
+    return {
+      period: currentPeriod,
+      text: value.replace(/[^\d:]/g, "").slice(0, 5),
+    };
   }
 
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  if (hour >= 13 && hour <= 23) {
+    return convertHour24ToPreferredTime(hour, minute);
+  }
+
+  if (hour === 0) {
+    return convertHour24ToPreferredTime(0, minute);
+  }
+
+  if (hour < 1 || hour > 12) {
+    return {
+      period: currentPeriod,
+      text: value.replace(/[^\d:]/g, "").slice(0, 5),
+    };
+  }
+
+  return {
+    period: currentPeriod,
+    text: formatPreferredTimeText(hour, minute),
+  };
 }
 
 function formatLocalDateTime(date: Date) {
@@ -1318,9 +1370,12 @@ export default function Home() {
   }
 
   function handlePreferredTimeTextInput(value: string) {
-    const nextText = normalizePreferredTimeInput(value);
-    setPreferredTimeText(nextText);
-    handleWorkStartInput(parsePreferredTimeInput(nextText, preferredPeriod) ?? "");
+    const nextSelection = normalizePreferredTimeSelection(value, preferredPeriod);
+    setPreferredPeriod(nextSelection.period);
+    setPreferredTimeText(nextSelection.text);
+    handleWorkStartInput(
+      parsePreferredTimeInput(nextSelection.text, nextSelection.period) ?? "",
+    );
   }
 
   function handlePreferredPeriodInput(period: DayPeriod) {
