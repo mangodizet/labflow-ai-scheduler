@@ -123,6 +123,18 @@ type Language = "en" | "ko";
 
 const languageStorageKey = "labflow-language";
 const customTemplateStorageKey = "labflow-custom-templates";
+const thp1ProtocolSample = `THP-1 Differentiation and Polarization in 2D
+M0 Differentiation
+1. Measure cell density and viability of THP-1 monocytes.
+2. Spin cells at 300 g for 5 minutes.
+3. Aspirate media and resuspend cells in RPMI.
+4. Add RPMI + 100 ng/mL PMA to flask.
+5. Plate cells at 300k/mL.
+6. Culture for 2 days.
+7. Aspirate media, wash with PBS, add fresh RPMI, and culture for 2 more days.
+M2 Polarization
+8. Aspirate media. Add RPMI + 20 ng/mL IL-4 and 20 ng/mL IL-13.
+9. Culture for 3 days.`;
 
 type CalendarBusyBlock = {
   start: string;
@@ -215,6 +227,14 @@ const copy = {
     chooseTemplate:
       "Choose an experiment template, then set a start date and preferred time to generate the timeline.",
     templateBuilder: "Template builder",
+    protocolQuickBuilder: "Protocol quick builder",
+    protocolQuickBuilderDescription:
+      "Paste a rough protocol and generate an editable schedule draft. The sample below follows the THP-1 PDF workflow.",
+    protocolText: "Protocol text",
+    loadPdfSample: "Load THP-1 PDF sample",
+    generateDraftFromProtocol: "Generate draft",
+    protocolDraftGenerated: "Draft generated. Review the steps, then save the template.",
+    protocolDraftNeedsText: "Paste or load protocol text first.",
     templateName: "Template name",
     templateSummary: "Template summary",
     addTemplateStep: "Add step",
@@ -328,6 +348,14 @@ const copy = {
     chooseTemplate:
       "실험 템플릿을 선택한 뒤 시작 날짜와 희망 시작 시간을 설정하면 일정이 생성됩니다.",
     templateBuilder: "템플릿 만들기",
+    protocolQuickBuilder: "프로토콜 빠른 생성",
+    protocolQuickBuilderDescription:
+      "대략적인 프로토콜을 붙여넣으면 수정 가능한 일정 초안을 만듭니다. 아래 샘플은 THP-1 PDF 워크플로우 기준입니다.",
+    protocolText: "프로토콜 텍스트",
+    loadPdfSample: "THP-1 PDF 샘플 불러오기",
+    generateDraftFromProtocol: "초안 생성",
+    protocolDraftGenerated: "초안을 생성했습니다. 단계를 확인한 뒤 템플릿으로 저장하세요.",
+    protocolDraftNeedsText: "먼저 프로토콜 텍스트를 붙여넣거나 샘플을 불러오세요.",
     templateName: "템플릿 이름",
     templateSummary: "템플릿 설명",
     addTemplateStep: "단계 추가",
@@ -573,6 +601,121 @@ function createInitialTemplateBuilder(): TemplateBuilderState {
     name: "",
     summary: "",
     steps: [createTemplateDraftStep()],
+  };
+}
+
+function createDraftStep(step: Omit<Step, "protocol"> & { protocol?: string }) {
+  return {
+    ...step,
+    id: createStableClientId(`${step.dayOffset}-${step.name}`),
+    protocol: step.protocol ?? step.name,
+  };
+}
+
+function createThp1M2ProtocolDraft(): TemplateBuilderState {
+  return {
+    name: "THP-1 M0 Differentiation + M2 Polarization",
+    summary:
+      "Generated from the THP-1 2D differentiation and polarization protocol. Default path uses M0 differentiation followed by M2 polarization.",
+    steps: [
+      createDraftStep({
+        category: "Hands-on",
+        dayOffset: 0,
+        durationMinutes: 30,
+        name: "Cell Density and Viability Check",
+        protocol: "Measure THP-1 density and viability. Target viability > 90%.",
+      }),
+      createDraftStep({
+        category: "Hands-on",
+        dayOffset: 0,
+        durationMinutes: 75,
+        name: "PMA Differentiation Setup",
+        protocol:
+          "Spin cells, aspirate media, resuspend in RPMI, add 100 ng/mL PMA, and plate at 300k/mL.",
+      }),
+      createDraftStep({
+        category: "Incubation",
+        dayOffset: 2,
+        durationMinutes: 15,
+        name: "M0 Culture Checkpoint",
+        protocol: "Culture for 2 days after PMA setup before media change.",
+      }),
+      createDraftStep({
+        category: "Hands-on",
+        dayOffset: 2,
+        durationMinutes: 45,
+        name: "PBS Wash and Fresh RPMI",
+        protocol: "Aspirate media, wash with PBS, add fresh RPMI, and continue culture.",
+      }),
+      createDraftStep({
+        category: "Incubation",
+        dayOffset: 4,
+        durationMinutes: 15,
+        name: "M0 Ready Check",
+        protocol: "After 2 more days of culture, cells are ready as M0 or for M1/M2 polarization.",
+      }),
+      createDraftStep({
+        category: "Hands-on",
+        dayOffset: 4,
+        durationMinutes: 45,
+        name: "M2 Polarization Setup",
+        protocol: "Aspirate media and add RPMI with 20 ng/mL IL-4 and 20 ng/mL IL-13.",
+      }),
+      createDraftStep({
+        category: "Assay",
+        dayOffset: 7,
+        durationMinutes: 30,
+        name: "M2 Polarization Endpoint",
+        protocol: "Culture for 3 days after IL-4/IL-13 treatment, then proceed with endpoint checks.",
+      }),
+    ],
+  };
+}
+
+function parseProtocolTextToDraft(protocolText: string): TemplateBuilderState {
+  const normalizedText = protocolText.toLowerCase();
+
+  if (
+    normalizedText.includes("thp-1") &&
+    normalizedText.includes("pma") &&
+    (normalizedText.includes("il-4") || normalizedText.includes("il4"))
+  ) {
+    return createThp1M2ProtocolDraft();
+  }
+
+  const parsedSteps = protocolText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const dayMatch = /\b(?:day|d)\s*(\d+)\b/i.exec(line);
+      const hourMatch = /(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i.exec(line);
+      const minuteMatch = /(\d+)\s*(?:m|min|mins|minute|minutes)\b/i.exec(line);
+      const lowerLine = line.toLowerCase();
+
+      return createDraftStep({
+        category: lowerLine.includes("assay")
+          ? "Assay"
+          : lowerLine.includes("culture") || lowerLine.includes("incubat")
+            ? "Incubation"
+            : "Hands-on",
+        dayOffset: dayMatch ? Number(dayMatch[1]) : index,
+        durationMinutes: hourMatch
+          ? Math.max(1, Math.round(Number(hourMatch[1]) * 60))
+          : minuteMatch
+            ? Math.max(1, Number(minuteMatch[1]))
+            : lowerLine.includes("culture")
+              ? 15
+              : 30,
+        name: line.replace(/^\d+\.\s*/, "").slice(0, 80),
+        protocol: line,
+      });
+    });
+
+  return {
+    name: "Custom Protocol Draft",
+    summary: "Generated from pasted protocol text. Review timing before saving.",
+    steps: parsedSteps.length ? parsedSteps : [createTemplateDraftStep()],
   };
 }
 
@@ -837,6 +980,7 @@ export default function Home() {
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
+  const [protocolText, setProtocolText] = useState(thp1ProtocolSample);
   const [templateId, setTemplateId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [workStart, setWorkStart] = useState("");
@@ -1172,6 +1316,19 @@ export default function Home() {
           : current.steps,
     }));
     setTemplateBuilderStatus("");
+  }
+
+  function generateTemplateDraftFromProtocol() {
+    const text = protocolText.trim();
+
+    if (!text) {
+      setTemplateBuilderStatus(t.protocolDraftNeedsText);
+      return;
+    }
+
+    setEditingTemplateId(null);
+    setTemplateBuilder(parseProtocolTextToDraft(text));
+    setTemplateBuilderStatus(t.protocolDraftGenerated);
   }
 
   function editSelectedTemplate() {
@@ -1637,6 +1794,39 @@ export default function Home() {
                   </button>
                 </div>
               ) : null}
+            </div>
+
+            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+              <h2 className="text-sm font-semibold text-[#26382d]">
+                {t.protocolQuickBuilder}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[#66756b]">
+                {t.protocolQuickBuilderDescription}
+              </p>
+              <label className="mt-3 block text-xs font-semibold text-[#405347]">
+                {t.protocolText}
+                <textarea
+                  className="mt-1 min-h-44 w-full resize-y border border-[#bfd0c4] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-[#2f6f4e]"
+                  value={protocolText}
+                  onChange={(event) => setProtocolText(event.currentTarget.value)}
+                />
+              </label>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                  onClick={() => setProtocolText(thp1ProtocolSample)}
+                  type="button"
+                >
+                  {t.loadPdfSample}
+                </button>
+                <button
+                  className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                  onClick={generateTemplateDraftFromProtocol}
+                  type="button"
+                >
+                  {t.generateDraftFromProtocol}
+                </button>
+              </div>
             </div>
 
             <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">

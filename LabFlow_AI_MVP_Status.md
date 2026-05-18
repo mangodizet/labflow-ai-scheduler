@@ -159,6 +159,8 @@ Completed:
 - Added Supabase-backed custom template persistence for connected users
 - Custom templates now load from Supabase after sign-in, while browser local storage remains as a fallback before sign-in
 - Saving, updating, and deleting custom templates now writes to the user's Supabase `experiment_templates` and `workflow_steps` rows when authenticated
+- Added a protocol quick builder that can turn pasted protocol text into an editable template draft
+- Added a THP-1 2D differentiation and M2 polarization sample based on the provided PDF protocol
 
 Validated:
 
@@ -245,6 +247,10 @@ Saved custom templates can be selected, loaded back into the builder, updated, o
 
 Connected users can save, update, delete, and reload custom experiment templates through Supabase. Local storage remains as a fallback for templates created before sign-in or when Supabase is not configured.
 
+### Added: Protocol quick builder
+
+Users can paste rough protocol text and generate an editable schedule draft. The first sample is based on the provided THP-1 2D differentiation and polarization PDF, using the M0 differentiation plus M2 polarization path.
+
 ### Stabilization: Calendar conflict refresh cadence
 
 Calendar conflicts are checked when schedule inputs are ready, when the user clicks refresh, and immediately before syncing. The previous interval/focus refresh behavior was removed to reduce Google Calendar API traffic and make refresh timing easier to understand.
@@ -319,7 +325,7 @@ AI may later suggest a next experiment plan based on notes and results, for exam
 3. Add a visible conflict-review panel showing which Google busy blocks affected the schedule
 4. Add an in-app sync history view backed by Supabase
 5. Replace MVP example schedules with validated lab protocols provided by the user or collaborator
-6. Add a guided workflow import flow for pasting protocol text and turning it into editable schedule steps
+6. Improve the guided workflow import flow with smarter parsing and optional AI review
 7. Add a template import/export or sharing flow after the private template storage is stable
 
 ## Git and Deployment
@@ -353,4 +359,4 @@ https://labflow-ai-scheduler.vercel.app/
 
 ## Status Date
 
-- Last updated: 2026-05-15
+- Last updated: 2026-05-18
