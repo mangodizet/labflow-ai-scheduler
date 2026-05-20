@@ -1332,12 +1332,6 @@ export default function Home() {
     });
   }, [avoidWeekends, calendarConflicts, startDate, template, workStart]);
 
-  const shiftedCount = schedule.filter((step) => step.shifted).length;
-  const handsOnMinutes = sumStepMinutes(schedule, "Hands-on");
-  const warningCount = schedule.reduce(
-    (total, step) => total + step.warnings.length,
-    0,
-  );
   const startDateOptions = useMemo(() => {
     if (!template || !startDate || !workStart) {
       return [];
@@ -1425,6 +1419,12 @@ export default function Home() {
   const selectedMovementDetails = selectedEvent
     ? getMovementDetails(selectedEvent)
     : null;
+  const shiftedCount = draftEvents.filter((step) => step.shifted).length;
+  const handsOnMinutes = sumStepMinutes(draftEvents, "Hands-on");
+  const warningCount = draftEvents.reduce(
+    (total, step) => total + step.warnings.length,
+    0,
+  );
   const groupedDraftEvents = useMemo(() => {
     return draftEvents.reduce<Record<string, DraftEvent[]>>((groups, event) => {
       const key = formatDateInput(event.date);
