@@ -239,6 +239,12 @@ const copy = {
     appendAddOns: "After primary",
     parallelAddOns: "Start together",
     combinedSet: "Combined set",
+    planningOptions: "Planning options",
+    planningOptionsDescription:
+      "Optional controls for combining experiments and comparing start dates.",
+    advancedTemplateTools: "Advanced template tools",
+    advancedTemplateToolsDescription:
+      "Create a reusable template only when the built-in templates are not enough.",
     templateBuilder: "Template builder",
     protocolQuickBuilder: "Protocol quick builder",
     protocolQuickBuilderDescription:
@@ -296,6 +302,8 @@ const copy = {
     experimentSet: "Experiment set",
     experimentSetDescription:
       "This draft is one experiment set. Move, review, and sync the set together.",
+    dragToMoveSet:
+      "Drag a schedule card to another day to move that event and all following events.",
     moveSetEarlier: "Move set -1 day",
     moveSetLater: "Move set +1 day",
     setMoveNote:
@@ -388,6 +396,12 @@ const copy = {
     appendAddOns: "기본 실험 뒤에",
     parallelAddOns: "같이 시작",
     combinedSet: "조합된 세트",
+    planningOptions: "일정 옵션",
+    planningOptionsDescription:
+      "실험 조합과 시작일 비교가 필요할 때만 열어서 사용하세요.",
+    advancedTemplateTools: "고급 템플릿 도구",
+    advancedTemplateToolsDescription:
+      "기본 템플릿만으로 부족할 때 새 템플릿을 만들 수 있습니다.",
     templateBuilder: "템플릿 만들기",
     protocolQuickBuilder: "프로토콜 빠른 생성",
     protocolQuickBuilderDescription:
@@ -445,6 +459,8 @@ const copy = {
     experimentSet: "실험 세트",
     experimentSetDescription:
       "이 초안은 하나의 실험 세트입니다. 세트 단위로 이동, 검토, 동기화합니다.",
+    dragToMoveSet:
+      "일정 카드를 다른 날짜 칸으로 드래그하면 그 일정부터 뒤 일정이 함께 이동합니다.",
     moveSetEarlier: "세트 하루 앞당기기",
     moveSetLater: "세트 하루 미루기",
     setMoveNote:
@@ -1268,6 +1284,8 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [draftEdits, setDraftEdits] = useState<Record<string, DraftEventEdit>>({});
   const [selectedEventId, setSelectedEventId] = useState("");
+  const [draggedEventId, setDraggedEventId] = useState("");
+  const [dragTargetDate, setDragTargetDate] = useState("");
   const previousBusySignature = useRef("");
   const t = copy[language];
 
@@ -1985,6 +2003,25 @@ export default function Home() {
     setSyncStatus("");
   }
 
+  function handleDraftEventDrop(eventId: string, dateKey: string) {
+    const event = draftEvents.find((item) => item.id === eventId);
+
+    if (!event) {
+      return;
+    }
+
+    const targetDate = combineDateAndTime(dateKey, formatTimeInput(event.date));
+    const days = getDayDifference(event.date, targetDate);
+
+    if (days !== 0) {
+      shiftDraftEventsFrom(eventId, days);
+      setSelectedEventId(eventId);
+    }
+
+    setDraggedEventId("");
+    setDragTargetDate("");
+  }
+
   function getMovementDetails(event: DraftEvent) {
     const originalDate = getOriginalScheduleDate(event, startDate, workStart);
     const moved =
@@ -2288,8 +2325,14 @@ export default function Home() {
                   : t.chooseTemplate}
               </p>
               {primaryTemplate && availableAddOnTemplates.length ? (
-                <div className="mt-4 border border-[#d8e2d4] bg-[#f8faf7] p-3">
-                  <h3 className="text-xs font-semibold text-[#26382d]">
+                <details className="mt-4 border border-[#d8e2d4] bg-[#f8faf7] p-3">
+                  <summary className="cursor-pointer text-xs font-semibold text-[#26382d]">
+                    {t.planningOptions}
+                  </summary>
+                  <p className="mt-1 text-xs leading-5 text-[#66756b]">
+                    {t.planningOptionsDescription}
+                  </p>
+                  <h3 className="mt-3 text-xs font-semibold text-[#26382d]">
                     {t.addOnExperiments}
                   </h3>
                   <p className="mt-1 text-xs leading-5 text-[#66756b]">
@@ -2352,7 +2395,7 @@ export default function Home() {
                       {t.combinedSet}: {template?.name}
                     </p>
                   ) : null}
-                </div>
+                </details>
               ) : null}
               {isCustomTemplateSelected ? (
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -2376,44 +2419,51 @@ export default function Home() {
               ) : null}
             </div>
 
-            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-              <h2 className="text-sm font-semibold text-[#26382d]">
-                {t.protocolQuickBuilder}
-              </h2>
+            <details className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-[#26382d]">
+                {t.advancedTemplateTools}
+              </summary>
               <p className="mt-2 text-sm leading-6 text-[#66756b]">
-                {t.protocolQuickBuilderDescription}
+                {t.advancedTemplateToolsDescription}
               </p>
-              <label className="mt-3 block text-xs font-semibold text-[#405347]">
-                {t.protocolText}
-                <textarea
-                  className="mt-1 min-h-44 w-full resize-y border border-[#bfd0c4] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-[#2f6f4e]"
-                  value={protocolText}
-                  onChange={(event) => setProtocolText(event.currentTarget.value)}
-                />
-              </label>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
-                  onClick={() => setProtocolText(thp1ProtocolSample)}
-                  type="button"
-                >
-                  {t.loadPdfSample}
-                </button>
-                <button
-                  className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
-                  onClick={generateTemplateDraftFromProtocol}
-                  type="button"
-                >
-                  {t.generateDraftFromProtocol}
-                </button>
+              <div className="mt-4 border border-[#d8e2d4] bg-white p-3">
+                <h2 className="text-sm font-semibold text-[#26382d]">
+                  {t.protocolQuickBuilder}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#66756b]">
+                  {t.protocolQuickBuilderDescription}
+                </p>
+                <label className="mt-3 block text-xs font-semibold text-[#405347]">
+                  {t.protocolText}
+                  <textarea
+                    className="mt-1 min-h-44 w-full resize-y border border-[#bfd0c4] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-[#2f6f4e]"
+                    value={protocolText}
+                    onChange={(event) => setProtocolText(event.currentTarget.value)}
+                  />
+                </label>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    onClick={() => setProtocolText(thp1ProtocolSample)}
+                    type="button"
+                  >
+                    {t.loadPdfSample}
+                  </button>
+                  <button
+                    className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                    onClick={generateTemplateDraftFromProtocol}
+                    type="button"
+                  >
+                    {t.generateDraftFromProtocol}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-              <h2 className="text-sm font-semibold text-[#26382d]">
-                {t.templateBuilder}
-              </h2>
-              <div className="mt-3 space-y-3">
+              <div className="mt-4 border border-[#d8e2d4] bg-white p-3">
+                <h2 className="text-sm font-semibold text-[#26382d]">
+                  {t.templateBuilder}
+                </h2>
+                <div className="mt-3 space-y-3">
                 <label className="block text-xs font-semibold text-[#405347]">
                   {t.templateName}
                   <input
@@ -2567,8 +2617,9 @@ export default function Home() {
                     {templateBuilderStatus}
                   </p>
                 ) : null}
+                </div>
               </div>
-            </div>
+            </details>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
               <div>
@@ -2750,6 +2801,9 @@ export default function Home() {
                         {t.experimentSetDescription}
                       </p>
                       <p className="mt-1 text-xs text-[#66756b]">{t.setMoveNote}</p>
+                      <p className="mt-1 text-xs font-medium text-[#2f6f4e]">
+                        {t.dragToMoveSet}
+                      </p>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <button
@@ -2774,7 +2828,23 @@ export default function Home() {
                     {draftDates.map((dateKey) => (
                       <section
                         key={dateKey}
-                        className="min-h-40 border border-[#d8e2d4] bg-[#fbfdf9]"
+                        onDragLeave={() => setDragTargetDate("")}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setDragTargetDate(dateKey);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const eventId =
+                            event.dataTransfer.getData("text/plain") ||
+                            draggedEventId;
+                          handleDraftEventDrop(eventId, dateKey);
+                        }}
+                        className={`min-h-40 border bg-[#fbfdf9] transition ${
+                          dragTargetDate === dateKey
+                            ? "border-[#2f6f4e] ring-2 ring-[#2f6f4e]/20"
+                            : "border-[#d8e2d4]"
+                        }`}
                       >
                         <div className="border-b border-[#d8e2d4] px-3 py-2">
                           <p className="text-sm font-semibold text-[#2f6f4e]">
@@ -2787,8 +2857,22 @@ export default function Home() {
 
                             return (
                               <button
+                                draggable
                                 key={event.id}
                                 onClick={() => setSelectedEventId(event.id)}
+                                onDragEnd={() => {
+                                  setDraggedEventId("");
+                                  setDragTargetDate("");
+                                }}
+                                onDragStart={(dragEvent) => {
+                                  setDraggedEventId(event.id);
+                                  setSelectedEventId(event.id);
+                                  dragEvent.dataTransfer.setData(
+                                    "text/plain",
+                                    event.id,
+                                  );
+                                  dragEvent.dataTransfer.effectAllowed = "move";
+                                }}
                                 className={`w-full border px-3 py-2 text-left transition ${
                                   selectedEventId === event.id
                                     ? "border-[#2f6f4e] bg-[#eef5ef]"

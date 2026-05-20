@@ -174,6 +174,8 @@ Completed:
 - Added add-on placement options so combined experiments can either start together or run after the primary experiment
 - Added partial set movement controls so users can move a selected event and all following events one day earlier or later
 - Partial set movement now regenerates the moved tail with weekend avoidance, working-hours overflow handling, and Google Calendar conflict checks
+- Added drag-and-drop draft calendar editing so dragging a schedule card to another day moves that event and following events with scheduler rules reapplied
+- Reduced first-screen complexity by moving add-on planning controls and template creation tools into collapsible sections
 
 Validated:
 
@@ -297,6 +299,14 @@ The add-on combination flow now supports two timing modes: add-ons can run after
 After selecting a draft event, users can move that event and every following event one day earlier or later. This supports mid-experiment corrections without shifting the already completed or already reviewed earlier steps.
 
 Partial movement now reruns the scheduler for the moved tail of the experiment set, so weekend avoidance, working-hours overflow handling, and Google Calendar conflicts are reapplied after the move.
+
+### UX Improvement: Drag and drop set movement
+
+Draft schedule cards can now be dragged onto another day column. Dropping a card moves that event and all following events, then reruns the scheduler for the moved tail so weekend avoidance, working-hours overflow handling, and Google Calendar conflicts are reapplied.
+
+### UX Improvement: Simpler first-screen flow
+
+Advanced planning and template-building controls are now tucked into collapsible sections. The first scheduling path is simpler: connect calendar if needed, select an experiment, set date/time, review the generated set, and sync.
 
 ### Stabilization: Calendar conflict refresh cadence
 
