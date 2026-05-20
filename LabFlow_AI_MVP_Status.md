@@ -166,6 +166,14 @@ Completed:
 - 24-hour compact entries such as `1700` now automatically switch to PM and display as `05:00`
 - Preferred start time normalization now runs on Enter or when the input loses focus, so typing is not interrupted
 - `2400` is accepted as midnight and 3-4 digit compact entries now infer AM/PM from 24-hour time
+- Added experiment-set review controls so the experiment start date can be moved one day earlier or later and regenerated before syncing
+- Updated Google Calendar sync/delete wording to emphasize syncing or deleting the experiment set, not isolated events
+- Added visible "adjusted from" and movement-reason details to draft events so users can understand weekend, conflict, and workday shifts
+- Added start-day option comparison so users can compare nearby experiment start dates by finish date, warnings, adjusted steps, and calendar conflicts
+- Added add-on experiment selection so multiple templates can be combined into one experiment set without manually rebuilding every step
+- Added add-on placement options so combined experiments can either start together or run after the primary experiment
+- Added partial set movement controls so users can move a selected event and all following events one day earlier or later
+- Partial set movement now regenerates the moved tail with weekend avoidance, working-hours overflow handling, and Google Calendar conflict checks
 
 Validated:
 
@@ -267,6 +275,28 @@ It also accepts 24-hour compact values such as `1300` or `1700`, switches the AM
 Normalization is committed on Enter or blur instead of during every keystroke, so users can finish typing values such as `1700` without the field changing mid-entry.
 
 `2400` is accepted as midnight (`AM 12:00`, internal `00:00`), and 3-4 digit values such as `1115` infer AM/PM from 24-hour time even after a previous PM input.
+
+### UX Improvement: Experiment set review
+
+The generated schedule is now framed as one experiment set. Users can move the experiment start date earlier or later by one day before syncing, then the scheduler regenerates the full set with weekend and calendar-conflict rules applied.
+
+Draft event cards and the edit panel now show the original planned date/time and the reason a step moved, such as weekend avoidance, Google Calendar conflict avoidance, or working-hours overflow.
+
+### UX Improvement: Start-day comparison
+
+The scheduler now shows nearby start-date options after the user selects a template, start date, and preferred time. Each option previews the calculated finish date, warning count, adjusted-step count, and calendar-conflict count so users can choose a cleaner start day without manually trying every date.
+
+### UX Improvement: Add-on experiment combinations
+
+Users can now choose a primary experiment template and attach additional templates as add-on experiments. Add-ons are appended after the primary experiment and the combined set is scheduled together with weekend avoidance, working-hours overflow handling, and Google Calendar conflict checks.
+
+The add-on combination flow now supports two timing modes: add-ons can run after the primary experiment, or they can start together with the primary experiment and let the scheduler place same-day work sequentially.
+
+### UX Improvement: Partial set movement
+
+After selecting a draft event, users can move that event and every following event one day earlier or later. This supports mid-experiment corrections without shifting the already completed or already reviewed earlier steps.
+
+Partial movement now reruns the scheduler for the moved tail of the experiment set, so weekend avoidance, working-hours overflow handling, and Google Calendar conflicts are reapplied after the move.
 
 ### Stabilization: Calendar conflict refresh cadence
 

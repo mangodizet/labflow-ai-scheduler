@@ -153,11 +153,16 @@ type DraftEvent = ScheduledStep & {
 };
 
 type DraftEventEdit = {
+  conflict?: string | null;
   name: string;
   date: string;
   time: string;
   durationMinutes: number;
+  shifted?: boolean;
+  warnings?: ScheduleWarningCode[];
 };
+
+type AddOnPlacementMode = "append" | "parallel";
 
 type TemplateBuilderState = {
   name: string;
@@ -227,6 +232,13 @@ const copy = {
     selectExperiment: "Select experiment",
     chooseTemplate:
       "Choose an experiment template, then set a start date and preferred time to generate the timeline.",
+    addOnExperiments: "Add-on experiments",
+    addOnExperimentsDescription:
+      "Combine additional templates into the same experiment set.",
+    addOnPlacement: "Add-on timing",
+    appendAddOns: "After primary",
+    parallelAddOns: "Start together",
+    combinedSet: "Combined set",
     templateBuilder: "Template builder",
     protocolQuickBuilder: "Protocol quick builder",
     protocolQuickBuilderDescription:
@@ -263,6 +275,14 @@ const copy = {
     preferredStartTime: "Preferred start time",
     preferredTimePlaceholder: "9:00",
     avoidWeekendWork: "Avoid weekend work",
+    startDayOptions: "Start day options",
+    startDayOptionsDescription:
+      "Compare nearby start dates before committing the experiment set.",
+    recommended: "Recommended",
+    chooseStartDate: "Choose",
+    finishDate: "Finish",
+    noIssues: "No schedule issues",
+    calendarConflictCount: "Calendar conflicts",
     mvpBuildOrder: "MVP build order",
     buildOrder: [
       "Template-based scheduling",
@@ -273,15 +293,25 @@ const copy = {
     ],
     generatedTimeline: "Generated timeline",
     previewBeforeCalendar: "Review and edit the draft calendar before syncing.",
+    experimentSet: "Experiment set",
+    experimentSetDescription:
+      "This draft is one experiment set. Move, review, and sync the set together.",
+    moveSetEarlier: "Move set -1 day",
+    moveSetLater: "Move set +1 day",
+    setMoveNote:
+      "Changes the experiment start date by one day and regenerates the draft with calendar rules.",
     draftCalendar: "Draft calendar",
     editEvent: "Edit event",
     eventName: "Event name",
     eventDate: "Date",
     eventTime: "Time",
     eventDuration: "Duration minutes",
+    shiftFollowingEvents: "Move this and following events",
+    moveFollowingEarlier: "Move earlier -1 day",
+    moveFollowingLater: "Move later +1 day",
     selectEventToEdit: "Select a calendar event to edit its draft details.",
-    prepareCalendarSync: "Sync to Google Calendar",
-    deleteCalendarSync: "Delete synced events",
+    prepareCalendarSync: "Sync experiment set",
+    deleteCalendarSync: "Delete synced set",
     syncingCalendar: "Syncing...",
     deletingCalendar: "Deleting...",
     calendarSyncComplete: "events were added to Google Calendar.",
@@ -305,6 +335,8 @@ const copy = {
     day: "Day",
     protocolPlaceholder: "Protocol link placeholder",
     conflictAvoided: "Conflict avoided",
+    adjustedFrom: "Adjusted from",
+    movedBecause: "Moved because",
     duration: "Duration",
     warningMessages: {
       "calendar-conflict": "Moved to avoid a calendar conflict.",
@@ -349,6 +381,13 @@ const copy = {
     selectExperiment: "실험 선택",
     chooseTemplate:
       "실험 템플릿을 선택한 뒤 시작 날짜와 희망 시작 시간을 설정하면 일정이 생성됩니다.",
+    addOnExperiments: "추가 실험",
+    addOnExperimentsDescription:
+      "추가 템플릿을 같은 실험 세트에 조합합니다.",
+    addOnPlacement: "추가 실험 배치",
+    appendAddOns: "기본 실험 뒤에",
+    parallelAddOns: "같이 시작",
+    combinedSet: "조합된 세트",
     templateBuilder: "템플릿 만들기",
     protocolQuickBuilder: "프로토콜 빠른 생성",
     protocolQuickBuilderDescription:
@@ -385,6 +424,14 @@ const copy = {
     preferredStartTime: "희망 시작 시간",
     preferredTimePlaceholder: "9:00",
     avoidWeekendWork: "주말 작업 피하기",
+    startDayOptions: "시작일 후보",
+    startDayOptionsDescription:
+      "실험 세트를 확정하기 전에 가까운 시작 날짜들을 비교합니다.",
+    recommended: "추천",
+    chooseStartDate: "선택",
+    finishDate: "완료",
+    noIssues: "문제 없음",
+    calendarConflictCount: "캘린더 충돌",
     mvpBuildOrder: "MVP 개발 순서",
     buildOrder: [
       "템플릿 기반 스케줄링",
@@ -395,15 +442,25 @@ const copy = {
     ],
     generatedTimeline: "생성된 일정",
     previewBeforeCalendar: "Google Calendar에 등록하기 전에 초안 일정을 확인하고 수정합니다.",
+    experimentSet: "실험 세트",
+    experimentSetDescription:
+      "이 초안은 하나의 실험 세트입니다. 세트 단위로 이동, 검토, 동기화합니다.",
+    moveSetEarlier: "세트 하루 앞당기기",
+    moveSetLater: "세트 하루 미루기",
+    setMoveNote:
+      "실험 시작일을 하루 단위로 바꾸고 캘린더 규칙에 맞춰 초안을 다시 생성합니다.",
     draftCalendar: "초안 캘린더",
     editEvent: "일정 수정",
     eventName: "일정 이름",
     eventDate: "날짜",
     eventTime: "시간",
     eventDuration: "소요 시간(분)",
+    shiftFollowingEvents: "이 일정부터 뒤 일정 이동",
+    moveFollowingEarlier: "하루 앞당기기",
+    moveFollowingLater: "하루 미루기",
     selectEventToEdit: "수정할 캘린더 일정을 선택하세요.",
-    prepareCalendarSync: "구글 캘린더에 동기화",
-    deleteCalendarSync: "동기화된 일정 삭제",
+    prepareCalendarSync: "실험 세트 동기화",
+    deleteCalendarSync: "동기화된 세트 삭제",
     syncingCalendar: "동기화 중...",
     deletingCalendar: "삭제 중...",
     calendarSyncComplete: "개의 이벤트를 Google Calendar에 추가했습니다.",
@@ -427,6 +484,8 @@ const copy = {
     day: "Day",
     protocolPlaceholder: "프로토콜 링크 자리",
     conflictAvoided: "피한 충돌",
+    adjustedFrom: "원래 일정",
+    movedBecause: "이동 사유",
     duration: "소요 시간",
     warningMessages: {
       "calendar-conflict": "캘린더 충돌을 피하기 위해 이동했습니다.",
@@ -695,6 +754,37 @@ function addDays(date: Date, days: number) {
   return nextDate;
 }
 
+function getDateOnly(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getDayDifference(startDate: Date, endDate: Date) {
+  const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+  return Math.round(
+    (getDateOnly(endDate).getTime() - getDateOnly(startDate).getTime()) /
+      millisecondsPerDay,
+  );
+}
+
+function getOriginalScheduleDate(
+  event: DraftEvent,
+  startDate: string,
+  workStart: string,
+) {
+  if (!startDate || !workStart) {
+    return null;
+  }
+
+  const originalDate = combineDateAndTime(startDate, workStart);
+
+  if (Number.isNaN(originalDate.getTime())) {
+    return null;
+  }
+
+  return addDays(originalDate, event.dayOffset);
+}
+
 function getScheduleTimeRange(template: ExperimentTemplate, startDate: string) {
   const baseDate = combineDateAndTime(startDate, "00:00");
   const lastOffset = Math.max(...template.steps.map((step) => step.dayOffset), 0);
@@ -710,6 +800,48 @@ function getTemplateSummary(templateId: string, language: Language, fallback: st
     templateCopy[language][templateId as keyof (typeof templateCopy)[Language]] ??
     fallback
   );
+}
+
+function getLastStepOffset(template: ExperimentTemplate) {
+  return Math.max(...template.steps.map((step) => step.dayOffset), 0);
+}
+
+function combineExperimentTemplates(
+  primaryTemplate: ExperimentTemplate,
+  addOnTemplates: ExperimentTemplate[],
+  placementMode: AddOnPlacementMode,
+) {
+  if (!addOnTemplates.length) {
+    return primaryTemplate;
+  }
+
+  const steps = [...primaryTemplate.steps];
+  let nextOffset = placementMode === "append" ? getLastStepOffset(primaryTemplate) + 1 : 0;
+
+  for (const addOnTemplate of addOnTemplates) {
+    steps.push(
+      ...addOnTemplate.steps.map((step) => ({
+        ...step,
+        dayOffset: step.dayOffset + nextOffset,
+        name: `${addOnTemplate.name}: ${step.name}`,
+      })),
+    );
+
+    if (placementMode === "append") {
+      nextOffset += getLastStepOffset(addOnTemplate) + 1;
+    }
+  }
+
+  return {
+    id: `combined-${primaryTemplate.id}-${addOnTemplates.map((item) => item.id).join("-")}`,
+    name: `${primaryTemplate.name} + ${addOnTemplates.map((item) => item.name).join(" + ")}`,
+    source: primaryTemplate.source,
+    steps,
+    summary: [
+      primaryTemplate.summary,
+      ...addOnTemplates.map((item) => item.summary),
+    ].join(" "),
+  } satisfies ExperimentTemplate;
 }
 
 function getInitialLanguage(): Language {
@@ -1117,6 +1249,9 @@ export default function Home() {
   const [isDeletingTemplate, setIsDeletingTemplate] = useState(false);
   const [protocolText, setProtocolText] = useState(thp1ProtocolSample);
   const [templateId, setTemplateId] = useState("");
+  const [addOnTemplateIds, setAddOnTemplateIds] = useState<string[]>([]);
+  const [addOnPlacementMode, setAddOnPlacementMode] =
+    useState<AddOnPlacementMode>("append");
   const [startDate, setStartDate] = useState("");
   const [preferredPeriod, setPreferredPeriod] = useState<DayPeriod>("AM");
   const [preferredTimeText, setPreferredTimeText] = useState("");
@@ -1140,7 +1275,26 @@ export default function Home() {
     () => [...templates, ...customTemplates],
     [customTemplates],
   );
-  const template = allTemplates.find((item) => item.id === templateId);
+  const primaryTemplate = allTemplates.find((item) => item.id === templateId);
+  const availableAddOnTemplates = allTemplates.filter((item) => item.id !== templateId);
+  const addOnTemplates = useMemo(
+    () =>
+      addOnTemplateIds
+        .map((id) => allTemplates.find((item) => item.id === id))
+        .filter((item): item is ExperimentTemplate => Boolean(item)),
+    [addOnTemplateIds, allTemplates],
+  );
+  const template = useMemo(
+    () =>
+      primaryTemplate
+        ? combineExperimentTemplates(
+            primaryTemplate,
+            addOnTemplates,
+            addOnPlacementMode,
+          )
+        : undefined,
+    [addOnPlacementMode, addOnTemplates, primaryTemplate],
+  );
   const isCustomTemplateSelected = Boolean(
     templateId && customTemplates.some((item) => item.id === templateId),
   );
@@ -1166,6 +1320,64 @@ export default function Home() {
     (total, step) => total + step.warnings.length,
     0,
   );
+  const startDateOptions = useMemo(() => {
+    if (!template || !startDate || !workStart) {
+      return [];
+    }
+
+    const baseDate = combineDateAndTime(startDate, "00:00");
+
+    if (Number.isNaN(baseDate.getTime())) {
+      return [];
+    }
+
+    const options = Array.from({ length: 5 }, (_, index) => {
+      const optionDate = addDays(baseDate, index);
+      const optionStartDate = formatDateInput(optionDate);
+      const optionSchedule = generateSchedule({
+        steps: template.steps,
+        startDate: optionStartDate,
+        workStart,
+        avoidWeekends,
+        conflicts: calendarConflicts,
+      });
+      const optionWarnings = optionSchedule.reduce(
+        (total, step) => total + step.warnings.length,
+        0,
+      );
+      const optionCalendarConflicts = optionSchedule.reduce(
+        (total, step) =>
+          total + (step.warnings.includes("calendar-conflict") ? 1 : 0),
+        0,
+      );
+      const optionShifted = optionSchedule.filter((step) => step.shifted).length;
+      const lastStep = optionSchedule.at(-1);
+
+      return {
+        calendarConflicts: optionCalendarConflicts,
+        finishDate: lastStep?.date ?? optionDate,
+        shifted: optionShifted,
+        startDate: optionStartDate,
+        warnings: optionWarnings,
+      };
+    });
+    const bestIndex = options.reduce((best, option, index) => {
+      const bestOption = options[best];
+      const score =
+        option.calendarConflicts * 3 + option.warnings * 2 + option.shifted;
+      const bestScore =
+        bestOption.calendarConflicts * 3 +
+        bestOption.warnings * 2 +
+        bestOption.shifted;
+
+      return score < bestScore ? index : best;
+    }, 0);
+
+    return options.map((option, index) => ({
+      ...option,
+      recommended: index === bestIndex,
+    }));
+  }, [avoidWeekends, calendarConflicts, startDate, template, workStart]);
   const canConnectGoogle = hasSupabaseBrowserConfig();
   const draftEvents = useMemo<DraftEvent[]>(() => {
     return schedule.map((step, index) => {
@@ -1182,13 +1394,19 @@ export default function Home() {
       return {
         ...step,
         id,
+        conflict: edit.conflict ?? step.conflict,
         name: edit.name,
         date: combineDateAndTime(edit.date, edit.time),
         durationMinutes: edit.durationMinutes,
+        shifted: edit.shifted ?? step.shifted,
+        warnings: edit.warnings ?? step.warnings,
       };
     });
   }, [draftEdits, schedule]);
   const selectedEvent = draftEvents.find((event) => event.id === selectedEventId);
+  const selectedMovementDetails = selectedEvent
+    ? getMovementDetails(selectedEvent)
+    : null;
   const groupedDraftEvents = useMemo(() => {
     return draftEvents.reduce<Record<string, DraftEvent[]>>((groups, event) => {
       const key = formatDateInput(event.date);
@@ -1384,6 +1602,23 @@ export default function Home() {
 
   function handleTemplateSelection(value: string) {
     setTemplateId(value);
+    setAddOnTemplateIds((current) => current.filter((id) => id !== value));
+    setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
+  }
+
+  function handleAddOnTemplateSelection(id: string, checked: boolean) {
+    setAddOnTemplateIds((current) =>
+      checked ? [...current, id] : current.filter((item) => item !== id),
+    );
+    setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
+  }
+
+  function handleAddOnPlacementModeSelection(mode: AddOnPlacementMode) {
+    setAddOnPlacementMode(mode);
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1559,6 +1794,9 @@ export default function Home() {
       current.filter((item) => item.id !== selectedTemplate.id),
     );
     setTemplateId("");
+    setAddOnTemplateIds((current) =>
+      current.filter((item) => item !== selectedTemplate.id),
+    );
     setEditingTemplateId((current) =>
       current === selectedTemplate.id ? null : current,
     );
@@ -1645,12 +1883,18 @@ export default function Home() {
       return;
     }
 
+    const changesPlacement =
+      "date" in patch || "time" in patch || "durationMinutes" in patch;
+
     setDraftEdits((current) => {
       const baseEdit = {
+        conflict: event.conflict,
         name: event.name,
         date: formatDateInput(event.date),
         time: formatTimeInput(event.date),
         durationMinutes: event.durationMinutes,
+        shifted: event.shifted,
+        warnings: event.warnings,
       };
 
       return {
@@ -1659,10 +1903,103 @@ export default function Home() {
           ...baseEdit,
           ...current[id],
           ...patch,
+          conflict: changesPlacement
+            ? null
+            : (patch.conflict ?? current[id]?.conflict ?? baseEdit.conflict),
+          shifted: changesPlacement
+            ? true
+            : (patch.shifted ?? current[id]?.shifted ?? baseEdit.shifted),
+          warnings: changesPlacement
+            ? []
+            : (patch.warnings ?? current[id]?.warnings ?? baseEdit.warnings),
         },
       };
     });
     setSyncStatus("");
+  }
+
+  function shiftDraftSet(days: number) {
+    if (!startDate) {
+      return;
+    }
+
+    const nextStartDate = addDays(combineDateAndTime(startDate, "00:00"), days);
+    setStartDate(formatDateInput(nextStartDate));
+    setSyncStatus("");
+    setDraftEdits({});
+    setSelectedEventId("");
+  }
+
+  function shiftDraftEventsFrom(id: string, days: number) {
+    const startIndex = draftEvents.findIndex((event) => event.id === id);
+
+    if (startIndex < 0) {
+      return;
+    }
+
+    const tailEvents = draftEvents.slice(startIndex);
+    const tailStart = addDays(tailEvents[0].date, days);
+    const rescheduledTail = generateSchedule({
+      steps: tailEvents.map((event) => ({
+        category: event.category,
+        dayOffset: Math.max(0, getDayDifference(tailEvents[0].date, event.date)),
+        durationMinutes: event.durationMinutes,
+        name: event.name,
+        protocol: event.protocol,
+      })),
+      startDate: formatDateInput(tailStart),
+      workStart: formatTimeInput(tailStart),
+      avoidWeekends,
+      conflicts: calendarConflicts,
+    });
+
+    if (rescheduledTail.length !== tailEvents.length) {
+      return;
+    }
+
+    setDraftEdits((current) => {
+      const next = { ...current };
+
+      for (const [index, event] of tailEvents.entries()) {
+        const rescheduledEvent = rescheduledTail[index];
+        const baseEdit = {
+          name: event.name,
+          date: formatDateInput(event.date),
+          time: formatTimeInput(event.date),
+          durationMinutes: event.durationMinutes,
+        };
+
+        next[event.id] = {
+          ...baseEdit,
+          ...current[event.id],
+          conflict: rescheduledEvent.conflict,
+          date: formatDateInput(rescheduledEvent.date),
+          shifted: rescheduledEvent.shifted,
+          time: formatTimeInput(rescheduledEvent.date),
+          warnings: rescheduledEvent.warnings,
+        };
+      }
+
+      return next;
+    });
+    setSyncStatus("");
+  }
+
+  function getMovementDetails(event: DraftEvent) {
+    const originalDate = getOriginalScheduleDate(event, startDate, workStart);
+    const moved =
+      event.shifted ||
+      Boolean(event.conflict) ||
+      event.warnings.length > 0 ||
+      Boolean(originalDate && originalDate.getTime() !== event.date.getTime());
+
+    return {
+      moved,
+      originalDate,
+      reasons: event.warnings.map((warning) =>
+        formatWarning(warning, t.warningMessages),
+      ),
+    };
   }
 
   function createCalendarPayload() {
@@ -1942,10 +2279,81 @@ export default function Home() {
                 ))}
               </select>
               <p className="mt-3 text-sm leading-6 text-[#66756b]">
-                {template
-                  ? getTemplateSummary(template.id, language, template.summary)
+                {primaryTemplate
+                  ? getTemplateSummary(
+                      primaryTemplate.id,
+                      language,
+                      primaryTemplate.summary,
+                    )
                   : t.chooseTemplate}
               </p>
+              {primaryTemplate && availableAddOnTemplates.length ? (
+                <div className="mt-4 border border-[#d8e2d4] bg-[#f8faf7] p-3">
+                  <h3 className="text-xs font-semibold text-[#26382d]">
+                    {t.addOnExperiments}
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-[#66756b]">
+                    {t.addOnExperimentsDescription}
+                  </p>
+                  <div className="mt-3">
+                    <p className="text-xs font-semibold text-[#26382d]">
+                      {t.addOnPlacement}
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 border border-[#bfd0c4] bg-white">
+                      {([
+                        ["append", t.appendAddOns],
+                        ["parallel", t.parallelAddOns],
+                      ] as const).map(([mode, label]) => (
+                        <button
+                          key={mode}
+                          className={`px-2 py-2 text-xs font-semibold transition ${
+                            addOnPlacementMode === mode
+                              ? "bg-[#2f6f4e] text-white"
+                              : "text-[#405347] hover:bg-[#eef5ef]"
+                          }`}
+                          onClick={() => handleAddOnPlacementModeSelection(mode)}
+                          type="button"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {availableAddOnTemplates.map((item) => (
+                      <label
+                        key={item.id}
+                        className="flex items-start gap-2 border border-[#d8e2d4] bg-white p-2 text-xs text-[#405347]"
+                      >
+                        <input
+                          checked={addOnTemplateIds.includes(item.id)}
+                          className="mt-0.5 h-4 w-4 accent-[#2f6f4e]"
+                          onChange={(event) =>
+                            handleAddOnTemplateSelection(
+                              item.id,
+                              event.currentTarget.checked,
+                            )
+                          }
+                          type="checkbox"
+                        />
+                        <span>
+                          <span className="block font-semibold text-[#17211b]">
+                            {item.name}
+                          </span>
+                          <span className="mt-1 block leading-5 text-[#66756b]">
+                            {getTemplateSummary(item.id, language, item.summary)}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {addOnTemplates.length ? (
+                    <p className="mt-3 border-t border-[#d8e2d4] pt-2 text-xs font-semibold text-[#2f6f4e]">
+                      {t.combinedSet}: {template?.name}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
               {isCustomTemplateSelected ? (
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
@@ -2233,6 +2641,59 @@ export default function Home() {
               />
             </label>
 
+            {startDateOptions.length ? (
+              <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+                <h2 className="text-sm font-semibold text-[#26382d]">
+                  {t.startDayOptions}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[#66756b]">
+                  {t.startDayOptionsDescription}
+                </p>
+                <div className="mt-3 space-y-2">
+                  {startDateOptions.map((option) => (
+                    <button
+                      key={option.startDate}
+                      className={`w-full border px-3 py-2 text-left transition ${
+                        option.startDate === startDate
+                          ? "border-[#2f6f4e] bg-white"
+                          : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
+                      }`}
+                      onClick={() => handleStartDateInput(option.startDate)}
+                      type="button"
+                    >
+                      <span className="flex items-start justify-between gap-3">
+                        <span>
+                          <span className="block text-sm font-semibold text-[#17211b]">
+                            {formatDate(
+                              combineDateAndTime(option.startDate, "00:00"),
+                              language,
+                            )}
+                          </span>
+                          <span className="mt-1 block text-xs text-[#66756b]">
+                            {t.finishDate}:{" "}
+                            {formatDate(option.finishDate, language)}
+                          </span>
+                        </span>
+                        {option.recommended ? (
+                          <span className="border border-[#2f6f4e] px-2 py-0.5 text-xs font-semibold text-[#2f6f4e]">
+                            {t.recommended}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="mt-2 block text-xs text-[#8a4b16]">
+                        {option.warnings || option.shifted || option.calendarConflicts
+                          ? `${t.warnings}: ${option.warnings} · ${t.adjusted}: ${option.shifted} · ${t.calendarConflictCount}: ${option.calendarConflicts}`
+                          : t.noIssues}
+                      </span>
+                      <span className="mt-1 block text-xs font-semibold text-[#2f6f4e]">
+                        {t.chooseStartDate}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
               <h2 className="text-sm font-semibold text-[#26382d]">{t.mvpBuildOrder}</h2>
               <ol className="mt-3 space-y-2 text-sm leading-6 text-[#607067]">
@@ -2278,7 +2739,35 @@ export default function Home() {
             ) : null}
 
             {canGenerateSchedule ? (
-              <div className="grid gap-5 p-5 xl:grid-cols-[1fr_280px]">
+              <div className="space-y-5 p-5">
+                <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-[#17211b]">
+                        {t.experimentSet}
+                      </h3>
+                      <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66756b]">
+                        {t.experimentSetDescription}
+                      </p>
+                      <p className="mt-1 text-xs text-[#66756b]">{t.setMoveNote}</p>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button
+                        onClick={() => shiftDraftSet(-1)}
+                        className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                      >
+                        {t.moveSetEarlier}
+                      </button>
+                      <button
+                        onClick={() => shiftDraftSet(1)}
+                        className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                      >
+                        {t.moveSetLater}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid gap-5 xl:grid-cols-[1fr_280px]">
                 <div>
                   <h3 className="text-base font-semibold text-[#17211b]">{t.draftCalendar}</h3>
                   <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -2293,33 +2782,44 @@ export default function Home() {
                           </p>
                         </div>
                         <div className="space-y-2 p-3">
-                          {groupedDraftEvents[dateKey].map((event) => (
-                            <button
-                              key={event.id}
-                              onClick={() => setSelectedEventId(event.id)}
-                              className={`w-full border px-3 py-2 text-left transition ${
-                                selectedEventId === event.id
-                                  ? "border-[#2f6f4e] bg-[#eef5ef]"
-                                  : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
-                              }`}
-                            >
-                              <span className="block text-xs font-semibold text-[#2f6f4e]">
-                                {formatTime(event.date, language)} ·{" "}
-                                {formatDuration(event.durationMinutes, language)}
-                              </span>
-                              <span className="mt-1 block text-sm font-semibold text-[#17211b]">
-                                {event.name}
-                              </span>
-                              <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5 text-xs text-[#55675c]">
-                                {t.categories[event.category]}
-                              </span>
-                              {event.warnings.length ? (
-                                <span className="mt-2 block text-xs font-medium text-[#8a4b16]">
-                                  {t.warnings}: {event.warnings.length}
+                          {groupedDraftEvents[dateKey].map((event) => {
+                            const movementDetails = getMovementDetails(event);
+
+                            return (
+                              <button
+                                key={event.id}
+                                onClick={() => setSelectedEventId(event.id)}
+                                className={`w-full border px-3 py-2 text-left transition ${
+                                  selectedEventId === event.id
+                                    ? "border-[#2f6f4e] bg-[#eef5ef]"
+                                    : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
+                                }`}
+                              >
+                                <span className="block text-xs font-semibold text-[#2f6f4e]">
+                                  {formatTime(event.date, language)} ·{" "}
+                                  {formatDuration(event.durationMinutes, language)}
                                 </span>
-                              ) : null}
-                            </button>
-                          ))}
+                                <span className="mt-1 block text-sm font-semibold text-[#17211b]">
+                                  {event.name}
+                                </span>
+                                <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5 text-xs text-[#55675c]">
+                                  {t.categories[event.category]}
+                                </span>
+                                {movementDetails.moved && movementDetails.originalDate ? (
+                                  <span className="mt-2 block text-xs font-medium text-[#8a4b16]">
+                                    {t.adjustedFrom}:{" "}
+                                    {formatDate(movementDetails.originalDate, language)}{" "}
+                                    {formatTime(movementDetails.originalDate, language)}
+                                  </span>
+                                ) : null}
+                                {movementDetails.reasons.length ? (
+                                  <span className="mt-1 block text-xs text-[#8a4b16]">
+                                    {movementDetails.reasons[0]}
+                                  </span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
                         </div>
                       </section>
                     ))}
@@ -2389,6 +2889,28 @@ export default function Home() {
                         />
                       </label>
 
+                      <div className="border border-[#d8e2d4] bg-white p-3">
+                        <p className="text-sm font-semibold text-[#26382d]">
+                          {t.shiftFollowingEvents}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-2">
+                          <button
+                            className="border border-[#bfd0c4] bg-white px-2 py-2 text-xs font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                            onClick={() => shiftDraftEventsFrom(selectedEvent.id, -1)}
+                            type="button"
+                          >
+                            {t.moveFollowingEarlier}
+                          </button>
+                          <button
+                            className="border border-[#bfd0c4] bg-white px-2 py-2 text-xs font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                            onClick={() => shiftDraftEventsFrom(selectedEvent.id, 1)}
+                            type="button"
+                          >
+                            {t.moveFollowingLater}
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="border border-[#d8e2d4] bg-white p-3 text-sm leading-6 text-[#66756b]">
                         <p>
                           {t.day} {selectedEvent.dayOffset}
@@ -2396,21 +2918,27 @@ export default function Home() {
                         <p>
                           {t.protocolPlaceholder}: {selectedEvent.protocol}
                         </p>
+                        {selectedMovementDetails?.moved &&
+                        selectedMovementDetails.originalDate ? (
+                          <p className="font-medium text-[#8a4b16]">
+                            {t.adjustedFrom}:{" "}
+                            {formatDate(selectedMovementDetails.originalDate, language)}{" "}
+                            {formatTime(selectedMovementDetails.originalDate, language)}
+                          </p>
+                        ) : null}
                         {selectedEvent.conflict ? (
                           <p className="font-medium text-[#8a4b16]">
                             {t.conflictAvoided}: {selectedEvent.conflict}
                           </p>
                         ) : null}
-                        {selectedEvent.warnings.length ? (
+                        {selectedMovementDetails?.reasons.length ? (
                           <div className="mt-2 border-t border-[#d8e2d4] pt-2">
                             <p className="font-semibold text-[#8a4b16]">
-                              {t.warnings}
+                              {t.movedBecause}
                             </p>
                             <ul className="mt-1 space-y-1">
-                              {selectedEvent.warnings.map((warning) => (
-                                <li key={warning}>
-                                  {formatWarning(warning, t.warningMessages)}
-                                </li>
+                              {selectedMovementDetails.reasons.map((reason) => (
+                                <li key={reason}>{reason}</li>
                               ))}
                             </ul>
                           </div>
@@ -2423,6 +2951,7 @@ export default function Home() {
                     </p>
                   )}
                 </aside>
+                </div>
               </div>
             ) : (
               <div className="px-5 py-16 text-center">
