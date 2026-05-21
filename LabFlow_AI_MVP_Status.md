@@ -176,6 +176,8 @@ Completed:
 - Partial set movement now regenerates the moved tail with weekend avoidance, working-hours overflow handling, and Google Calendar conflict checks
 - Added drag-and-drop draft calendar editing so dragging a schedule card to another day moves that event and following events with scheduler rules reapplied
 - Reduced first-screen complexity by moving add-on planning controls and template creation tools into collapsible sections
+- Changed start-day comparison cards to preview candidate dates first and only update the draft after the user explicitly applies a start date
+- Clarified calendar-conflict wording so users can tell the experiment start date is kept while only affected steps are moved
 
 Validated:
 
@@ -416,4 +418,4 @@ https://labflow-ai-scheduler.vercel.app/
 
 ## Status Date
 
-- Last updated: 2026-05-18
+- Last updated: 2026-05-21

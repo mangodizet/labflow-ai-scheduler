@@ -281,11 +281,15 @@ const copy = {
     preferredStartTime: "Preferred start time",
     preferredTimePlaceholder: "9:00",
     avoidWeekendWork: "Avoid weekend work",
-    startDayOptions: "Start day options",
+    startDayOptions: "Start date comparison",
     startDayOptionsDescription:
-      "Compare nearby start dates before committing the experiment set.",
-    recommended: "Recommended",
-    chooseStartDate: "Choose",
+      "Compare nearby start dates without changing the current draft. Apply a date only when you are ready.",
+    recommended: "Fewest adjustments",
+    chooseStartDate: "Preview",
+    applyStartDate: "Apply this start date",
+    currentStartDate: "Current start",
+    previewSelected: "Preview selected",
+    startDateApplyHint: "The draft calendar stays unchanged until you apply a start date.",
     finishDate: "Finish",
     noIssues: "No schedule issues",
     calendarConflictCount: "Calendar conflicts",
@@ -342,12 +346,12 @@ const copy = {
       "Select an experiment template, start date, and preferred start time to preview the schedule.",
     day: "Day",
     protocolPlaceholder: "Protocol link placeholder",
-    conflictAvoided: "Conflict avoided",
+    conflictAvoided: "Avoided calendar event",
     adjustedFrom: "Adjusted from",
     movedBecause: "Moved because",
     duration: "Duration",
     warningMessages: {
-      "calendar-conflict": "Moved to avoid a calendar conflict.",
+      "calendar-conflict": "Start date kept; this step moved to avoid a calendar conflict.",
       "duration-exceeds-workday": "Duration is longer than one working day.",
       "invalid-duration": "Invalid duration was adjusted to 1 minute.",
       "weekend-shift": "Moved to avoid weekend work.",
@@ -438,11 +442,15 @@ const copy = {
     preferredStartTime: "희망 시작 시간",
     preferredTimePlaceholder: "9:00",
     avoidWeekendWork: "주말 작업 피하기",
-    startDayOptions: "시작일 후보",
+    startDayOptions: "시작일 비교",
     startDayOptionsDescription:
-      "실험 세트를 확정하기 전에 가까운 시작 날짜들을 비교합니다.",
-    recommended: "추천",
-    chooseStartDate: "선택",
+      "현재 초안 일정은 그대로 두고 가까운 시작일을 비교합니다. 적용 버튼을 눌러야 시작일이 바뀝니다.",
+    recommended: "가장 적은 조정",
+    chooseStartDate: "미리보기",
+    applyStartDate: "이 시작일 적용",
+    currentStartDate: "현재 시작일",
+    previewSelected: "미리보기 선택됨",
+    startDateApplyHint: "적용하기 전까지 초안 캘린더는 바뀌지 않습니다.",
     finishDate: "완료",
     noIssues: "문제 없음",
     calendarConflictCount: "캘린더 충돌",
@@ -499,12 +507,12 @@ const copy = {
       "실험 템플릿, 시작 날짜, 희망 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
     day: "Day",
     protocolPlaceholder: "프로토콜 링크 자리",
-    conflictAvoided: "피한 충돌",
+    conflictAvoided: "피한 캘린더 일정",
     adjustedFrom: "원래 일정",
     movedBecause: "이동 사유",
     duration: "소요 시간",
     warningMessages: {
-      "calendar-conflict": "캘린더 충돌을 피하기 위해 이동했습니다.",
+      "calendar-conflict": "시작일은 유지하고, 이 단계만 캘린더 충돌을 피하도록 이동했습니다.",
       "duration-exceeds-workday": "소요 시간이 하루 근무시간보다 깁니다.",
       "invalid-duration": "잘못된 소요 시간을 1분으로 조정했습니다.",
       "weekend-shift": "주말 작업을 피하기 위해 이동했습니다.",
@@ -1269,6 +1277,7 @@ export default function Home() {
   const [addOnPlacementMode, setAddOnPlacementMode] =
     useState<AddOnPlacementMode>("append");
   const [startDate, setStartDate] = useState("");
+  const [previewStartDate, setPreviewStartDate] = useState("");
   const [preferredPeriod, setPreferredPeriod] = useState<DayPeriod>("AM");
   const [preferredTimeText, setPreferredTimeText] = useState("");
   const [workStart, setWorkStart] = useState("");
@@ -1621,6 +1630,7 @@ export default function Home() {
   function handleTemplateSelection(value: string) {
     setTemplateId(value);
     setAddOnTemplateIds((current) => current.filter((id) => id !== value));
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1630,6 +1640,7 @@ export default function Home() {
     setAddOnTemplateIds((current) =>
       checked ? [...current, id] : current.filter((item) => item !== id),
     );
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1637,6 +1648,7 @@ export default function Home() {
 
   function handleAddOnPlacementModeSelection(mode: AddOnPlacementMode) {
     setAddOnPlacementMode(mode);
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1644,6 +1656,7 @@ export default function Home() {
 
   function handleStartDateInput(value: string) {
     setStartDate(value);
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1651,9 +1664,23 @@ export default function Home() {
 
   function handleWorkStartInput(value: string) {
     setWorkStart(value);
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
+  }
+
+  function handleStartDatePreview(value: string) {
+    setPreviewStartDate(value);
+  }
+
+  function applyPreviewStartDate() {
+    if (!previewStartDate || previewStartDate === startDate) {
+      setPreviewStartDate("");
+      return;
+    }
+
+    handleStartDateInput(previewStartDate);
   }
 
   function handlePreferredTimeTextInput(value: string) {
@@ -1693,6 +1720,7 @@ export default function Home() {
 
   function handleWeekendPreferenceInput(checked: boolean) {
     setAvoidWeekends(checked);
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -1943,6 +1971,7 @@ export default function Home() {
 
     const nextStartDate = addDays(combineDateAndTime(startDate, "00:00"), days);
     setStartDate(formatDateInput(nextStartDate));
+    setPreviewStartDate("");
     setSyncStatus("");
     setDraftEdits({});
     setSelectedEventId("");
@@ -2701,47 +2730,73 @@ export default function Home() {
                   {t.startDayOptionsDescription}
                 </p>
                 <div className="mt-3 space-y-2">
-                  {startDateOptions.map((option) => (
-                    <button
-                      key={option.startDate}
-                      className={`w-full border px-3 py-2 text-left transition ${
-                        option.startDate === startDate
-                          ? "border-[#2f6f4e] bg-white"
-                          : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
-                      }`}
-                      onClick={() => handleStartDateInput(option.startDate)}
-                      type="button"
-                    >
-                      <span className="flex items-start justify-between gap-3">
-                        <span>
-                          <span className="block text-sm font-semibold text-[#17211b]">
-                            {formatDate(
-                              combineDateAndTime(option.startDate, "00:00"),
-                              language,
-                            )}
+                  {startDateOptions.map((option) => {
+                    const isCurrent = option.startDate === startDate;
+                    const isPreviewed = option.startDate === previewStartDate;
+
+                    return (
+                      <button
+                        key={option.startDate}
+                        className={`w-full border px-3 py-2 text-left transition ${
+                          isPreviewed
+                            ? "border-[#2f6f4e] bg-[#eef5ef]"
+                            : isCurrent
+                              ? "border-[#2f6f4e] bg-white"
+                              : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
+                        }`}
+                        onClick={() => handleStartDatePreview(option.startDate)}
+                        type="button"
+                      >
+                        <span className="flex items-start justify-between gap-3">
+                          <span>
+                            <span className="block text-sm font-semibold text-[#17211b]">
+                              {formatDate(
+                                combineDateAndTime(option.startDate, "00:00"),
+                                language,
+                              )}
+                            </span>
+                            <span className="mt-1 block text-xs text-[#66756b]">
+                              {t.finishDate}:{" "}
+                              {formatDate(option.finishDate, language)}
+                            </span>
                           </span>
-                          <span className="mt-1 block text-xs text-[#66756b]">
-                            {t.finishDate}:{" "}
-                            {formatDate(option.finishDate, language)}
+                          <span className="flex flex-col items-end gap-1">
+                            {isCurrent ? (
+                              <span className="border border-[#2f6f4e] px-2 py-0.5 text-xs font-semibold text-[#2f6f4e]">
+                                {t.currentStartDate}
+                              </span>
+                            ) : null}
+                            {option.recommended ? (
+                              <span className="border border-[#8a4b16] px-2 py-0.5 text-xs font-semibold text-[#8a4b16]">
+                                {t.recommended}
+                              </span>
+                            ) : null}
                           </span>
                         </span>
-                        {option.recommended ? (
-                          <span className="border border-[#2f6f4e] px-2 py-0.5 text-xs font-semibold text-[#2f6f4e]">
-                            {t.recommended}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="mt-2 block text-xs text-[#8a4b16]">
-                        {option.warnings || option.shifted || option.calendarConflicts
-                          ? `${t.warnings}: ${option.warnings} · ${t.adjusted}: ${option.shifted} · ${t.calendarConflictCount}: ${option.calendarConflicts}`
-                          : t.noIssues}
-                      </span>
-                      <span className="mt-1 block text-xs font-semibold text-[#2f6f4e]">
-                        {t.chooseStartDate}
-                      </span>
-                    </button>
-                  ))}
+                        <span className="mt-2 block text-xs text-[#8a4b16]">
+                          {option.warnings || option.shifted || option.calendarConflicts
+                            ? `${t.warnings}: ${option.warnings} · ${t.adjusted}: ${option.shifted} · ${t.calendarConflictCount}: ${option.calendarConflicts}`
+                            : t.noIssues}
+                        </span>
+                        <span className="mt-1 block text-xs font-semibold text-[#2f6f4e]">
+                          {isPreviewed ? t.previewSelected : t.chooseStartDate}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+                {previewStartDate && previewStartDate !== startDate ? (
+                  <button
+                    className="mt-3 w-full border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                    onClick={applyPreviewStartDate}
+                    type="button"
+                  >
+                    {t.applyStartDate}
+                  </button>
+                ) : null}
+                <p className="mt-3 text-xs leading-5 text-[#66756b]">
+                  {t.startDateApplyHint}
+                </p>
               </div>
             ) : null}
 
