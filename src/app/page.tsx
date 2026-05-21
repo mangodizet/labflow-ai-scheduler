@@ -210,11 +210,23 @@ const copy = {
       "Build a rule-based research timeline, avoid weekend work, check Google Calendar conflicts, and sync final events.",
     introTitle: "How to use LabFlow AI",
     introDescription:
-      "Select an experiment, set the start date and preferred time, review the draft calendar, then sync the approved set to Google Calendar.",
+      "Start with the left panel, review the generated draft in the calendar, then sync only after the schedule looks right.",
     introSteps: [
-      "Choose an experiment template",
-      "Set start date and preferred time",
-      "Review, adjust, and sync the draft",
+      {
+        title: "Choose the experiment",
+        description:
+          "Pick a template first. Add-on experiments and custom templates stay inside Planning options.",
+      },
+      {
+        title: "Set timing rules",
+        description:
+          "Choose the start date, type the preferred start time, and leave weekend avoidance on if needed.",
+      },
+      {
+        title: "Review the draft calendar",
+        description:
+          "Check moved steps, drag cards or edit details, then sync the final experiment set to Google Calendar.",
+      },
     ],
     dismissIntro: "Dismiss",
     steps: "Steps",
@@ -384,11 +396,23 @@ const copy = {
       "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 Google Calendar 충돌을 피한 뒤 최종 일정을 동기화합니다.",
     introTitle: "사용 방법",
     introDescription:
-      "실험을 선택하고 시작 날짜와 희망 시간을 정하면 초안 캘린더가 만들어집니다. 확인하고 수정한 뒤 Google Calendar에 동기화하세요.",
+      "왼쪽 설정부터 시작하고, 가운데 초안 캘린더를 확인한 뒤 일정이 맞을 때만 Google Calendar에 동기화하세요.",
     introSteps: [
-      "실험 템플릿 선택",
-      "시작 날짜와 희망 시간 설정",
-      "초안 확인, 수정 후 동기화",
+      {
+        title: "실험 선택",
+        description:
+          "먼저 실험 템플릿을 고르세요. 추가 실험이나 새 템플릿은 일정 옵션 안에서 사용할 수 있습니다.",
+      },
+      {
+        title: "시간 규칙 설정",
+        description:
+          "시작 날짜와 희망 시작 시간을 입력하고, 필요하면 주말 작업 피하기를 켜둡니다.",
+      },
+      {
+        title: "초안 확인 후 동기화",
+        description:
+          "이동된 일정을 확인하고, 카드를 드래그하거나 오른쪽 패널에서 수정한 뒤 최종 세트를 동기화합니다.",
+      },
     ],
     dismissIntro: "닫기",
     steps: "단계",
@@ -2322,32 +2346,53 @@ export default function Home() {
         {showIntroBanner ? (
           <section
             aria-label={t.introTitle}
-            className="border border-[#bfd0c4] bg-white px-5 py-4"
+            className="sticky top-3 z-20 border border-[#2f6f4e] bg-white px-5 py-4 shadow-[0_12px_32px_rgba(31,54,39,0.16)]"
           >
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <h2 className="text-base font-semibold text-[#17211b]">
-                  {t.introTitle}
-                </h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#55675c]">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
+                      LabFlow AI
+                    </p>
+                    <h2 className="mt-1 text-lg font-semibold text-[#17211b]">
+                      {t.introTitle}
+                    </h2>
+                  </div>
+                  <button
+                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] xl:hidden"
+                    onClick={dismissIntroBanner}
+                    type="button"
+                  >
+                    {t.dismissIntro}
+                  </button>
+                </div>
+                <p className="mt-2 max-w-4xl text-sm leading-6 text-[#55675c]">
                   {t.introDescription}
                 </p>
-                <ol className="mt-3 grid gap-2 text-sm text-[#405347] sm:grid-cols-3">
+                <ol className="mt-4 grid gap-3 md:grid-cols-3">
                   {t.introSteps.map((step, index) => (
                     <li
-                      className="border border-[#d8e2d4] bg-[#f8faf7] px-3 py-2"
-                      key={step}
+                      className="border border-[#d8e2d4] bg-[#f8faf7] p-3"
+                      key={step.title}
                     >
-                      <span className="mr-2 font-semibold text-[#2f6f4e]">
-                        {index + 1}
-                      </span>
-                      {step}
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-7 w-7 items-center justify-center border border-[#2f6f4e] bg-white text-sm font-semibold text-[#2f6f4e]">
+                          {index + 1}
+                        </span>
+                        <strong className="text-sm text-[#17211b]">
+                          {step.title}
+                        </strong>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-[#55675c]">
+                        {step.description}
+                      </p>
                     </li>
                   ))}
                 </ol>
               </div>
               <button
-                className="self-start border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                className="hidden shrink-0 border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] xl:block"
                 onClick={dismissIntroBanner}
                 type="button"
               >
