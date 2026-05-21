@@ -210,24 +210,53 @@ const copy = {
       "Build a rule-based research timeline, avoid weekend work, check Google Calendar conflicts, and sync final events.",
     introTitle: "How to use LabFlow AI",
     introDescription:
-      "Start with the left panel, review the generated draft in the calendar, then sync only after the schedule looks right.",
-    introSteps: [
+      "Follow the short guide, then close it and try the same flow in the real scheduler.",
+    introPages: [
       {
         title: "Choose the experiment",
         description:
-          "Pick a template first. Add-on experiments and custom templates stay inside Planning options.",
+          "Use Experiment template first. Open Planning options for add-on experiments, or Advanced template tools when you need a detailed custom workflow.",
+        callouts: [
+          "Click the template dropdown to choose the base experiment.",
+          "Open Planning options only when combining multiple experiments.",
+          "Use Advanced template tools to build a detailed schedule from protocol steps.",
+        ],
       },
       {
         title: "Set timing rules",
         description:
-          "Choose the start date, type the preferred start time, and leave weekend avoidance on if needed.",
+          "Pick the start date and type the preferred start time. The scheduler uses these rules before it creates the draft calendar.",
+        callouts: [
+          "Set Start date with the date picker.",
+          "Choose AM or PM, then type a time such as 0900 or 5:30.",
+          "Keep Avoid weekend work on when Saturday or Sunday steps should move.",
+        ],
       },
       {
-        title: "Review the draft calendar",
+        title: "Edit the generated draft",
         description:
-          "Check moved steps, drag cards or edit details, then sync the final experiment set to Google Calendar.",
+          "Review the generated calendar before syncing. Drag a card to move that step and following steps, or use the edit panel for exact changes.",
+        callouts: [
+          "Click a schedule card to open the edit panel.",
+          "Drag a card to another date column to move the schedule.",
+          "Use the right panel to change name, date, time, or duration.",
+        ],
+      },
+      {
+        title: "Sync the final schedule",
+        description:
+          "After the draft looks right, sync the approved experiment set to Google Calendar. You can also delete a synced set later.",
+        callouts: [
+          "Refresh conflicts if Google Calendar changed.",
+          "Click Sync experiment set only after checking the draft.",
+          "Use Delete synced set if you need to remove the LabFlow events.",
+        ],
       },
     ],
+    previousTutorial: "Previous",
+    nextTutorial: "Next",
+    finishTutorial: "Finish",
+    tutorialStepLabel: "Step",
     dismissIntro: "Dismiss",
     tutorialButton: "Tutorial",
     steps: "Steps",
@@ -397,24 +426,53 @@ const copy = {
       "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 Google Calendar 충돌을 피한 뒤 최종 일정을 동기화합니다.",
     introTitle: "사용 방법",
     introDescription:
-      "왼쪽 설정부터 시작하고, 가운데 초안 캘린더를 확인한 뒤 일정이 맞을 때만 Google Calendar에 동기화하세요.",
-    introSteps: [
+      "짧은 안내를 넘겨보신 뒤, 같은 순서로 실제 스케줄러에서 진행하시면 됩니다.",
+    introPages: [
       {
         title: "실험 선택",
         description:
-          "먼저 실험 템플릿을 고르세요. 추가 실험이나 새 템플릿은 일정 옵션 안에서 사용할 수 있습니다.",
+          "먼저 실험 템플릿을 선택합니다. 여러 실험을 조합하거나 더 자세한 워크플로우가 필요하면 일정 옵션과 고급 템플릿 도구를 사용합니다.",
+        callouts: [
+          "실험 템플릿 드롭다운을 눌러 기본 실험을 선택합니다.",
+          "여러 실험을 합칠 때만 일정 옵션을 엽니다.",
+          "프로토콜 단계로 디테일한 스케줄을 만들 때 고급 템플릿 도구를 사용합니다.",
+        ],
       },
       {
         title: "시간 규칙 설정",
         description:
-          "시작 날짜와 희망 시작 시간을 입력하고, 필요하면 주말 작업 피하기를 켜둡니다.",
+          "시작 날짜와 희망 시작 시간을 입력합니다. 이 규칙을 기준으로 초안 캘린더가 생성됩니다.",
+        callouts: [
+          "시작 날짜는 날짜 선택기로 고릅니다.",
+          "오전/오후를 선택하고 0900 또는 5:30처럼 시간을 입력합니다.",
+          "토요일/일요일 작업을 피하려면 주말 작업 피하기를 켜둡니다.",
+        ],
       },
       {
-        title: "초안 확인 후 동기화",
+        title: "생성된 일정 수정",
         description:
-          "이동된 일정을 확인하고, 카드를 드래그하거나 오른쪽 패널에서 수정한 뒤 최종 세트를 동기화합니다.",
+          "생성된 초안 캘린더를 먼저 확인합니다. 일정 카드를 드래그해서 이동하거나, 오른쪽 패널에서 정확한 정보를 수정할 수 있습니다.",
+        callouts: [
+          "일정 카드를 누르면 오른쪽 수정 패널이 열립니다.",
+          "카드를 다른 날짜 칸으로 드래그하면 그 일정부터 뒤 일정이 함께 이동합니다.",
+          "오른쪽 패널에서 이름, 날짜, 시간, 소요 시간을 직접 수정합니다.",
+        ],
+      },
+      {
+        title: "최종 일정 동기화",
+        description:
+          "수정이 끝난 뒤 최종 실험 세트를 Google Calendar에 동기화합니다. 필요하면 동기화된 세트를 다시 삭제할 수도 있습니다.",
+        callouts: [
+          "구글 캘린더가 바뀌었다면 충돌 정보를 새로고침합니다.",
+          "초안이 맞는지 확인한 뒤 실험 세트 동기화를 누릅니다.",
+          "LabFlow로 등록한 일정을 지우려면 동기화된 세트 삭제를 사용합니다.",
+        ],
       },
     ],
+    previousTutorial: "이전",
+    nextTutorial: "다음",
+    finishTutorial: "완료",
+    tutorialStepLabel: "단계",
     dismissIntro: "닫기",
     tutorialButton: "튜토리얼",
     steps: "단계",
@@ -1326,6 +1384,7 @@ export default function Home() {
   const [showIntroBanner, setShowIntroBanner] = useState(
     getInitialIntroBannerVisibility,
   );
+  const [tutorialPage, setTutorialPage] = useState(0);
   const [customTemplates, setCustomTemplates] = useState<ExperimentTemplate[]>([]);
   const [customTemplatesLoaded, setCustomTemplatesLoaded] = useState(false);
   const [templateBuilder, setTemplateBuilder] = useState<TemplateBuilderState>(
@@ -1693,6 +1752,7 @@ export default function Home() {
 
   function dismissIntroBanner() {
     setShowIntroBanner(false);
+    setTutorialPage(0);
 
     if (typeof window !== "undefined") {
       window.localStorage.setItem(introBannerStorageKey, "true");
@@ -1700,7 +1760,14 @@ export default function Home() {
   }
 
   function openIntroBanner() {
+    setTutorialPage(0);
     setShowIntroBanner(true);
+  }
+
+  function moveTutorialPage(direction: number) {
+    setTutorialPage((current) =>
+      Math.min(Math.max(current + direction, 0), t.introPages.length - 1),
+    );
   }
 
   function handleTemplateSelection(value: string) {
@@ -2287,16 +2354,20 @@ export default function Home() {
     }
   }
 
+  const currentTutorialPage = t.introPages[tutorialPage] ?? t.introPages[0];
+  const isFirstTutorialPage = tutorialPage === 0;
+  const isLastTutorialPage = tutorialPage === t.introPages.length - 1;
+
   return (
     <main className="min-h-screen bg-[#f4f7f3] text-[#17211b]">
       {showIntroBanner ? (
         <div
           aria-labelledby="introTutorialTitle"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-start justify-center bg-[#17211b]/45 px-4 py-6 sm:py-10"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-[#17211b]/45 px-4 py-4 sm:py-8"
           role="dialog"
         >
-          <section className="max-h-[calc(100vh-3rem)] w-full max-w-4xl overflow-y-auto border border-[#2f6f4e] bg-white p-5 shadow-[0_24px_60px_rgba(23,33,27,0.28)] sm:p-6">
+          <section className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto border border-[#2f6f4e] bg-white p-5 shadow-[0_24px_60px_rgba(23,33,27,0.28)] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
@@ -2320,26 +2391,194 @@ export default function Home() {
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#55675c]">
               {t.introDescription}
             </p>
-            <ol className="mt-5 grid gap-3 md:grid-cols-3">
-              {t.introSteps.map((step, index) => (
-                <li
-                  className="border border-[#d8e2d4] bg-[#f8faf7] p-4"
-                  key={step.title}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center border border-[#2f6f4e] bg-white text-sm font-semibold text-[#2f6f4e]">
-                      {index + 1}
-                    </span>
-                    <strong className="text-base text-[#17211b]">
-                      {step.title}
-                    </strong>
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+                {tutorialPage === 0 ? (
+                  <div className="grid gap-3 text-xs text-[#405347]">
+                    <div className="border-2 border-[#2f6f4e] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.experimentTemplate}
+                      </span>
+                      <div className="mt-2 border border-[#bfd0c4] px-3 py-2">
+                        THP-1 M2 Polarization
+                      </div>
+                    </div>
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.planningOptions}
+                      </span>
+                      <p className="mt-1 text-[#66756b]">
+                        {t.planningOptionsDescription}
+                      </p>
+                    </div>
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.advancedTemplateTools}
+                      </span>
+                      <p className="mt-1 text-[#66756b]">
+                        {t.advancedTemplateToolsDescription}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-3 text-sm leading-6 text-[#55675c]">
-                    {step.description}
-                  </p>
-                </li>
-              ))}
-            </ol>
+                ) : null}
+                {tutorialPage === 1 ? (
+                  <div className="grid gap-3 text-xs text-[#405347]">
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.startDate}
+                      </span>
+                      <div className="mt-2 border-2 border-[#2f6f4e] px-3 py-2">
+                        2026-05-14
+                      </div>
+                    </div>
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.preferredStartTime}
+                      </span>
+                      <div className="mt-2 grid grid-cols-[auto_1fr] gap-2">
+                        <span className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-white">
+                          AM
+                        </span>
+                        <span className="border-2 border-[#2f6f4e] px-3 py-2">
+                          09:00
+                        </span>
+                      </div>
+                    </div>
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.avoidWeekendWork}
+                      </span>
+                      <span className="ml-2 inline-block border border-[#2f6f4e] px-2 py-1 text-[#2f6f4e]">
+                        ON
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+                {tutorialPage === 2 ? (
+                  <div className="grid gap-3 text-xs text-[#405347] md:grid-cols-[1fr_0.8fr]">
+                    <div className="grid grid-cols-2 gap-2">
+                      {["May 14", "May 15", "May 18", "May 20"].map((date, index) => (
+                        <div
+                          className="min-h-28 border border-[#d8e2d4] bg-white p-2"
+                          key={date}
+                        >
+                          <span className="font-semibold text-[#2f6f4e]">
+                            {date}
+                          </span>
+                          {index < 3 ? (
+                            <div
+                              className={`mt-3 border p-2 ${
+                                index === 1
+                                  ? "border-[#2f6f4e] bg-[#eef5ef]"
+                                  : "border-[#d8e2d4]"
+                              }`}
+                            >
+                              <span className="block font-semibold text-[#17211b]">
+                                {index === 0
+                                  ? "PMA Treatment"
+                                  : index === 1
+                                    ? "Wash + Resting"
+                                    : "IL4 / IL13"}
+                              </span>
+                              <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5">
+                                {t.categories["Hands-on"]}
+                              </span>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="border-2 border-[#2f6f4e] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.editEvent}
+                      </span>
+                      <div className="mt-3 space-y-2">
+                        <div className="border border-[#bfd0c4] px-3 py-2">
+                          {t.eventName}
+                        </div>
+                        <div className="border border-[#bfd0c4] px-3 py-2">
+                          {t.eventDate}
+                        </div>
+                        <div className="border border-[#bfd0c4] px-3 py-2">
+                          {t.eventTime}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                {tutorialPage === 3 ? (
+                  <div className="grid gap-3 text-xs text-[#405347] md:grid-cols-[0.8fr_1fr]">
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.googleCalendar}
+                      </span>
+                      <div className="mt-3 border border-[#bfd0c4] px-3 py-2 text-[#2f6f4e]">
+                        {userEmail ? `${t.connectedAs} ${userEmail}` : t.connectGoogle}
+                      </div>
+                      <div className="mt-2 border border-[#bfd0c4] px-3 py-2">
+                        {t.refreshCalendarConflicts}
+                      </div>
+                    </div>
+                    <div className="border border-[#d8e2d4] bg-white p-3">
+                      <span className="font-semibold text-[#26382d]">
+                        {t.generatedTimeline}
+                      </span>
+                      <div className="mt-3 border-2 border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-center font-semibold text-white">
+                        {t.prepareCalendarSync}
+                      </div>
+                      <div className="mt-2 border border-[#bfd0c4] px-3 py-2 text-center">
+                        {t.deleteCalendarSync}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex flex-col">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
+                  {t.tutorialStepLabel} {tutorialPage + 1} / {t.introPages.length}
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-[#17211b]">
+                  {currentTutorialPage.title}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-[#55675c]">
+                  {currentTutorialPage.description}
+                </p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-[#405347]">
+                  {currentTutorialPage.callouts.map((callout) => (
+                    <li className="border-l-2 border-[#2f6f4e] pl-3" key={callout}>
+                      {callout}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#d8e2d4] pt-4">
+                  <button
+                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:text-[#8a968e]"
+                    disabled={isFirstTutorialPage}
+                    onClick={() => moveTutorialPage(-1)}
+                    type="button"
+                  >
+                    {t.previousTutorial}
+                  </button>
+                  {isLastTutorialPage ? (
+                    <button
+                      className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                      onClick={dismissIntroBanner}
+                      type="button"
+                    >
+                      {t.finishTutorial}
+                    </button>
+                  ) : (
+                    <button
+                      className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                      onClick={() => moveTutorialPage(1)}
+                      type="button"
+                    >
+                      {t.nextTutorial}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </section>
         </div>
       ) : null}
