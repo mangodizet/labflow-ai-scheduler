@@ -346,6 +346,10 @@ const copy = {
       "Select an experiment template, start date, and preferred start time to preview the schedule.",
     day: "Day",
     protocolPlaceholder: "Protocol link placeholder",
+    scheduleExplanation: "Schedule explanation",
+    currentDraftTime: "Current draft time",
+    originalCalculatedTime: "Original calculated time",
+    noMovementNeeded: "No automatic movement was needed.",
     conflictAvoided: "Avoided calendar event",
     adjustedFrom: "Adjusted from",
     movedBecause: "Moved because",
@@ -507,6 +511,10 @@ const copy = {
       "실험 템플릿, 시작 날짜, 희망 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
     day: "Day",
     protocolPlaceholder: "프로토콜 링크 자리",
+    scheduleExplanation: "일정 이동 설명",
+    currentDraftTime: "현재 초안 일정",
+    originalCalculatedTime: "원래 계산된 일정",
+    noMovementNeeded: "자동 이동이 필요하지 않았습니다.",
     conflictAvoided: "피한 캘린더 일정",
     adjustedFrom: "원래 일정",
     movedBecause: "이동 사유",
@@ -3051,25 +3059,60 @@ export default function Home() {
                       </div>
 
                       <div className="border border-[#d8e2d4] bg-white p-3 text-sm leading-6 text-[#66756b]">
-                        <p>
-                          {t.day} {selectedEvent.dayOffset}
-                        </p>
-                        <p>
-                          {t.protocolPlaceholder}: {selectedEvent.protocol}
-                        </p>
-                        {selectedMovementDetails?.moved &&
-                        selectedMovementDetails.originalDate ? (
-                          <p className="font-medium text-[#8a4b16]">
-                            {t.adjustedFrom}:{" "}
-                            {formatDate(selectedMovementDetails.originalDate, language)}{" "}
-                            {formatTime(selectedMovementDetails.originalDate, language)}
+                        <h4 className="font-semibold text-[#26382d]">
+                          {t.scheduleExplanation}
+                        </h4>
+                        <div className="mt-2 space-y-2">
+                          <p>
+                            <span className="block text-xs font-semibold uppercase text-[#8a968e]">
+                              {t.currentDraftTime}
+                            </span>
+                            <span className="font-medium text-[#26382d]">
+                              {formatDate(selectedEvent.date, language)}{" "}
+                              {formatTime(selectedEvent.date, language)}
+                            </span>
                           </p>
-                        ) : null}
-                        {selectedEvent.conflict ? (
-                          <p className="font-medium text-[#8a4b16]">
-                            {t.conflictAvoided}: {selectedEvent.conflict}
+                          <p>
+                            <span className="block text-xs font-semibold uppercase text-[#8a968e]">
+                              {t.originalCalculatedTime}
+                            </span>
+                            <span
+                              className={`font-medium ${
+                                selectedMovementDetails?.moved
+                                  ? "text-[#8a4b16]"
+                                  : "text-[#26382d]"
+                              }`}
+                            >
+                              {selectedMovementDetails?.originalDate
+                                ? `${formatDate(
+                                    selectedMovementDetails.originalDate,
+                                    language,
+                                  )} ${formatTime(
+                                    selectedMovementDetails.originalDate,
+                                    language,
+                                  )}`
+                                : t.noMovementNeeded}
+                            </span>
                           </p>
-                        ) : null}
+                          {selectedEvent.conflict ? (
+                            <p>
+                              <span className="block text-xs font-semibold uppercase text-[#8a968e]">
+                                {t.conflictAvoided}
+                              </span>
+                              <span className="font-medium text-[#8a4b16]">
+                                {selectedEvent.conflict}
+                              </span>
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="mt-3 border-t border-[#d8e2d4] pt-2">
+                          <p>
+                            {t.day} {selectedEvent.dayOffset}
+                          </p>
+                          <p>
+                            {t.protocolPlaceholder}: {selectedEvent.protocol}
+                          </p>
+                        </div>
                         {selectedMovementDetails?.reasons.length ? (
                           <div className="mt-2 border-t border-[#d8e2d4] pt-2">
                             <p className="font-semibold text-[#8a4b16]">
@@ -3081,7 +3124,11 @@ export default function Home() {
                               ))}
                             </ul>
                           </div>
-                        ) : null}
+                        ) : selectedMovementDetails?.moved ? null : (
+                          <p className="mt-2 border-t border-[#d8e2d4] pt-2 text-[#2f6f4e]">
+                            {t.noMovementNeeded}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ) : (
