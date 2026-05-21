@@ -229,6 +229,7 @@ const copy = {
       },
     ],
     dismissIntro: "Dismiss",
+    tutorialButton: "Tutorial",
     steps: "Steps",
     handsOn: "Hands-on",
     adjusted: "Adjusted",
@@ -415,6 +416,7 @@ const copy = {
       },
     ],
     dismissIntro: "닫기",
+    tutorialButton: "튜토리얼",
     steps: "단계",
     handsOn: "작업 시간",
     adjusted: "조정됨",
@@ -1697,6 +1699,10 @@ export default function Home() {
     }
   }
 
+  function openIntroBanner() {
+    setShowIntroBanner(true);
+  }
+
   function handleTemplateSelection(value: string) {
     setTemplateId(value);
     setAddOnTemplateIds((current) => current.filter((id) => id !== value));
@@ -2283,15 +2289,78 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#f4f7f3] text-[#17211b]">
+      {showIntroBanner ? (
+        <div
+          aria-labelledby="introTutorialTitle"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-[#17211b]/45 px-4 py-6 sm:py-10"
+          role="dialog"
+        >
+          <section className="max-h-[calc(100vh-3rem)] w-full max-w-4xl overflow-y-auto border border-[#2f6f4e] bg-white p-5 shadow-[0_24px_60px_rgba(23,33,27,0.28)] sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
+                  LabFlow AI
+                </p>
+                <h2
+                  className="mt-1 text-2xl font-semibold text-[#17211b]"
+                  id="introTutorialTitle"
+                >
+                  {t.introTitle}
+                </h2>
+              </div>
+              <button
+                className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                onClick={dismissIntroBanner}
+                type="button"
+              >
+                {t.dismissIntro}
+              </button>
+            </div>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-[#55675c]">
+              {t.introDescription}
+            </p>
+            <ol className="mt-5 grid gap-3 md:grid-cols-3">
+              {t.introSteps.map((step, index) => (
+                <li
+                  className="border border-[#d8e2d4] bg-[#f8faf7] p-4"
+                  key={step.title}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center border border-[#2f6f4e] bg-white text-sm font-semibold text-[#2f6f4e]">
+                      {index + 1}
+                    </span>
+                    <strong className="text-base text-[#17211b]">
+                      {step.title}
+                    </strong>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[#55675c]">
+                    {step.description}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+      ) : null}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-6 sm:px-8 lg:px-10">
         <header className="flex flex-col gap-4 border-b border-[#d8e2d4] pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#4c6b57]">
               LabFlow AI
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-[#142018] sm:text-4xl">
-              {t.appTitle}
-            </h1>
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <h1 className="text-3xl font-semibold text-[#142018] sm:text-4xl">
+                {t.appTitle}
+              </h1>
+              <button
+                className="w-fit border border-[#2f6f4e] bg-white px-3 py-2 text-sm font-semibold text-[#2f6f4e] transition hover:bg-[#eef5ef]"
+                onClick={openIntroBanner}
+                type="button"
+              >
+                {t.tutorialButton}
+              </button>
+            </div>
             <p className="mt-3 max-w-2xl text-base leading-7 text-[#55675c]">
               {t.appDescription}
             </p>
@@ -2342,65 +2411,6 @@ export default function Home() {
             </div>
           </div>
         </header>
-
-        {showIntroBanner ? (
-          <section
-            aria-label={t.introTitle}
-            className="sticky top-3 z-20 border border-[#2f6f4e] bg-white px-5 py-4 shadow-[0_12px_32px_rgba(31,54,39,0.16)]"
-          >
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
-                      LabFlow AI
-                    </p>
-                    <h2 className="mt-1 text-lg font-semibold text-[#17211b]">
-                      {t.introTitle}
-                    </h2>
-                  </div>
-                  <button
-                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] xl:hidden"
-                    onClick={dismissIntroBanner}
-                    type="button"
-                  >
-                    {t.dismissIntro}
-                  </button>
-                </div>
-                <p className="mt-2 max-w-4xl text-sm leading-6 text-[#55675c]">
-                  {t.introDescription}
-                </p>
-                <ol className="mt-4 grid gap-3 md:grid-cols-3">
-                  {t.introSteps.map((step, index) => (
-                    <li
-                      className="border border-[#d8e2d4] bg-[#f8faf7] p-3"
-                      key={step.title}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-7 w-7 items-center justify-center border border-[#2f6f4e] bg-white text-sm font-semibold text-[#2f6f4e]">
-                          {index + 1}
-                        </span>
-                        <strong className="text-sm text-[#17211b]">
-                          {step.title}
-                        </strong>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-[#55675c]">
-                        {step.description}
-                      </p>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <button
-                className="hidden shrink-0 border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] xl:block"
-                onClick={dismissIntroBanner}
-                type="button"
-              >
-                {t.dismissIntro}
-              </button>
-            </div>
-          </section>
-        ) : null}
 
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <aside className="flex flex-col gap-5 border border-[#d8e2d4] bg-white p-5">
