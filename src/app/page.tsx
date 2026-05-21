@@ -124,6 +124,7 @@ type DayPeriod = "AM" | "PM";
 
 const languageStorageKey = "labflow-language";
 const customTemplateStorageKey = "labflow-custom-templates";
+const introBannerStorageKey = "labflow-intro-banner-dismissed";
 const thp1ProtocolSample = `THP-1 Differentiation and Polarization in 2D
 M0 Differentiation
 1. Measure cell density and viability of THP-1 monocytes.
@@ -207,6 +208,15 @@ const copy = {
     appTitle: "Experiment Scheduler",
     appDescription:
       "Build a rule-based research timeline, avoid weekend work, check Google Calendar conflicts, and sync final events.",
+    introTitle: "How to use LabFlow AI",
+    introDescription:
+      "Select an experiment, set the start date and preferred time, review the draft calendar, then sync the approved set to Google Calendar.",
+    introSteps: [
+      "Choose an experiment template",
+      "Set start date and preferred time",
+      "Review, adjust, and sync the draft",
+    ],
+    dismissIntro: "Dismiss",
     steps: "Steps",
     handsOn: "Hands-on",
     adjusted: "Adjusted",
@@ -372,6 +382,15 @@ const copy = {
     appTitle: "실험 스케줄러",
     appDescription:
       "실험 워크플로우를 규칙 기반 일정으로 만들고, 주말 작업과 Google Calendar 충돌을 피한 뒤 최종 일정을 동기화합니다.",
+    introTitle: "사용 방법",
+    introDescription:
+      "실험을 선택하고 시작 날짜와 희망 시간을 정하면 초안 캘린더가 만들어집니다. 확인하고 수정한 뒤 Google Calendar에 동기화하세요.",
+    introSteps: [
+      "실험 템플릿 선택",
+      "시작 날짜와 희망 시간 설정",
+      "초안 확인, 수정 후 동기화",
+    ],
+    dismissIntro: "닫기",
     steps: "단계",
     handsOn: "작업 시간",
     adjusted: "조정됨",
@@ -884,6 +903,14 @@ function getInitialLanguage(): Language {
   return readBrowserStorage(languageStorageKey) === "ko" ? "ko" : "en";
 }
 
+function getInitialIntroBannerVisibility() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  return window.localStorage.getItem(introBannerStorageKey) !== "true";
+}
+
 function createTemplateDraftStep(): TemplateDraftStep {
   return {
     id: createStableClientId("step"),
@@ -1270,6 +1297,9 @@ async function fetchCalendarConflicts(
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [showIntroBanner, setShowIntroBanner] = useState(
+    getInitialIntroBannerVisibility,
+  );
   const [customTemplates, setCustomTemplates] = useState<ExperimentTemplate[]>([]);
   const [customTemplatesLoaded, setCustomTemplatesLoaded] = useState(false);
   const [templateBuilder, setTemplateBuilder] = useState<TemplateBuilderState>(
@@ -1633,6 +1663,14 @@ export default function Home() {
   function handleLanguageSelection(nextLanguage: Language) {
     setLanguage(nextLanguage);
     writeBrowserStorage(languageStorageKey, nextLanguage);
+  }
+
+  function dismissIntroBanner() {
+    setShowIntroBanner(false);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(introBannerStorageKey, "true");
+    }
   }
 
   function handleTemplateSelection(value: string) {
@@ -2280,6 +2318,44 @@ export default function Home() {
             </div>
           </div>
         </header>
+
+        {showIntroBanner ? (
+          <section
+            aria-label={t.introTitle}
+            className="border border-[#bfd0c4] bg-white px-5 py-4"
+          >
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-[#17211b]">
+                  {t.introTitle}
+                </h2>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#55675c]">
+                  {t.introDescription}
+                </p>
+                <ol className="mt-3 grid gap-2 text-sm text-[#405347] sm:grid-cols-3">
+                  {t.introSteps.map((step, index) => (
+                    <li
+                      className="border border-[#d8e2d4] bg-[#f8faf7] px-3 py-2"
+                      key={step}
+                    >
+                      <span className="mr-2 font-semibold text-[#2f6f4e]">
+                        {index + 1}
+                      </span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <button
+                className="self-start border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                onClick={dismissIntroBanner}
+                type="button"
+              >
+                {t.dismissIntro}
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <aside className="flex flex-col gap-5 border border-[#d8e2d4] bg-white p-5">
