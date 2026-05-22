@@ -1450,6 +1450,26 @@ export default function Home() {
   );
   const canGenerateSchedule = Boolean(template && startDate && workStart);
 
+  useEffect(() => {
+    if (!showIntroBanner) {
+      return;
+    }
+
+    function handleTutorialKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setShowIntroBanner(false);
+        setTutorialPage(0);
+        window.localStorage.setItem(introBannerStorageKey, "true");
+      }
+    }
+
+    window.addEventListener("keydown", handleTutorialKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleTutorialKeyDown);
+    };
+  }, [showIntroBanner]);
+
   const schedule = useMemo<ScheduledStep[]>(() => {
     if (!template || !startDate || !workStart) {
       return [];
@@ -2537,6 +2557,21 @@ export default function Home() {
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
                   {t.tutorialStepLabel} {tutorialPage + 1} / {t.introPages.length}
                 </p>
+                <div className="mt-3 flex gap-2">
+                  {t.introPages.map((page, index) => (
+                    <button
+                      aria-label={`${t.tutorialStepLabel} ${index + 1}`}
+                      className={`h-2.5 flex-1 border transition ${
+                        tutorialPage === index
+                          ? "border-[#2f6f4e] bg-[#2f6f4e]"
+                          : "border-[#bfd0c4] bg-white hover:bg-[#eef5ef]"
+                      }`}
+                      key={page.title}
+                      onClick={() => setTutorialPage(index)}
+                      type="button"
+                    />
+                  ))}
+                </div>
                 <h3 className="mt-2 text-xl font-semibold text-[#17211b]">
                   {currentTutorialPage.title}
                 </h3>
