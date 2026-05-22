@@ -727,6 +727,27 @@ function formatWarning(
   return messages[warning];
 }
 
+function getCategoryAccent(category: Step["category"]) {
+  if (category === "Assay") {
+    return {
+      bar: "bg-[#247a7a]",
+      chip: "border-[#b9d6d3] bg-[#eef8f7] text-[#1d6262]",
+    };
+  }
+
+  if (category === "Incubation") {
+    return {
+      bar: "bg-[#8a6f2a]",
+      chip: "border-[#ddd2a6] bg-[#faf6df] text-[#6d571e]",
+    };
+  }
+
+  return {
+    bar: "bg-[#2f6f4e]",
+    chip: "border-[#c8d9ce] bg-[#eef5ef] text-[#2f6f4e]",
+  };
+}
+
 function formatDateInput(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -2387,7 +2408,7 @@ export default function Home() {
           className="fixed inset-0 z-50 flex items-start justify-center bg-[#17211b]/45 px-4 py-4 sm:py-8"
           role="dialog"
         >
-          <section className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto border border-[#2f6f4e] bg-white p-5 shadow-[0_24px_60px_rgba(23,33,27,0.28)] sm:p-6">
+          <section className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto border border-[#2f6f4e] bg-[#fbfdf9] p-5 shadow-[0_24px_60px_rgba(23,33,27,0.28)] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
@@ -2412,10 +2433,10 @@ export default function Home() {
               {t.introDescription}
             </p>
             <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+              <div className="border border-[#d8e2d4] bg-white p-4 shadow-[0_8px_24px_rgba(31,54,39,0.06)]">
                 {tutorialPage === 0 ? (
                   <div className="grid gap-3 text-xs text-[#405347]">
-                    <div className="border-2 border-[#2f6f4e] bg-white p-3">
+                    <div className="border-2 border-[#2f6f4e] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.experimentTemplate}
                       </span>
@@ -2423,7 +2444,7 @@ export default function Home() {
                         THP-1 M2 Polarization
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.planningOptions}
                       </span>
@@ -2431,7 +2452,7 @@ export default function Home() {
                         {t.planningOptionsDescription}
                       </p>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.advancedTemplateTools}
                       </span>
@@ -2443,7 +2464,7 @@ export default function Home() {
                 ) : null}
                 {tutorialPage === 1 ? (
                   <div className="grid gap-3 text-xs text-[#405347]">
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.startDate}
                       </span>
@@ -2451,7 +2472,7 @@ export default function Home() {
                         2026-05-14
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.preferredStartTime}
                       </span>
@@ -2464,7 +2485,7 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.avoidWeekendWork}
                       </span>
@@ -2479,7 +2500,7 @@ export default function Home() {
                     <div className="grid grid-cols-2 gap-2">
                       {["May 14", "May 15", "May 18", "May 20"].map((date, index) => (
                         <div
-                          className="min-h-28 border border-[#d8e2d4] bg-white p-2"
+                          className="min-h-28 border border-[#d8e2d4] bg-[#fbfdf9] p-2"
                           key={date}
                         >
                           <span className="font-semibold text-[#2f6f4e]">
@@ -2487,12 +2508,13 @@ export default function Home() {
                           </span>
                           {index < 3 ? (
                             <div
-                              className={`mt-3 border p-2 ${
+                              className={`relative mt-3 border bg-white p-2 pl-3 ${
                                 index === 1
                                   ? "border-[#2f6f4e] bg-[#eef5ef]"
                                   : "border-[#d8e2d4]"
                               }`}
                             >
+                              <span className="absolute bottom-0 left-0 top-0 w-1 bg-[#2f6f4e]" />
                               <span className="block font-semibold text-[#17211b]">
                                 {index === 0
                                   ? "PMA Treatment"
@@ -2508,7 +2530,7 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    <div className="border-2 border-[#2f6f4e] bg-white p-3">
+                    <div className="border-2 border-[#2f6f4e] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.editEvent}
                       </span>
@@ -2528,7 +2550,7 @@ export default function Home() {
                 ) : null}
                 {tutorialPage === 3 ? (
                   <div className="grid gap-3 text-xs text-[#405347] md:grid-cols-[0.8fr_1fr]">
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.googleCalendar}
                       </span>
@@ -2539,7 +2561,7 @@ export default function Home() {
                         {t.refreshCalendarConflicts}
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-white p-3">
+                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
                       <span className="font-semibold text-[#26382d]">
                         {t.generatedTimeline}
                       </span>
@@ -2553,7 +2575,7 @@ export default function Home() {
                   </div>
                 ) : null}
               </div>
-              <div className="flex flex-col">
+              <div className="flex flex-col border border-[#d8e2d4] bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
                   {t.tutorialStepLabel} {tutorialPage + 1} / {t.introPages.length}
                 </p>
@@ -3225,8 +3247,8 @@ export default function Home() {
             </div>
           </aside>
 
-          <section className="border border-[#d8e2d4] bg-white">
-            <div className="flex flex-col gap-3 border-b border-[#d8e2d4] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <section className="border border-[#d8e2d4] bg-white shadow-[0_10px_30px_rgba(31,54,39,0.05)]">
+            <div className="flex flex-col gap-3 border-b border-[#d8e2d4] bg-[#fbfdf9] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold text-[#17211b]">{t.generatedTimeline}</h2>
                 <p className="text-sm text-[#66756b]">{t.previewBeforeCalendar}</p>
@@ -3242,7 +3264,7 @@ export default function Home() {
                 <button
                   onClick={handleCalendarSync}
                   disabled={!canGenerateSchedule || isSyncing || isDeletingSync}
-                  className="w-full border border-[#2f6f4e] bg-[#2f6f4e] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b] sm:w-auto"
+                  className="w-full border border-[#245e43] bg-[#245e43] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(36,94,67,0.22)] transition hover:bg-[#1d4d37] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b] disabled:shadow-none sm:w-auto"
                 >
                   {isSyncing ? t.syncingCalendar : t.prepareCalendarSync}
                 </button>
@@ -3259,7 +3281,7 @@ export default function Home() {
 
             {canGenerateSchedule ? (
               <div className="space-y-5 p-5">
-                <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
+                <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <h3 className="text-base font-semibold text-[#17211b]">
@@ -3314,7 +3336,7 @@ export default function Home() {
                             : "border-[#d8e2d4]"
                         }`}
                       >
-                        <div className="border-b border-[#d8e2d4] px-3 py-2">
+                        <div className="border-b border-[#d8e2d4] bg-white px-3 py-2">
                           <p className="text-sm font-semibold text-[#2f6f4e]">
                             {formatDate(new Date(`${dateKey}T00:00:00`), language)}
                           </p>
@@ -3322,6 +3344,7 @@ export default function Home() {
                         <div className="space-y-2 p-3">
                           {groupedDraftEvents[dateKey].map((event) => {
                             const movementDetails = getMovementDetails(event);
+                            const categoryAccent = getCategoryAccent(event.category);
 
                             return (
                               <button
@@ -3341,12 +3364,15 @@ export default function Home() {
                                   );
                                   dragEvent.dataTransfer.effectAllowed = "move";
                                 }}
-                                className={`w-full border px-3 py-2 text-left transition ${
+                                className={`relative w-full border py-2 pl-4 pr-3 text-left shadow-[0_4px_12px_rgba(31,54,39,0.04)] transition ${
                                   selectedEventId === event.id
                                     ? "border-[#2f6f4e] bg-[#eef5ef]"
                                     : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
                                 }`}
                               >
+                                <span
+                                  className={`absolute bottom-0 left-0 top-0 w-1 ${categoryAccent.bar}`}
+                                />
                                 <span className="block text-xs font-semibold text-[#2f6f4e]">
                                   {formatTime(event.date, language)} ·{" "}
                                   {formatDuration(event.durationMinutes, language)}
@@ -3354,7 +3380,9 @@ export default function Home() {
                                 <span className="mt-1 block text-sm font-semibold text-[#17211b]">
                                   {event.name}
                                 </span>
-                                <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5 text-xs text-[#55675c]">
+                                <span
+                                  className={`mt-1 inline-block border px-2 py-0.5 text-xs font-medium ${categoryAccent.chip}`}
+                                >
                                   {t.categories[event.category]}
                                 </span>
                                 {movementDetails.moved && movementDetails.originalDate ? (
