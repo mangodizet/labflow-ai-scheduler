@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -730,21 +730,21 @@ function formatWarning(
 function getCategoryAccent(category: Step["category"]) {
   if (category === "Assay") {
     return {
-      bar: "bg-[#247a7a]",
-      chip: "border-[#b9d6d3] bg-[#eef8f7] text-[#1d6262]",
+      bar: "bg-lab-amber-600",
+      chip: "border-lab-amber-100 bg-lab-amber-50 text-lab-amber-600",
     };
   }
 
   if (category === "Incubation") {
     return {
-      bar: "bg-[#8a6f2a]",
-      chip: "border-[#ddd2a6] bg-[#faf6df] text-[#6d571e]",
+      bar: "bg-lab-indigo-600",
+      chip: "border-lab-indigo-100 bg-lab-indigo-50 text-lab-indigo-600",
     };
   }
 
   return {
-    bar: "bg-[#2f6f4e]",
-    chip: "border-[#c8d9ce] bg-[#eef5ef] text-[#2f6f4e]",
+    bar: "bg-lab-teal-600",
+    chip: "border-lab-teal-100 bg-lab-teal-50 text-lab-teal-700",
   };
 }
 
@@ -2400,129 +2400,129 @@ export default function Home() {
   const isLastTutorialPage = tutorialPage === t.introPages.length - 1;
 
   return (
-    <main className="min-h-screen bg-[#f4f7f3] text-[#17211b]">
+    <main className="min-h-screen bg-precision-grid bg-lab-steel-50 text-lab-steel-900 pb-12">
       {showIntroBanner ? (
         <div
           aria-labelledby="introTutorialTitle"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-start justify-center bg-[#17211b]/45 px-4 py-4 sm:py-8"
+          className="fixed inset-0 z-50 flex items-start justify-center bg-lab-steel-900/60 backdrop-blur-md px-4 py-4 sm:py-8"
           role="dialog"
         >
-          <section className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto border border-[#2f6f4e] bg-[#fbfdf9] p-5 shadow-[0_24px_60px_rgba(23,33,27,0.28)] sm:p-6">
+          <section className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto border border-lab-steel-200 bg-white p-6 shadow-2xl rounded-2xl sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
+                <p className="text-xs font-bold uppercase tracking-[0.15em] text-lab-teal-600 bg-lab-teal-50 px-2 py-0.5 rounded border border-lab-teal-100 w-fit">
                   LabFlow AI
                 </p>
                 <h2
-                  className="mt-1 text-2xl font-semibold text-[#17211b]"
+                  className="mt-2 text-2xl font-bold text-lab-steel-900 tracking-tight"
                   id="introTutorialTitle"
                 >
                   {t.introTitle}
                 </h2>
               </div>
               <button
-                className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                className="border border-lab-steel-200 bg-white hover:bg-lab-steel-50 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-lab-steel-600 transition"
                 onClick={dismissIntroBanner}
                 type="button"
               >
                 {t.dismissIntro}
               </button>
             </div>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-[#55675c]">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-lab-steel-600">
               {t.introDescription}
             </p>
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="border border-[#d8e2d4] bg-white p-4 shadow-[0_8px_24px_rgba(31,54,39,0.06)]">
+            <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="border border-lab-steel-200 bg-white p-5 rounded-xl shadow-sm">
                 {tutorialPage === 0 ? (
-                  <div className="grid gap-3 text-xs text-[#405347]">
-                    <div className="border-2 border-[#2f6f4e] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                  <div className="grid gap-3 text-xs text-lab-steel-600">
+                    <div className="border border-lab-teal-200 bg-lab-teal-50/20 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-teal-700 block">
                         {t.experimentTemplate}
                       </span>
-                      <div className="mt-2 border border-[#bfd0c4] px-3 py-2">
+                      <div className="mt-2 border border-lab-teal-100 bg-white px-3 py-2 rounded font-medium">
                         THP-1 M2 Polarization
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900">
                         {t.planningOptions}
                       </span>
-                      <p className="mt-1 text-[#66756b]">
+                      <p className="mt-1 text-lab-steel-600">
                         {t.planningOptionsDescription}
                       </p>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900">
                         {t.advancedTemplateTools}
                       </span>
-                      <p className="mt-1 text-[#66756b]">
+                      <p className="mt-1 text-lab-steel-600">
                         {t.advancedTemplateToolsDescription}
                       </p>
                     </div>
                   </div>
                 ) : null}
                 {tutorialPage === 1 ? (
-                  <div className="grid gap-3 text-xs text-[#405347]">
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                  <div className="grid gap-3 text-xs text-lab-steel-600">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900">
                         {t.startDate}
                       </span>
-                      <div className="mt-2 border-2 border-[#2f6f4e] px-3 py-2">
+                      <div className="mt-2 border border-lab-teal-600/30 bg-white px-3 py-2 rounded text-lab-teal-700 font-mono font-semibold">
                         2026-05-14
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900">
                         {t.preferredStartTime}
                       </span>
-                      <div className="mt-2 grid grid-cols-[auto_1fr] gap-2">
-                        <span className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-white">
+                      <div className="mt-2 grid grid-cols-[auto_1fr] gap-2 font-mono">
+                        <span className="border border-lab-teal-600 bg-lab-teal-600 px-3 py-2 text-white rounded font-bold">
                           AM
                         </span>
-                        <span className="border-2 border-[#2f6f4e] px-3 py-2">
+                        <span className="border border-lab-steel-200 bg-white px-3 py-2 rounded text-lab-steel-900 font-semibold">
                           09:00
                         </span>
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg flex items-center justify-between">
+                      <span className="font-semibold text-lab-steel-900">
                         {t.avoidWeekendWork}
                       </span>
-                      <span className="ml-2 inline-block border border-[#2f6f4e] px-2 py-1 text-[#2f6f4e]">
+                      <span className="inline-block bg-lab-teal-50 text-lab-teal-700 border border-lab-teal-100 rounded px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wider font-mono">
                         ON
                       </span>
                     </div>
                   </div>
                 ) : null}
                 {tutorialPage === 2 ? (
-                  <div className="grid gap-3 text-xs text-[#405347] md:grid-cols-[1fr_0.8fr]">
+                  <div className="grid gap-3 text-xs text-lab-steel-600 md:grid-cols-[1fr_0.8fr]">
                     <div className="grid grid-cols-2 gap-2">
                       {["May 14", "May 15", "May 18", "May 20"].map((date, index) => (
                         <div
-                          className="min-h-28 border border-[#d8e2d4] bg-[#fbfdf9] p-2"
+                          className="min-h-28 border border-lab-steel-200 bg-lab-steel-50 p-2 rounded-lg"
                           key={date}
                         >
-                          <span className="font-semibold text-[#2f6f4e]">
+                          <span className="font-mono font-bold text-lab-teal-700 text-[10px]">
                             {date}
                           </span>
                           {index < 3 ? (
                             <div
-                              className={`relative mt-3 border bg-white p-2 pl-3 ${
+                              className={`relative mt-2 border rounded p-1.5 pl-2.5 bg-white text-[10px] ${
                                 index === 1
-                                  ? "border-[#2f6f4e] bg-[#eef5ef]"
-                                  : "border-[#d8e2d4]"
+                                  ? "border-lab-teal-600 bg-lab-teal-50/50"
+                                  : "border-lab-steel-200"
                               }`}
                             >
-                              <span className="absolute bottom-0 left-0 top-0 w-1 bg-[#2f6f4e]" />
-                              <span className="block font-semibold text-[#17211b]">
+                              <span className="absolute bottom-0 left-0 top-0 w-0.5 bg-lab-teal-600" />
+                              <span className="block font-semibold text-lab-steel-900 truncate">
                                 {index === 0
                                   ? "PMA Treatment"
                                   : index === 1
                                     ? "Wash + Resting"
                                     : "IL4 / IL13"}
                               </span>
-                              <span className="mt-1 inline-block border border-[#d8e2d4] px-2 py-0.5">
+                              <span className="mt-1 inline-block border border-lab-steel-200 px-1 py-0.2 rounded text-[9px]">
                                 {t.categories["Hands-on"]}
                               </span>
                             </div>
@@ -2530,18 +2530,18 @@ export default function Home() {
                         </div>
                       ))}
                     </div>
-                    <div className="border-2 border-[#2f6f4e] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900 block border-b border-lab-steel-200 pb-1.5">
                         {t.editEvent}
                       </span>
                       <div className="mt-3 space-y-2">
-                        <div className="border border-[#bfd0c4] px-3 py-2">
+                        <div className="border border-lab-steel-200 bg-white rounded px-2.5 py-1.5 font-medium">
                           {t.eventName}
                         </div>
-                        <div className="border border-[#bfd0c4] px-3 py-2">
+                        <div className="border border-lab-steel-200 bg-white rounded px-2.5 py-1.5 font-medium">
                           {t.eventDate}
                         </div>
-                        <div className="border border-[#bfd0c4] px-3 py-2">
+                        <div className="border border-lab-steel-200 bg-white rounded px-2.5 py-1.5 font-medium">
                           {t.eventTime}
                         </div>
                       </div>
@@ -2549,67 +2549,69 @@ export default function Home() {
                   </div>
                 ) : null}
                 {tutorialPage === 3 ? (
-                  <div className="grid gap-3 text-xs text-[#405347] md:grid-cols-[0.8fr_1fr]">
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                  <div className="grid gap-3 text-xs text-lab-steel-600 md:grid-cols-[0.8fr_1fr]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900">
                         {t.googleCalendar}
                       </span>
-                      <div className="mt-3 border border-[#bfd0c4] px-3 py-2 text-[#2f6f4e]">
+                      <div className="mt-3 border border-lab-steel-200 bg-white px-3 py-2 text-lab-teal-700 font-semibold rounded text-center">
                         {userEmail ? `${t.connectedAs} ${userEmail}` : t.connectGoogle}
                       </div>
-                      <div className="mt-2 border border-[#bfd0c4] px-3 py-2">
+                      <div className="mt-2 border border-lab-steel-200 bg-white px-3 py-2 rounded text-center cursor-pointer hover:bg-lab-steel-50">
                         {t.refreshCalendarConflicts}
                       </div>
                     </div>
-                    <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-3">
-                      <span className="font-semibold text-[#26382d]">
+                    <div className="border border-lab-steel-200 bg-lab-steel-50 p-3 rounded-lg">
+                      <span className="font-semibold text-lab-steel-900 block border-b border-lab-steel-200 pb-1.5">
                         {t.generatedTimeline}
                       </span>
-                      <div className="mt-3 border-2 border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-center font-semibold text-white">
+                      <div className="mt-3 bg-lab-teal-600 px-3 py-2 text-center font-bold text-white rounded shadow-sm hover:bg-lab-teal-700 transition cursor-pointer">
                         {t.prepareCalendarSync}
                       </div>
-                      <div className="mt-2 border border-[#bfd0c4] px-3 py-2 text-center">
+                      <div className="mt-2 border border-lab-steel-200 bg-white px-3 py-2 rounded text-center hover:bg-lab-steel-50 transition cursor-pointer">
                         {t.deleteCalendarSync}
                       </div>
                     </div>
                   </div>
                 ) : null}
               </div>
-              <div className="flex flex-col border border-[#d8e2d4] bg-white p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#2f6f4e]">
-                  {t.tutorialStepLabel} {tutorialPage + 1} / {t.introPages.length}
-                </p>
-                <div className="mt-3 flex gap-2">
-                  {t.introPages.map((page, index) => (
-                    <button
-                      aria-label={`${t.tutorialStepLabel} ${index + 1}`}
-                      className={`h-2.5 flex-1 border transition ${
-                        tutorialPage === index
-                          ? "border-[#2f6f4e] bg-[#2f6f4e]"
-                          : "border-[#bfd0c4] bg-white hover:bg-[#eef5ef]"
-                      }`}
-                      key={page.title}
-                      onClick={() => setTutorialPage(index)}
-                      type="button"
-                    />
-                  ))}
+              <div className="flex flex-col border border-lab-steel-200 bg-white p-5 rounded-xl shadow-sm justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-lab-teal-600">
+                    {t.tutorialStepLabel} {tutorialPage + 1} / {t.introPages.length}
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    {t.introPages.map((page, index) => (
+                      <button
+                        aria-label={`${t.tutorialStepLabel} ${index + 1}`}
+                        className={`h-1.5 flex-1 rounded-full transition ${
+                          tutorialPage === index
+                            ? "bg-lab-teal-600"
+                            : "bg-lab-steel-100 hover:bg-lab-steel-200"
+                        }`}
+                        key={page.title}
+                        onClick={() => setTutorialPage(index)}
+                        type="button"
+                      />
+                    ))}
+                  </div>
+                  <h3 className="mt-4 text-xl font-bold tracking-tight text-lab-steel-900">
+                    {currentTutorialPage.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-lab-steel-600">
+                    {currentTutorialPage.description}
+                  </p>
+                  <ul className="mt-4 space-y-2 text-sm leading-6 text-lab-steel-700">
+                    {currentTutorialPage.callouts.map((callout) => (
+                      <li className="border-l-2 border-lab-teal-600 pl-3.5" key={callout}>
+                        {callout}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <h3 className="mt-2 text-xl font-semibold text-[#17211b]">
-                  {currentTutorialPage.title}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-[#55675c]">
-                  {currentTutorialPage.description}
-                </p>
-                <ul className="mt-4 space-y-2 text-sm leading-6 text-[#405347]">
-                  {currentTutorialPage.callouts.map((callout) => (
-                    <li className="border-l-2 border-[#2f6f4e] pl-3" key={callout}>
-                      {callout}
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#d8e2d4] pt-4">
+                <div className="mt-6 flex items-center justify-between gap-3 border-t border-lab-steel-200 pt-4">
                   <button
-                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:text-[#8a968e]"
+                    className="border border-lab-steel-200 bg-white px-4 py-2 rounded-lg text-sm font-semibold text-lab-steel-700 transition hover:bg-lab-steel-50 disabled:cursor-not-allowed disabled:text-lab-steel-400 disabled:bg-lab-steel-50"
                     disabled={isFirstTutorialPage}
                     onClick={() => moveTutorialPage(-1)}
                     type="button"
@@ -2618,7 +2620,7 @@ export default function Home() {
                   </button>
                   {isLastTutorialPage ? (
                     <button
-                      className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                      className="bg-lab-teal-600 px-4 py-2 rounded-lg text-sm font-semibold text-white transition hover:bg-lab-teal-700 shadow-sm"
                       onClick={dismissIntroBanner}
                       type="button"
                     >
@@ -2626,7 +2628,7 @@ export default function Home() {
                     </button>
                   ) : (
                     <button
-                      className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                      className="bg-lab-teal-600 px-4 py-2 rounded-lg text-sm font-semibold text-white transition hover:bg-lab-teal-700 shadow-sm"
                       onClick={() => moveTutorialPage(1)}
                       type="button"
                     >
@@ -2640,46 +2642,58 @@ export default function Home() {
         </div>
       ) : null}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-6 sm:px-8 lg:px-10">
-        <header className="flex flex-col gap-4 border-b border-[#d8e2d4] pb-5 lg:flex-row lg:items-end lg:justify-between">
+        <header className="flex flex-col gap-5 border-b border-lab-steel-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#4c6b57]">
-              LabFlow AI
-            </p>
-            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <h1 className="text-3xl font-semibold text-[#142018] sm:text-4xl">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs font-bold tracking-[0.15em] text-lab-teal-600 bg-lab-teal-50 px-2.5 py-0.5 rounded border border-lab-teal-100 uppercase">
+                LabFlow AI
+              </span>
+              <span className="text-[10px] font-mono font-semibold tracking-wider text-lab-steel-600 bg-lab-steel-100 px-2 py-0.5 rounded border border-lab-steel-200">
+                v1.2.0 [STABLE]
+              </span>
+              <div className="flex items-center gap-1.5 border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-emerald-600 tracking-wide uppercase">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-led" />
+                SYSTEM ACTIVE
+              </div>
+            </div>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-lab-steel-900 via-lab-steel-800 to-lab-teal-700 bg-clip-text text-transparent sm:text-4xl">
                 {t.appTitle}
               </h1>
               <button
-                className="w-fit border border-[#2f6f4e] bg-white px-3 py-2 text-sm font-semibold text-[#2f6f4e] transition hover:bg-[#eef5ef]"
+                className="w-fit inline-flex items-center gap-1.5 border border-lab-teal-600/30 bg-white px-3.5 py-1.5 rounded-lg text-xs font-semibold text-lab-teal-700 transition hover:bg-lab-teal-50 hover:border-lab-teal-600 hover:shadow-sm"
                 onClick={openIntroBanner}
                 type="button"
               >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
                 {t.tutorialButton}
               </button>
             </div>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-[#55675c]">
+            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-lab-steel-600">
               {t.appDescription}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <div className="border border-[#d8e2d4] bg-white px-4 py-3">
-              <span className="block text-[#637568]">{t.languageLabel}</span>
-              <div className="mt-2 flex gap-1">
+          <div className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-5 lg:grid-cols-5 w-full lg:w-auto">
+            <div className="border border-lab-steel-200 bg-white rounded-xl p-3 shadow-sm flex flex-col justify-between min-h-[76px]">
+              <span className="block font-semibold text-lab-steel-600">{t.languageLabel}</span>
+              <div className="mt-1.5 inline-flex rounded-lg border border-lab-steel-100 bg-lab-steel-50 p-0.5 w-full">
                 <button
-                  className={`border px-2 py-1 text-xs font-semibold ${
+                  className={`flex-1 rounded-md py-1 text-[10px] font-bold transition-all cursor-pointer ${
                     language === "en"
-                      ? "border-[#2f6f4e] bg-[#2f6f4e] text-white"
-                      : "border-[#d8e2d4] text-[#405347]"
+                      ? "bg-white text-lab-teal-700 shadow-sm border border-lab-steel-100"
+                      : "text-lab-steel-600 hover:text-lab-steel-900"
                   }`}
                   onClick={() => handleLanguageSelection("en")}
                 >
                   EN
                 </button>
                 <button
-                  className={`border px-2 py-1 text-xs font-semibold ${
+                  className={`flex-1 rounded-md py-1 text-[10px] font-bold transition-all cursor-pointer ${
                     language === "ko"
-                      ? "border-[#2f6f4e] bg-[#2f6f4e] text-white"
-                      : "border-[#d8e2d4] text-[#405347]"
+                      ? "bg-white text-lab-teal-700 shadow-sm border border-lab-steel-100"
+                      : "text-lab-steel-600 hover:text-lab-steel-900"
                   }`}
                   onClick={() => handleLanguageSelection("ko")}
                 >
@@ -2687,42 +2701,79 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            <div className="border border-[#d8e2d4] bg-white px-4 py-3">
-              <span className="block text-[#637568]">{t.steps}</span>
-              <strong className="mt-1 block text-2xl">{schedule.length}</strong>
+            <div className="border border-lab-steel-200 bg-white rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group hover:border-lab-teal-600/30 transition-all min-h-[76px]">
+              <div className="flex flex-col">
+                <span className="block font-semibold text-lab-steel-600">{t.steps}</span>
+                <strong className="mt-0.5 block text-2xl font-bold tracking-tight text-lab-steel-900">{schedule.length}</strong>
+              </div>
+              <div className="p-2 bg-lab-teal-50 text-lab-teal-600 rounded-lg group-hover:bg-lab-teal-100 transition-colors">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
             </div>
-            <div className="border border-[#d8e2d4] bg-white px-4 py-3">
-              <span className="block text-[#637568]">{t.handsOn}</span>
-              <strong className="mt-1 block text-2xl">
-                {formatDuration(handsOnMinutes, language)}
-              </strong>
+            <div className="border border-lab-steel-200 bg-white rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group hover:border-lab-indigo-600/30 transition-all min-h-[76px]">
+              <div className="flex flex-col max-w-[calc(100%-2.5rem)]">
+                <span className="block font-semibold text-lab-steel-600 truncate">{t.handsOn}</span>
+                <strong className="mt-0.5 block text-lg font-bold tracking-tight text-lab-steel-900 truncate">
+                  {formatDuration(handsOnMinutes, language)}
+                </strong>
+              </div>
+              <div className="p-2 bg-lab-indigo-50 text-lab-indigo-600 rounded-lg group-hover:bg-lab-indigo-100 transition-colors flex-shrink-0">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
             </div>
-            <div className="border border-[#d8e2d4] bg-white px-4 py-3">
-              <span className="block text-[#637568]">{t.warnings}</span>
-              <strong className="mt-1 block text-2xl">{warningCount}</strong>
+            <div className={`border rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group transition-all min-h-[76px] ${
+              warningCount > 0
+                ? "border-lab-amber-200 bg-lab-amber-50/30 hover:border-lab-amber-500/50"
+                : "border-lab-steel-200 bg-white hover:border-lab-steel-300"
+            }`}>
+              <div className="flex flex-col">
+                <span className="block font-semibold text-lab-steel-600">{t.warnings}</span>
+                <strong className={`mt-0.5 block text-2xl font-bold tracking-tight ${warningCount > 0 ? "text-lab-amber-600" : "text-lab-steel-900"}`}>{warningCount}</strong>
+              </div>
+              <div className={`p-2 rounded-lg transition-colors ${warningCount > 0 ? "bg-lab-amber-100/70 text-lab-amber-600" : "bg-lab-steel-100 text-lab-steel-500 group-hover:bg-lab-steel-200"}`}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
             </div>
-            <div className="border border-[#d8e2d4] bg-white px-4 py-3">
-              <span className="block text-[#637568]">{t.adjusted}</span>
-              <strong className="mt-1 block text-2xl">{shiftedCount}</strong>
+            <div className="border border-lab-steel-200 bg-white rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group hover:border-lab-teal-600/30 transition-all min-h-[76px]">
+              <div className="flex flex-col">
+                <span className="block font-semibold text-lab-steel-600">{t.adjusted}</span>
+                <strong className="mt-0.5 block text-2xl font-bold tracking-tight text-lab-steel-900">{shiftedCount}</strong>
+              </div>
+              <div className="p-2 bg-lab-teal-50 text-lab-teal-600 rounded-lg group-hover:bg-lab-teal-100 transition-colors">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+              </div>
             </div>
           </div>
         </header>
-
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
-          <aside className="flex flex-col gap-5 border border-[#d8e2d4] bg-white p-5">
-            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-              <h2 className="text-sm font-semibold text-[#26382d]">{t.googleCalendar}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#66756b]">
+          <aside className="flex flex-col gap-5 border border-lab-steel-200 bg-white p-5 rounded-2xl shadow-sm h-fit">
+            <div className="border border-lab-steel-200 bg-lab-steel-50/30 p-4 rounded-xl">
+              <h2 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider flex items-center gap-1.5">
+                <svg className="h-4 w-4 text-lab-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
+                </svg>
+                {t.googleCalendar}
+              </h2>
+              <p className="mt-2 text-xs leading-relaxed text-lab-steel-500">
                 {t.googleCalendarDescription}
               </p>
               {userEmail ? (
-                <div className="mt-4 space-y-3">
-                  <p className="border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-medium text-[#2f6f4e]">
-                    {t.connectedAs} {userEmail}
-                  </p>
+                <div className="mt-4 space-y-2.5">
+                  <div className="border border-lab-teal-100 bg-lab-teal-50/30 px-3 py-2 text-xs font-semibold text-lab-teal-700 rounded-lg flex items-center justify-between">
+                    <span className="truncate max-w-[180px]">{t.connectedAs} {userEmail}</span>
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+                  </div>
                   <button
                     onClick={handleSignOut}
-                    className="w-full border border-[#bfd0c4] bg-white px-4 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    className="w-full border border-lab-steel-200 bg-white px-3 py-2 rounded-lg text-xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 hover:text-lab-steel-900 transition cursor-pointer"
                   >
                     {t.disconnect}
                   </button>
@@ -2731,7 +2782,7 @@ export default function Home() {
                       onClick={() =>
                         setCalendarRefreshToken((current) => current + 1)
                       }
-                      className="w-full border border-[#bfd0c4] bg-white px-4 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                      className="w-full border border-lab-steel-200 bg-white px-3 py-2 rounded-lg text-xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 hover:text-lab-steel-900 transition cursor-pointer"
                     >
                       {t.refreshCalendarConflicts}
                     </button>
@@ -2740,25 +2791,28 @@ export default function Home() {
               ) : (
                 <button
                   onClick={handleGoogleConnect}
-                  className="mt-4 w-full border border-[#2f6f4e] bg-white px-4 py-2 text-sm font-semibold text-[#2f6f4e] transition hover:bg-[#eef5ef]"
+                  className="mt-4 w-full border border-lab-teal-600 bg-white px-3 py-2 rounded-lg text-xs font-bold text-lab-teal-700 hover:bg-lab-teal-50/50 hover:border-lab-teal-700 transition shadow-2xs cursor-pointer flex items-center justify-center gap-1.5"
                 >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.529-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1 6.033 1 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/>
+                  </svg>
                   {t.connectGoogle}
                 </button>
               )}
               {authStatus ? (
-                <p className="mt-3 text-sm font-medium text-[#8a4b16]" role="status">
+                <p className="mt-3 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded px-2.5 py-1" role="status">
                   {authStatus}
                 </p>
               ) : null}
               {calendarStatus ? (
-                <p className="mt-3 text-sm font-medium text-[#2f6f4e]" role="status">
+                <p className="mt-3 text-xs font-semibold text-lab-teal-700 bg-lab-teal-50 border border-lab-teal-100 rounded px-2.5 py-1" role="status">
                   {calendarStatus}
                 </p>
               ) : null}
             </div>
 
-            <div>
-              <label className="text-sm font-semibold text-[#26382d]" htmlFor="template">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider" htmlFor="template">
                 {t.experimentTemplate}
               </label>
               <select
@@ -2770,7 +2824,7 @@ export default function Home() {
                 onInput={(event) => {
                   handleTemplateSelection(event.currentTarget.value);
                 }}
-                className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                className="mt-1 w-full border border-lab-steel-200 bg-white px-3 py-2 rounded-lg text-xs outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all font-medium text-lab-steel-800"
               >
                 <option value="">{t.selectExperiment}</option>
                 {allTemplates.map((item) => (
@@ -2779,7 +2833,7 @@ export default function Home() {
                   </option>
                 ))}
               </select>
-              <p className="mt-3 text-sm leading-6 text-[#66756b]">
+              <p className="mt-2 text-xs leading-relaxed text-lab-steel-500">
                 {primaryTemplate
                   ? getTemplateSummary(
                       primaryTemplate.id,
@@ -2789,82 +2843,86 @@ export default function Home() {
                   : t.chooseTemplate}
               </p>
               {primaryTemplate && availableAddOnTemplates.length ? (
-                <details className="mt-4 border border-[#d8e2d4] bg-[#f8faf7] p-3">
-                  <summary className="cursor-pointer text-xs font-semibold text-[#26382d]">
+                <details className="mt-3 border border-lab-steel-200 bg-lab-steel-50/20 rounded-xl overflow-hidden">
+                  <summary className="cursor-pointer text-2xs font-bold text-lab-steel-900 p-3 hover:bg-lab-steel-50 flex items-center justify-between uppercase tracking-wider">
                     {t.planningOptions}
                   </summary>
-                  <p className="mt-1 text-xs leading-5 text-[#66756b]">
-                    {t.planningOptionsDescription}
-                  </p>
-                  <h3 className="mt-3 text-xs font-semibold text-[#26382d]">
-                    {t.addOnExperiments}
-                  </h3>
-                  <p className="mt-1 text-xs leading-5 text-[#66756b]">
-                    {t.addOnExperimentsDescription}
-                  </p>
-                  <div className="mt-3">
-                    <p className="text-xs font-semibold text-[#26382d]">
-                      {t.addOnPlacement}
+                  <div className="p-3 border-t border-lab-steel-200 bg-white space-y-3.5">
+                    <p className="text-xs leading-relaxed text-lab-steel-500">
+                      {t.planningOptionsDescription}
                     </p>
-                    <div className="mt-2 grid grid-cols-2 border border-[#bfd0c4] bg-white">
-                      {([
-                        ["append", t.appendAddOns],
-                        ["parallel", t.parallelAddOns],
-                      ] as const).map(([mode, label]) => (
-                        <button
-                          key={mode}
-                          className={`px-2 py-2 text-xs font-semibold transition ${
-                            addOnPlacementMode === mode
-                              ? "bg-[#2f6f4e] text-white"
-                              : "text-[#405347] hover:bg-[#eef5ef]"
-                          }`}
-                          onClick={() => handleAddOnPlacementModeSelection(mode)}
-                          type="button"
+                    <div className="border-t border-lab-steel-100 pt-3">
+                      <h3 className="text-xs font-bold text-lab-steel-800">
+                        {t.addOnExperiments}
+                      </h3>
+                      <p className="mt-1 text-[11px] leading-relaxed text-lab-steel-500">
+                        {t.addOnExperimentsDescription}
+                      </p>
+                    </div>
+                    <div className="bg-lab-steel-50/50 p-2.5 rounded-lg border border-lab-steel-100">
+                      <p className="text-[11px] font-bold text-lab-steel-700">
+                        {t.addOnPlacement}
+                      </p>
+                      <div className="mt-1.5 grid grid-cols-2 border border-lab-steel-200 bg-white rounded-lg p-0.5">
+                        {([
+                          ["append", t.appendAddOns],
+                          ["parallel", t.parallelAddOns],
+                        ] as const).map(([mode, label]) => (
+                          <button
+                            key={mode}
+                            className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                              addOnPlacementMode === mode
+                                ? "bg-lab-teal-600 text-white shadow-sm"
+                                : "text-lab-steel-600 hover:bg-lab-steel-50"
+                            }`}
+                            onClick={() => handleAddOnPlacementModeSelection(mode)}
+                            type="button"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                      {availableAddOnTemplates.map((item) => (
+                        <label
+                          key={item.id}
+                          className="flex items-start gap-2.5 border border-lab-steel-200 bg-white p-2.5 rounded-lg text-xs text-lab-steel-700 cursor-pointer hover:border-lab-steel-300 transition-colors"
                         >
-                          {label}
-                        </button>
+                          <input
+                            checked={addOnTemplateIds.includes(item.id)}
+                            className="mt-0.5 h-3.5 w-3.5 rounded accent-lab-teal-600 border-lab-steel-300"
+                            onChange={(event) =>
+                              handleAddOnTemplateSelection(
+                                item.id,
+                                event.currentTarget.checked,
+                              )
+                            }
+                            type="checkbox"
+                          />
+                          <span className="flex-1 min-w-0">
+                            <span className="block font-semibold text-lab-steel-900 truncate">
+                              {item.name}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] leading-normal text-lab-steel-500">
+                              {getTemplateSummary(item.id, language, item.summary)}
+                            </span>
+                          </span>
+                        </label>
                       ))}
                     </div>
+                    {addOnTemplates.length ? (
+                      <div className="mt-3 border-t border-lab-steel-100 pt-2.5 text-2xs font-bold text-lab-teal-700 bg-lab-teal-50/20 px-2 py-1.5 rounded border border-lab-teal-100/50 truncate">
+                        {t.combinedSet}: {template?.name}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="mt-3 space-y-2">
-                    {availableAddOnTemplates.map((item) => (
-                      <label
-                        key={item.id}
-                        className="flex items-start gap-2 border border-[#d8e2d4] bg-white p-2 text-xs text-[#405347]"
-                      >
-                        <input
-                          checked={addOnTemplateIds.includes(item.id)}
-                          className="mt-0.5 h-4 w-4 accent-[#2f6f4e]"
-                          onChange={(event) =>
-                            handleAddOnTemplateSelection(
-                              item.id,
-                              event.currentTarget.checked,
-                            )
-                          }
-                          type="checkbox"
-                        />
-                        <span>
-                          <span className="block font-semibold text-[#17211b]">
-                            {item.name}
-                          </span>
-                          <span className="mt-1 block leading-5 text-[#66756b]">
-                            {getTemplateSummary(item.id, language, item.summary)}
-                          </span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  {addOnTemplates.length ? (
-                    <p className="mt-3 border-t border-[#d8e2d4] pt-2 text-xs font-semibold text-[#2f6f4e]">
-                      {t.combinedSet}: {template?.name}
-                    </p>
-                  ) : null}
                 </details>
               ) : null}
               {isCustomTemplateSelected ? (
-                <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="mt-2.5 grid grid-cols-2 gap-2">
                   <button
-                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                    className="border border-lab-steel-200 bg-white py-2 rounded-lg text-xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 hover:text-lab-steel-900 transition cursor-pointer"
                     disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={editSelectedTemplate}
                     type="button"
@@ -2872,7 +2930,7 @@ export default function Home() {
                     {t.editSelectedTemplate}
                   </button>
                   <button
-                    className="border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#8a4b16] transition hover:bg-[#fff7ed] disabled:cursor-not-allowed disabled:bg-[#f1f4ef] disabled:text-[#8a968e]"
+                    className="border border-red-200 bg-white py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition cursor-pointer"
                     disabled={isSavingTemplate || isDeletingTemplate}
                     onClick={deleteSelectedTemplate}
                     type="button"
@@ -2883,211 +2941,213 @@ export default function Home() {
               ) : null}
             </div>
 
-            <details className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-[#26382d]">
+            <details className="border border-lab-steel-200 bg-lab-steel-50/20 rounded-xl overflow-hidden">
+              <summary className="cursor-pointer text-2xs font-bold text-lab-steel-900 p-3 hover:bg-lab-steel-50 flex items-center justify-between uppercase tracking-wider">
                 {t.advancedTemplateTools}
               </summary>
-              <p className="mt-2 text-sm leading-6 text-[#66756b]">
-                {t.advancedTemplateToolsDescription}
-              </p>
-              <div className="mt-4 border border-[#d8e2d4] bg-white p-3">
-                <h2 className="text-sm font-semibold text-[#26382d]">
-                  {t.protocolQuickBuilder}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-[#66756b]">
-                  {t.protocolQuickBuilderDescription}
+              <div className="p-3 border-t border-lab-steel-200 bg-white space-y-4">
+                <p className="text-xs leading-relaxed text-lab-steel-500">
+                  {t.advancedTemplateToolsDescription}
                 </p>
-                <label className="mt-3 block text-xs font-semibold text-[#405347]">
-                  {t.protocolText}
-                  <textarea
-                    className="mt-1 min-h-44 w-full resize-y border border-[#bfd0c4] bg-white px-3 py-2 text-sm leading-6 outline-none focus:border-[#2f6f4e]"
-                    value={protocolText}
-                    onChange={(event) => setProtocolText(event.currentTarget.value)}
-                  />
-                </label>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
-                    onClick={() => setProtocolText(thp1ProtocolSample)}
-                    type="button"
-                  >
-                    {t.loadPdfSample}
-                  </button>
-                  <button
-                    className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
-                    onClick={generateTemplateDraftFromProtocol}
-                    type="button"
-                  >
-                    {t.generateDraftFromProtocol}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 border border-[#d8e2d4] bg-white p-3">
-                <h2 className="text-sm font-semibold text-[#26382d]">
-                  {t.templateBuilder}
-                </h2>
-                <div className="mt-3 space-y-3">
-                <label className="block text-xs font-semibold text-[#405347]">
-                  {t.templateName}
-                  <input
-                    className="mt-1 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
-                    value={templateBuilder.name}
-                    onChange={(event) =>
-                      updateTemplateBuilder({ name: event.currentTarget.value })
-                    }
-                  />
-                </label>
-                <label className="block text-xs font-semibold text-[#405347]">
-                  {t.templateSummary}
-                  <textarea
-                    className="mt-1 min-h-20 w-full resize-y border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
-                    value={templateBuilder.summary}
-                    onChange={(event) =>
-                      updateTemplateBuilder({ summary: event.currentTarget.value })
-                    }
-                  />
-                </label>
-                <div className="space-y-3">
-                  {templateBuilder.steps.map((step, index) => (
-                    <div key={step.id} className="border border-[#d8e2d4] bg-white p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-[#2f6f4e]">
-                          {t.day} {index + 1}
-                        </span>
-                        <button
-                          className="border border-[#d8e2d4] px-2 py-1 text-xs font-semibold text-[#66756b] transition hover:bg-[#eef5ef]"
-                          onClick={() => removeTemplateBuilderStep(step.id)}
-                          type="button"
-                        >
-                          {t.removeStep}
-                        </button>
-                      </div>
-                      <label className="mt-3 block text-xs font-semibold text-[#405347]">
-                        {t.stepName}
-                        <input
-                          className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
-                          value={step.name}
-                          onChange={(event) =>
-                            updateTemplateBuilderStep(step.id, {
-                              name: event.currentTarget.value,
-                            })
-                          }
-                        />
-                      </label>
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        <label className="block text-xs font-semibold text-[#405347]">
-                          {t.dayOffset}
-                          <input
-                            className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
-                            min="0"
-                            type="number"
-                            value={step.dayOffset}
-                            onChange={(event) =>
-                              updateTemplateBuilderStep(step.id, {
-                                dayOffset: Math.max(
-                                  0,
-                                  Number(event.currentTarget.value),
-                                ),
-                              })
-                            }
-                          />
-                        </label>
-                        <label className="block text-xs font-semibold text-[#405347]">
-                          {t.eventDuration}
-                          <input
-                            className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
-                            min="1"
-                            type="number"
-                            value={step.durationMinutes}
-                            onChange={(event) =>
-                              updateTemplateBuilderStep(step.id, {
-                                durationMinutes: Math.max(
-                                  1,
-                                  Number(event.currentTarget.value),
-                                ),
-                              })
-                            }
-                          />
-                        </label>
-                      </div>
-                      <div className="mt-3 grid grid-cols-1 gap-2">
-                        <label className="block text-xs font-semibold text-[#405347]">
-                          {t.category}
-                          <select
-                            className="mt-1 w-full border border-[#bfd0c4] bg-white px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
-                            value={step.category}
-                            onChange={(event) =>
-                              updateTemplateBuilderStep(step.id, {
-                                category: event.currentTarget.value as Step["category"],
-                              })
-                            }
-                          >
-                            <option value="Hands-on">{t.categories["Hands-on"]}</option>
-                            <option value="Incubation">{t.categories.Incubation}</option>
-                            <option value="Assay">{t.categories.Assay}</option>
-                          </select>
-                        </label>
-                        <label className="block text-xs font-semibold text-[#405347]">
-                          {t.protocol}
-                          <input
-                            className="mt-1 w-full border border-[#bfd0c4] px-2 py-1 text-sm outline-none focus:border-[#2f6f4e]"
-                            value={step.protocol}
-                            onChange={(event) =>
-                              updateTemplateBuilderStep(step.id, {
-                                protocol: event.currentTarget.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:bg-[#f1f4ef] disabled:text-[#8a968e]"
-                    disabled={isSavingTemplate || isDeletingTemplate}
-                    onClick={addTemplateBuilderStep}
-                    type="button"
-                  >
-                    {t.addTemplateStep}
-                  </button>
-                  <button
-                    className="border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f] disabled:cursor-not-allowed disabled:border-[#bfd0c4] disabled:bg-[#d8e2d4] disabled:text-[#66756b]"
-                    disabled={isSavingTemplate || isDeletingTemplate}
-                    onClick={saveTemplateBuilder}
-                    type="button"
-                  >
-                    {isSavingTemplate
-                      ? t.savingTemplate
-                      : editingTemplateId
-                        ? t.updateTemplate
-                        : t.saveTemplate}
-                  </button>
-                </div>
-                {editingTemplateId ? (
-                  <button
-                    className="w-full border border-[#d8e2d4] bg-white px-3 py-2 text-sm font-semibold text-[#66756b] transition hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:bg-[#f1f4ef] disabled:text-[#8a968e]"
-                    disabled={isSavingTemplate || isDeletingTemplate}
-                    onClick={cancelTemplateEdit}
-                    type="button"
-                  >
-                    {t.cancelTemplateEdit}
-                  </button>
-                ) : null}
-                {templateBuilderStatus ? (
-                  <p className="text-sm font-medium text-[#2f6f4e]" role="status">
-                    {templateBuilderStatus}
+                <div className="border border-lab-steel-200 bg-lab-steel-50/30 p-3 rounded-xl space-y-3">
+                  <h2 className="text-xs font-bold text-lab-steel-900 uppercase">
+                    {t.protocolQuickBuilder}
+                  </h2>
+                  <p className="text-[11px] leading-relaxed text-lab-steel-500">
+                    {t.protocolQuickBuilderDescription}
                   </p>
-                ) : null}
+                  <label className="block text-[10px] font-bold text-lab-steel-700 uppercase">
+                    {t.protocolText}
+                    <textarea
+                      className="mt-1 min-h-36 w-full resize-y border border-lab-steel-200 bg-white px-2.5 py-1.5 rounded-lg text-xs leading-relaxed outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all font-mono"
+                      value={protocolText}
+                      onChange={(event) => setProtocolText(event.currentTarget.value)}
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      className="border border-lab-steel-200 bg-white py-1.5 rounded-lg text-2xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 hover:text-lab-steel-900 transition cursor-pointer"
+                      onClick={() => setProtocolText(thp1ProtocolSample)}
+                      type="button"
+                    >
+                      {t.loadPdfSample}
+                    </button>
+                    <button
+                      className="bg-lab-teal-600 hover:bg-lab-teal-700 py-1.5 rounded-lg text-2xs font-bold text-white transition shadow-2xs cursor-pointer"
+                      onClick={generateTemplateDraftFromProtocol}
+                      type="button"
+                    >
+                      {t.generateDraftFromProtocol}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="border border-lab-steel-200 bg-lab-steel-50/30 p-3 rounded-xl space-y-3">
+                  <h2 className="text-xs font-bold text-lab-steel-900 uppercase">
+                    {t.templateBuilder}
+                  </h2>
+                  <div className="space-y-2.5">
+                    <label className="block text-[10px] font-bold text-lab-steel-700 uppercase">
+                      {t.templateName}
+                      <input
+                        className="mt-1 w-full border border-lab-steel-200 bg-white px-2.5 py-1.5 rounded-lg text-xs outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all"
+                        value={templateBuilder.name}
+                        onChange={(event) =>
+                          updateTemplateBuilder({ name: event.currentTarget.value })
+                        }
+                      />
+                    </label>
+                    <label className="block text-[10px] font-bold text-lab-steel-700 uppercase">
+                      {t.templateSummary}
+                      <textarea
+                        className="mt-1 min-h-16 w-full resize-y border border-lab-steel-200 bg-white px-2.5 py-1.5 rounded-lg text-xs outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all leading-normal"
+                        value={templateBuilder.summary}
+                        onChange={(event) =>
+                          updateTemplateBuilder({ summary: event.currentTarget.value })
+                        }
+                      />
+                    </label>
+                    <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                      {templateBuilder.steps.map((step, index) => (
+                        <div key={step.id} className="border border-lab-steel-200 bg-white p-2.5 rounded-lg space-y-2">
+                          <div className="flex items-center justify-between gap-2 border-b border-lab-steel-100 pb-1.5">
+                            <span className="text-[10px] font-bold text-lab-teal-700 bg-lab-teal-50 px-1.5 py-0.5 rounded border border-lab-teal-100 font-mono">
+                              {t.day} {index + 1}
+                            </span>
+                            <button
+                              className="text-[10px] font-bold text-red-500 hover:text-red-700 cursor-pointer"
+                              onClick={() => removeTemplateBuilderStep(step.id)}
+                              type="button"
+                            >
+                              {t.removeStep}
+                            </button>
+                          </div>
+                          <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                            {t.stepName}
+                            <input
+                              className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600"
+                              value={step.name}
+                              onChange={(event) =>
+                                updateTemplateBuilderStep(step.id, {
+                                  name: event.currentTarget.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <div className="grid grid-cols-2 gap-1.5 font-mono">
+                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                              {t.dayOffset}
+                              <input
+                                className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600"
+                                min="0"
+                                type="number"
+                                value={step.dayOffset}
+                                onChange={(event) =>
+                                  updateTemplateBuilderStep(step.id, {
+                                    dayOffset: Math.max(
+                                      0,
+                                      Number(event.currentTarget.value),
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                              {t.eventDuration}
+                              <input
+                                className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600"
+                                min="1"
+                                type="number"
+                                value={step.durationMinutes}
+                                onChange={(event) =>
+                                  updateTemplateBuilderStep(step.id, {
+                                    durationMinutes: Math.max(
+                                      1,
+                                      Number(event.currentTarget.value),
+                                    ),
+                                  })
+                                }
+                              />
+                            </label>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                              {t.category}
+                              <select
+                                className="mt-0.5 w-full border border-lab-steel-200 bg-white px-1.5 py-1 rounded text-2xs outline-none focus:border-lab-teal-600 font-semibold"
+                                value={step.category}
+                                onChange={(event) =>
+                                  updateTemplateBuilderStep(step.id, {
+                                    category: event.currentTarget.value as Step["category"],
+                                  })
+                                }
+                              >
+                                <option value="Hands-on">{t.categories["Hands-on"]}</option>
+                                <option value="Incubation">{t.categories.Incubation}</option>
+                                <option value="Assay">{t.categories.Assay}</option>
+                              </select>
+                            </label>
+                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                              {t.protocol}
+                              <input
+                                className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600 truncate"
+                                value={step.protocol}
+                                onChange={(event) =>
+                                  updateTemplateBuilderStep(step.id, {
+                                    protocol: event.currentTarget.value,
+                                  })
+                                }
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 border-t border-lab-steel-100 pt-2.5">
+                    <button
+                      className="border border-lab-steel-200 bg-white py-1.5 rounded-lg text-2xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 transition cursor-pointer"
+                      disabled={isSavingTemplate || isDeletingTemplate}
+                      onClick={addTemplateBuilderStep}
+                      type="button"
+                    >
+                      {t.addTemplateStep}
+                    </button>
+                    <button
+                      className="bg-lab-teal-600 hover:bg-lab-teal-700 py-1.5 rounded-lg text-2xs font-bold text-white transition shadow-2xs cursor-pointer disabled:bg-lab-steel-200"
+                      disabled={isSavingTemplate || isDeletingTemplate}
+                      onClick={saveTemplateBuilder}
+                      type="button"
+                    >
+                      {isSavingTemplate
+                        ? t.savingTemplate
+                        : editingTemplateId
+                          ? t.updateTemplate
+                          : t.saveTemplate}
+                    </button>
+                  </div>
+                  {editingTemplateId ? (
+                    <button
+                      className="w-full mt-1.5 border border-lab-steel-200 bg-white py-1.5 rounded-lg text-2xs font-bold text-lab-steel-500 hover:bg-lab-steel-50 transition cursor-pointer"
+                      disabled={isSavingTemplate || isDeletingTemplate}
+                      onClick={cancelTemplateEdit}
+                      type="button"
+                    >
+                      {t.cancelTemplateEdit}
+                    </button>
+                  ) : null}
+                  {templateBuilderStatus ? (
+                    <p className="text-xs font-semibold text-lab-teal-700 bg-lab-teal-50 border border-lab-teal-100 rounded px-2.5 py-1" role="status">
+                      {templateBuilderStatus}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </details>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              <div>
-                <label className="text-sm font-semibold text-[#26382d]" htmlFor="startDate">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider" htmlFor="startDate">
                   {t.startDate}
                 </label>
                 <input
@@ -3100,23 +3160,23 @@ export default function Home() {
                   onInput={(event) => {
                     handleStartDateInput(event.currentTarget.value);
                   }}
-                  className="mt-2 w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                  className="mt-1 w-full border border-lab-steel-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all font-mono font-medium text-lab-steel-800"
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-semibold text-[#26382d]" htmlFor="workStart">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider" htmlFor="workStart">
                   {t.preferredStartTime}
                 </label>
-                <div className="mt-2 grid grid-cols-[auto_1fr] gap-2">
-                  <div className="grid grid-cols-2 border border-[#bfd0c4] bg-white">
+                <div className="mt-1 grid grid-cols-[100px_1fr] gap-2">
+                  <div className="grid grid-cols-2 border border-lab-steel-200 bg-white rounded-lg p-0.5 font-mono text-[10px] font-bold">
                     {(["AM", "PM"] as const).map((period) => (
                       <button
                         key={period}
-                        className={`px-3 py-2 text-sm font-semibold transition ${
+                        className={`py-1.5 rounded-md transition-all cursor-pointer ${
                           preferredPeriod === period
-                            ? "bg-[#2f6f4e] text-white"
-                            : "text-[#405347] hover:bg-[#eef5ef]"
+                            ? "bg-lab-teal-600 text-white shadow-sm"
+                            : "text-lab-steel-600 hover:bg-lab-steel-50"
                         }`}
                         onClick={() => handlePreferredPeriodInput(period)}
                         type="button"
@@ -3135,14 +3195,14 @@ export default function Home() {
                     }}
                     onBlur={commitPreferredTimeInput}
                     onKeyDown={handlePreferredTimeKeyDown}
-                    className="w-full border border-[#bfd0c4] px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                    className="w-full border border-lab-steel-200 rounded-lg px-3 py-2 text-xs focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 outline-none font-mono font-semibold text-lab-steel-800"
                   />
                 </div>
               </div>
             </div>
 
-            <label className="flex items-center justify-between gap-4 border border-[#d8e2d4] bg-[#f8faf7] px-4 py-3 text-sm font-semibold text-[#26382d]">
-              <span>{t.avoidWeekendWork}</span>
+            <label className="flex items-center justify-between gap-4 border border-lab-steel-200 bg-white px-4 py-3 rounded-xl text-xs font-bold text-lab-steel-900 shadow-2xs hover:border-lab-steel-300 transition-colors cursor-pointer">
+              <span className="uppercase tracking-wider">{t.avoidWeekendWork}</span>
               <input
                 type="checkbox"
                 checked={avoidWeekends}
@@ -3152,19 +3212,19 @@ export default function Home() {
                 onInput={(event) => {
                   handleWeekendPreferenceInput(event.currentTarget.checked);
                 }}
-                className="h-5 w-5 accent-[#2f6f4e]"
+                className="h-4.5 w-4.5 rounded accent-lab-teal-600 border-lab-steel-300"
               />
             </label>
 
             {startDateOptions.length ? (
-              <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-                <h2 className="text-sm font-semibold text-[#26382d]">
+              <div className="border border-lab-steel-200 bg-lab-steel-50/20 p-4 rounded-xl space-y-3">
+                <h2 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider">
                   {t.startDayOptions}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-[#66756b]">
+                <p className="text-[11px] leading-relaxed text-lab-steel-500">
                   {t.startDayOptionsDescription}
                 </p>
-                <div className="mt-3 space-y-2">
+                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                   {startDateOptions.map((option) => {
                     const isCurrent = option.startDate === startDate;
                     const isPreviewed = option.startDate === previewStartDate;
@@ -3172,48 +3232,48 @@ export default function Home() {
                     return (
                       <button
                         key={option.startDate}
-                        className={`w-full border px-3 py-2 text-left transition ${
+                        className={`w-full border p-2.5 text-left rounded-lg transition-all cursor-pointer ${
                           isPreviewed
-                            ? "border-[#2f6f4e] bg-[#eef5ef]"
+                            ? "border-lab-teal-600 bg-lab-teal-50/50 shadow-sm"
                             : isCurrent
-                              ? "border-[#2f6f4e] bg-white"
-                              : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
+                              ? "border-lab-teal-600 bg-white shadow-2xs"
+                              : "border-lab-steel-200 bg-white hover:border-lab-steel-300 hover:shadow-2xs"
                         }`}
                         onClick={() => handleStartDatePreview(option.startDate)}
                         type="button"
                       >
                         <span className="flex items-start justify-between gap-3">
-                          <span>
-                            <span className="block text-sm font-semibold text-[#17211b]">
+                          <span className="min-w-0">
+                            <span className="block text-xs font-bold text-lab-steel-900 truncate">
                               {formatDate(
                                 combineDateAndTime(option.startDate, "00:00"),
                                 language,
                               )}
                             </span>
-                            <span className="mt-1 block text-xs text-[#66756b]">
+                            <span className="mt-0.5 block text-[10px] text-lab-steel-500 truncate">
                               {t.finishDate}:{" "}
                               {formatDate(option.finishDate, language)}
                             </span>
                           </span>
-                          <span className="flex flex-col items-end gap-1">
+                          <span className="flex flex-col items-end gap-1 flex-shrink-0">
                             {isCurrent ? (
-                              <span className="border border-[#2f6f4e] px-2 py-0.5 text-xs font-semibold text-[#2f6f4e]">
+                              <span className="border border-lab-teal-100 bg-lab-teal-50 px-1.5 py-0.2 rounded text-[8px] font-bold text-lab-teal-700 font-mono uppercase tracking-wider">
                                 {t.currentStartDate}
                               </span>
                             ) : null}
                             {option.recommended ? (
-                              <span className="border border-[#8a4b16] px-2 py-0.5 text-xs font-semibold text-[#8a4b16]">
+                              <span className="border border-lab-amber-100 bg-lab-amber-50 px-1.5 py-0.2 rounded text-[8px] font-bold text-lab-amber-600 font-mono uppercase tracking-wider">
                                 {t.recommended}
                               </span>
                             ) : null}
                           </span>
                         </span>
-                        <span className="mt-2 block text-xs text-[#8a4b16]">
+                        <span className="mt-2 block text-[10px] text-lab-steel-500 font-medium">
                           {option.warnings || option.shifted || option.calendarConflicts
                             ? `${t.warnings}: ${option.warnings} · ${t.adjusted}: ${option.shifted} · ${t.calendarConflictCount}: ${option.calendarConflicts}`
                             : t.noIssues}
                         </span>
-                        <span className="mt-1 block text-xs font-semibold text-[#2f6f4e]">
+                        <span className="mt-1 block text-[9px] font-bold text-lab-teal-700 font-mono uppercase tracking-wider">
                           {isPreviewed ? t.previewSelected : t.chooseStartDate}
                         </span>
                       </button>
@@ -3222,25 +3282,26 @@ export default function Home() {
                 </div>
                 {previewStartDate && previewStartDate !== startDate ? (
                   <button
-                    className="mt-3 w-full border border-[#2f6f4e] bg-[#2f6f4e] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#25583f]"
+                    className="w-full bg-lab-teal-600 hover:bg-lab-teal-700 py-2 rounded-lg text-xs font-bold text-white transition shadow-sm cursor-pointer"
                     onClick={applyPreviewStartDate}
                     type="button"
                   >
                     {t.applyStartDate}
                   </button>
                 ) : null}
-                <p className="mt-3 text-xs leading-5 text-[#66756b]">
+                <p className="text-[10px] leading-relaxed text-lab-steel-400">
                   {t.startDateApplyHint}
                 </p>
               </div>
             ) : null}
 
-            <div className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-              <h2 className="text-sm font-semibold text-[#26382d]">{t.mvpBuildOrder}</h2>
-              <ol className="mt-3 space-y-2 text-sm leading-6 text-[#607067]">
+            <div className="border border-lab-steel-200 bg-lab-steel-50/20 p-4 rounded-xl">
+              <h2 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider">{t.mvpBuildOrder}</h2>
+              <ol className="mt-2.5 space-y-2 text-xs leading-normal text-lab-steel-500 font-medium">
                 {t.buildOrder.map((item, index) => (
-                  <li key={item}>
-                    {index + 1}. {item}
+                  <li key={item} className="flex gap-2">
+                    <span className="font-mono text-lab-teal-700">{index + 1}.</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ol>
@@ -3280,140 +3341,153 @@ export default function Home() {
             ) : null}
 
             {canGenerateSchedule ? (
-              <div className="space-y-5 p-5">
-                <div className="border border-[#d8e2d4] bg-[#fbfdf9] p-4">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="space-y-6 p-6">
+                <div className="border border-lab-steel-200 bg-lab-steel-50/30 p-5 rounded-2xl shadow-xs">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <h3 className="text-base font-semibold text-[#17211b]">
+                      <h3 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-lab-indigo-600"></span>
                         {t.experimentSet}
                       </h3>
-                      <p className="mt-1 max-w-2xl text-sm leading-6 text-[#66756b]">
+                      <p className="mt-1.5 max-w-2xl text-xs text-lab-steel-500 font-medium leading-relaxed">
                         {t.experimentSetDescription}
                       </p>
-                      <p className="mt-1 text-xs text-[#66756b]">{t.setMoveNote}</p>
-                      <p className="mt-1 text-xs font-medium text-[#2f6f4e]">
-                        {t.dragToMoveSet}
-                      </p>
+                      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-lab-steel-400 font-semibold font-mono">
+                        <span className="flex items-center gap-1.5">
+                          <span className="inline-block w-1.5 h-1.5 border border-lab-steel-300 bg-lab-steel-100 rounded-sm"></span>
+                          {t.setMoveNote}
+                        </span>
+                        <span className="flex items-center gap-1.5 text-lab-teal-700">
+                          <span className="w-1 h-1 rounded-full bg-lab-teal-600 animate-pulse"></span>
+                          {t.dragToMoveSet}
+                        </span>
+                      </div>
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <button
                         onClick={() => shiftDraftSet(-1)}
-                        className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                        className="px-4 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-xs"
                       >
                         {t.moveSetEarlier}
                       </button>
                       <button
                         onClick={() => shiftDraftSet(1)}
-                        className="border border-[#bfd0c4] bg-white px-3 py-2 text-sm font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                        className="px-4 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-xs"
                       >
                         {t.moveSetLater}
                       </button>
                     </div>
                   </div>
                 </div>
-                <div className="grid gap-5 xl:grid-cols-[1fr_280px]">
-                <div>
-                  <h3 className="text-base font-semibold text-[#17211b]">{t.draftCalendar}</h3>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {draftDates.map((dateKey) => (
-                      <section
-                        key={dateKey}
-                        onDragLeave={() => setDragTargetDate("")}
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setDragTargetDate(dateKey);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const eventId =
-                            event.dataTransfer.getData("text/plain") ||
-                            draggedEventId;
-                          handleDraftEventDrop(eventId, dateKey);
-                        }}
-                        className={`min-h-40 border bg-[#fbfdf9] transition ${
-                          dragTargetDate === dateKey
-                            ? "border-[#2f6f4e] ring-2 ring-[#2f6f4e]/20"
-                            : "border-[#d8e2d4]"
-                        }`}
-                      >
-                        <div className="border-b border-[#d8e2d4] bg-white px-3 py-2">
-                          <p className="text-sm font-semibold text-[#2f6f4e]">
-                            {formatDate(new Date(`${dateKey}T00:00:00`), language)}
-                          </p>
-                        </div>
-                        <div className="space-y-2 p-3">
-                          {groupedDraftEvents[dateKey].map((event) => {
-                            const movementDetails = getMovementDetails(event);
-                            const categoryAccent = getCategoryAccent(event.category);
+                <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
+                  <div>
+                    <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100">
+                      {t.draftCalendar}
+                    </h3>
+                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                      {draftDates.map((dateKey) => (
+                        <section
+                          key={dateKey}
+                          onDragLeave={() => setDragTargetDate("")}
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setDragTargetDate(dateKey);
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const eventId =
+                              event.dataTransfer.getData("text/plain") ||
+                              draggedEventId;
+                            handleDraftEventDrop(eventId, dateKey);
+                          }}
+                          className={`min-h-48 border rounded-2xl bg-white bg-precision-grid transition duration-200 flex flex-col overflow-hidden ${
+                            dragTargetDate === dateKey
+                              ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
+                              : "border-lab-steel-200 shadow-xs"
+                          }`}
+                        >
+                          <div className="border-b border-lab-steel-100 bg-lab-steel-50/50 px-4 py-2.5 flex items-center justify-between">
+                            <p className="text-xs font-bold text-lab-steel-800 font-mono tracking-tight flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-lab-teal-500 animate-pulse"></span>
+                              {formatDate(new Date(`${dateKey}T00:00:00`), language)}
+                            </p>
+                          </div>
+                          <div className="space-y-3 p-4 flex-1">
+                            {groupedDraftEvents[dateKey].map((event) => {
+                              const movementDetails = getMovementDetails(event);
+                              const categoryAccent = getCategoryAccent(event.category);
 
-                            return (
-                              <button
-                                draggable
-                                key={event.id}
-                                onClick={() => setSelectedEventId(event.id)}
-                                onDragEnd={() => {
-                                  setDraggedEventId("");
-                                  setDragTargetDate("");
-                                }}
-                                onDragStart={(dragEvent) => {
-                                  setDraggedEventId(event.id);
-                                  setSelectedEventId(event.id);
-                                  dragEvent.dataTransfer.setData(
-                                    "text/plain",
-                                    event.id,
-                                  );
-                                  dragEvent.dataTransfer.effectAllowed = "move";
-                                }}
-                                className={`relative w-full border py-2 pl-4 pr-3 text-left shadow-[0_4px_12px_rgba(31,54,39,0.04)] transition ${
-                                  selectedEventId === event.id
-                                    ? "border-[#2f6f4e] bg-[#eef5ef]"
-                                    : "border-[#d8e2d4] bg-white hover:border-[#8fad99]"
-                                }`}
-                              >
-                                <span
-                                  className={`absolute bottom-0 left-0 top-0 w-1 ${categoryAccent.bar}`}
-                                />
-                                <span className="block text-xs font-semibold text-[#2f6f4e]">
-                                  {formatTime(event.date, language)} ·{" "}
-                                  {formatDuration(event.durationMinutes, language)}
-                                </span>
-                                <span className="mt-1 block text-sm font-semibold text-[#17211b]">
-                                  {event.name}
-                                </span>
-                                <span
-                                  className={`mt-1 inline-block border px-2 py-0.5 text-xs font-medium ${categoryAccent.chip}`}
+                              return (
+                                <button
+                                  draggable
+                                  key={event.id}
+                                  onClick={() => setSelectedEventId(event.id)}
+                                  onDragEnd={() => {
+                                    setDraggedEventId("");
+                                    setDragTargetDate("");
+                                  }}
+                                  onDragStart={(dragEvent) => {
+                                    setDraggedEventId(event.id);
+                                    setSelectedEventId(event.id);
+                                    dragEvent.dataTransfer.setData(
+                                      "text/plain",
+                                      event.id,
+                                    );
+                                    dragEvent.dataTransfer.effectAllowed = "move";
+                                  }}
+                                  className={`relative w-full border rounded-xl py-3 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
+                                    selectedEventId === event.id
+                                      ? "border-lab-teal-600 bg-lab-teal-50/40 ring-1 ring-lab-teal-600/20 shadow-xs"
+                                      : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
+                                  }`}
                                 >
-                                  {t.categories[event.category]}
-                                </span>
-                                {movementDetails.moved && movementDetails.originalDate ? (
-                                  <span className="mt-2 block text-xs font-medium text-[#8a4b16]">
-                                    {t.adjustedFrom}:{" "}
-                                    {formatDate(movementDetails.originalDate, language)}{" "}
-                                    {formatTime(movementDetails.originalDate, language)}
+                                  <span
+                                    className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
+                                  />
+                                  <span className="block text-[10px] font-bold text-lab-steel-400 font-mono tracking-tight uppercase">
+                                    {formatTime(event.date, language)} ·{" "}
+                                    {formatDuration(event.durationMinutes, language)}
                                   </span>
-                                ) : null}
-                                {movementDetails.reasons.length ? (
-                                  <span className="mt-1 block text-xs text-[#8a4b16]">
-                                    {movementDetails.reasons[0]}
+                                  <span className="mt-1 block text-xs font-bold text-lab-steel-900 leading-snug">
+                                    {event.name}
                                   </span>
-                                ) : null}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </section>
-                    ))}
+                                  <span
+                                    className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                  >
+                                    {t.categories[event.category]}
+                                  </span>
+                                  {movementDetails.moved && movementDetails.originalDate ? (
+                                    <span className="mt-2.5 block text-[10px] font-semibold text-lab-amber-700 bg-lab-amber-50/50 border border-lab-amber-100 rounded px-2 py-1 font-mono">
+                                      {t.adjustedFrom}:{" "}
+                                      {formatDate(movementDetails.originalDate, language)}{" "}
+                                      {formatTime(movementDetails.originalDate, language)}
+                                    </span>
+                                  ) : null}
+                                  {movementDetails.reasons.length ? (
+                                    <span className="mt-1.5 block text-[10px] font-medium text-lab-amber-600 pl-1 border-l-2 border-lab-amber-400">
+                                      {movementDetails.reasons[0]}
+                                    </span>
+                                  ) : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <aside className="border border-[#d8e2d4] bg-[#f8faf7] p-4">
-                  <h3 className="text-base font-semibold text-[#17211b]">{t.editEvent}</h3>
+                <aside className="border border-lab-steel-200 bg-lab-steel-50/20 p-5 rounded-2xl shadow-xs self-start">
+                  <h3 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider flex items-center gap-2 border-b border-lab-steel-100 pb-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-lab-teal-600 animate-pulse"></span>
+                    {t.editEvent}
+                  </h3>
                   {selectedEvent ? (
                     <div className="mt-4 space-y-4">
-                      <label className="block text-sm font-semibold text-[#26382d]">
+                      <label className="block text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
                         {t.eventName}
                         <input
-                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          className="mt-1.5 w-full border border-lab-steel-200 bg-white px-3 py-2 text-xs font-medium text-lab-steel-800 rounded-lg outline-none focus:border-lab-teal-600 focus:ring-2 focus:ring-lab-teal-500/10 transition"
                           value={selectedEvent.name}
                           onChange={(event) =>
                             updateDraftEvent(selectedEvent.id, {
@@ -3423,10 +3497,10 @@ export default function Home() {
                         />
                       </label>
 
-                      <label className="block text-sm font-semibold text-[#26382d]">
+                      <label className="block text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
                         {t.eventDate}
                         <input
-                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          className="mt-1.5 w-full border border-lab-steel-200 bg-white px-3 py-2 text-xs font-bold text-lab-steel-800 font-mono rounded-lg outline-none focus:border-lab-teal-600 focus:ring-2 focus:ring-lab-teal-500/10 transition"
                           type="date"
                           value={formatDateInput(selectedEvent.date)}
                           onChange={(event) =>
@@ -3437,10 +3511,10 @@ export default function Home() {
                         />
                       </label>
 
-                      <label className="block text-sm font-semibold text-[#26382d]">
+                      <label className="block text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
                         {t.eventTime}
                         <input
-                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          className="mt-1.5 w-full border border-lab-steel-200 bg-white px-3 py-2 text-xs font-bold text-lab-steel-800 font-mono rounded-lg outline-none focus:border-lab-teal-600 focus:ring-2 focus:ring-lab-teal-500/10 transition"
                           type="time"
                           value={formatTimeInput(selectedEvent.date)}
                           onChange={(event) =>
@@ -3451,10 +3525,10 @@ export default function Home() {
                         />
                       </label>
 
-                      <label className="block text-sm font-semibold text-[#26382d]">
-                        {t.eventDuration}
+                      <label className="block text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
+                        {t.eventDuration} (Min)
                         <input
-                          className="mt-2 w-full border border-[#bfd0c4] bg-white px-3 py-2 text-sm outline-none focus:border-[#2f6f4e]"
+                          className="mt-1.5 w-full border border-lab-steel-200 bg-white px-3 py-2 text-xs font-bold text-lab-steel-800 font-mono rounded-lg outline-none focus:border-lab-teal-600 focus:ring-2 focus:ring-lab-teal-500/10 transition"
                           min="1"
                           type="number"
                           value={selectedEvent.durationMinutes}
@@ -3469,20 +3543,20 @@ export default function Home() {
                         />
                       </label>
 
-                      <div className="border border-[#d8e2d4] bg-white p-3">
-                        <p className="text-sm font-semibold text-[#26382d]">
+                      <div className="border border-lab-steel-200 bg-white p-4 rounded-xl shadow-xs">
+                        <p className="text-[10px] font-bold text-lab-steel-600 uppercase tracking-wider">
                           {t.shiftFollowingEvents}
                         </p>
-                        <div className="mt-2 grid grid-cols-2 gap-2">
+                        <div className="mt-2.5 grid grid-cols-2 gap-2">
                           <button
-                            className="border border-[#bfd0c4] bg-white px-2 py-2 text-xs font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                            className="px-2 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-[10px] font-bold text-lab-steel-700 transition cursor-pointer shadow-2xs"
                             onClick={() => shiftDraftEventsFrom(selectedEvent.id, -1)}
                             type="button"
                           >
                             {t.moveFollowingEarlier}
                           </button>
                           <button
-                            className="border border-[#bfd0c4] bg-white px-2 py-2 text-xs font-semibold text-[#405347] transition hover:bg-[#eef5ef]"
+                            className="px-2 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-[10px] font-bold text-lab-steel-700 transition cursor-pointer shadow-2xs"
                             onClick={() => shiftDraftEventsFrom(selectedEvent.id, 1)}
                             type="button"
                           >
@@ -3491,29 +3565,29 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="border border-[#d8e2d4] bg-white p-3 text-sm leading-6 text-[#66756b]">
-                        <h4 className="font-semibold text-[#26382d]">
+                      <div className="border border-lab-steel-200 bg-white p-4 rounded-xl text-xs text-lab-steel-500 leading-relaxed shadow-xs space-y-3.5">
+                        <h4 className="text-[10px] font-bold text-lab-steel-900 uppercase tracking-wider border-b border-lab-steel-100 pb-1.5">
                           {t.scheduleExplanation}
                         </h4>
-                        <div className="mt-2 space-y-2">
+                        <div className="space-y-3 font-medium">
                           <p>
-                            <span className="block text-xs font-semibold uppercase text-[#8a968e]">
+                            <span className="block text-[9px] font-bold uppercase tracking-wider text-lab-steel-400 font-mono">
                               {t.currentDraftTime}
                             </span>
-                            <span className="font-medium text-[#26382d]">
+                            <span className="text-xs font-bold text-lab-steel-800 font-mono">
                               {formatDate(selectedEvent.date, language)}{" "}
                               {formatTime(selectedEvent.date, language)}
                             </span>
                           </p>
                           <p>
-                            <span className="block text-xs font-semibold uppercase text-[#8a968e]">
+                            <span className="block text-[9px] font-bold uppercase tracking-wider text-lab-steel-400 font-mono">
                               {t.originalCalculatedTime}
                             </span>
                             <span
-                              className={`font-medium ${
+                              className={`text-xs font-bold font-mono ${
                                 selectedMovementDetails?.moved
-                                  ? "text-[#8a4b16]"
-                                  : "text-[#26382d]"
+                                  ? "text-lab-amber-600 bg-lab-amber-50 px-1 py-0.5 rounded"
+                                  : "text-lab-steel-800"
                               }`}
                             >
                               {selectedMovementDetails?.originalDate
@@ -3529,43 +3603,46 @@ export default function Home() {
                           </p>
                           {selectedEvent.conflict ? (
                             <p>
-                              <span className="block text-xs font-semibold uppercase text-[#8a968e]">
+                              <span className="block text-[9px] font-bold uppercase tracking-wider text-lab-steel-400 font-mono">
                                 {t.conflictAvoided}
                               </span>
-                              <span className="font-medium text-[#8a4b16]">
+                              <span className="text-xs font-bold text-lab-amber-600 bg-lab-amber-50 px-1 py-0.5 rounded font-mono">
                                 {selectedEvent.conflict}
                               </span>
                             </p>
                           ) : null}
                         </div>
-                        <div className="mt-3 border-t border-[#d8e2d4] pt-2">
-                          <p>
-                            {t.day} {selectedEvent.dayOffset}
+                        <div className="mt-3 border-t border-lab-steel-100 pt-2.5 text-[10px] font-mono font-bold text-lab-steel-400 space-y-1">
+                          <p className="flex justify-between">
+                            <span>SEQUENCE ID:</span>
+                            <span className="text-lab-steel-700">DAY {selectedEvent.dayOffset}</span>
                           </p>
-                          <p>
-                            {t.protocolPlaceholder}: {selectedEvent.protocol}
+                          <p className="flex justify-between">
+                            <span>{t.protocolPlaceholder.toUpperCase()}:</span>
+                            <span className="text-lab-steel-700">{selectedEvent.protocol}</span>
                           </p>
                         </div>
                         {selectedMovementDetails?.reasons.length ? (
-                          <div className="mt-2 border-t border-[#d8e2d4] pt-2">
-                            <p className="font-semibold text-[#8a4b16]">
+                          <div className="mt-3 border-t border-lab-steel-100 pt-2.5">
+                            <p className="text-[10px] font-bold text-lab-amber-700 uppercase tracking-wider">
                               {t.movedBecause}
                             </p>
-                            <ul className="mt-1 space-y-1">
+                            <ul className="mt-1 space-y-1 text-[10px] font-medium text-lab-amber-600 pl-3.5 list-disc">
                               {selectedMovementDetails.reasons.map((reason) => (
                                 <li key={reason}>{reason}</li>
                               ))}
                             </ul>
                           </div>
                         ) : selectedMovementDetails?.moved ? null : (
-                          <p className="mt-2 border-t border-[#d8e2d4] pt-2 text-[#2f6f4e]">
-                            {t.noMovementNeeded}
+                          <p className="mt-3 border-t border-lab-steel-100 pt-2.5 text-[10px] font-bold text-lab-teal-600 font-mono flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-lab-teal-500 rounded-full animate-pulse"></span>
+                            {t.noMovementNeeded.toUpperCase()}
                           </p>
                         )}
                       </div>
                     </div>
                   ) : (
-                    <p className="mt-3 text-sm leading-6 text-[#66756b]">
+                    <p className="mt-3 text-xs leading-normal text-lab-steel-400 font-semibold text-center py-8">
                       {t.selectEventToEdit}
                     </p>
                   )}

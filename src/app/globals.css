@@ -1,15 +1,36 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 :root {
-  --background: #f4f7f3;
-  --foreground: #17211b;
+  --background: #f8fafc; /* Clinical crisp light slate */
+  --foreground: #0f172a; /* High-precision slate-900 */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  
+  /* Precision Lab Palette (Tailwind v4 theme variables) */
+  --color-lab-teal-50: #f0fdfa;
+  --color-lab-teal-100: #ccfbf1;
+  --color-lab-teal-600: #0d9488;
+  --color-lab-teal-700: #0f766e;
+  
+  --color-lab-indigo-50: #eef2ff;
+  --color-lab-indigo-100: #c7d2fe;
+  --color-lab-indigo-600: #4f46e5;
+  
+  --color-lab-amber-50: #fffbeb;
+  --color-lab-amber-100: #fef3c7;
+  --color-lab-amber-600: #d97706;
+  
+  --color-lab-steel-50: #f8fafc;
+  --color-lab-steel-100: #f1f5f9;
+  --color-lab-steel-200: #e2e8f0;
+  --color-lab-steel-300: #cbd5e1;
+  --color-lab-steel-600: #475569;
+  --color-lab-steel-900: #0f172a;
 }
 
 * {
@@ -25,11 +46,37 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Precision Scientific Grid Background Pattern */
+.bg-precision-grid {
+  background-size: 24px 24px;
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+}
+
+/* Clinical Pulsing LED Animation */
+@keyframes led-blink {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+  }
+}
+
+.animate-led {
+  animation: led-blink 2s infinite ease-in-out;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
+
