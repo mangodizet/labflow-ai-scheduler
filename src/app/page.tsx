@@ -2641,7 +2641,7 @@ export default function Home() {
           </section>
         </div>
       ) : null}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-6 sm:px-8 lg:px-10">
+      <div className="mx-auto flex w-full max-w-[97%] 2xl:max-w-[1750px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-5 border-b border-lab-steel-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-3">
