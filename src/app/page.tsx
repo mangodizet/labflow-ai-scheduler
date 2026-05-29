@@ -3221,7 +3221,7 @@ export default function Home() {
                 <h2 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider">
                   {t.startDayOptions}
                 </h2>
-                <p className="text-[11px] leading-relaxed text-lab-steel-500">
+                <p className="text-xs font-medium font-sans leading-relaxed text-lab-steel-500">
                   {t.startDayOptionsDescription}
                 </p>
                 <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
@@ -3232,7 +3232,7 @@ export default function Home() {
                     return (
                       <button
                         key={option.startDate}
-                        className={`w-full border p-2.5 text-left rounded-lg transition-all cursor-pointer ${
+                        className={`w-full border p-3 text-left rounded-lg transition-all cursor-pointer ${
                           isPreviewed
                             ? "border-lab-teal-600 bg-lab-teal-50/50 shadow-sm"
                             : isCurrent
@@ -3244,36 +3244,36 @@ export default function Home() {
                       >
                         <span className="flex items-start justify-between gap-3">
                           <span className="min-w-0">
-                            <span className="block text-xs font-bold text-lab-steel-900 truncate">
+                            <span className="block text-xs font-bold text-lab-steel-900 truncate font-sans">
                               {formatDate(
                                 combineDateAndTime(option.startDate, "00:00"),
                                 language,
                               )}
                             </span>
-                            <span className="mt-0.5 block text-[10px] text-lab-steel-500 truncate">
+                            <span className="mt-1 block text-xs text-lab-steel-500 font-sans leading-normal">
                               {t.finishDate}:{" "}
-                              {formatDate(option.finishDate, language)}
+                              <span className="font-mono">{formatDate(option.finishDate, language)}</span>
                             </span>
                           </span>
                           <span className="flex flex-col items-end gap-1 flex-shrink-0">
                             {isCurrent ? (
-                              <span className="border border-lab-teal-100 bg-lab-teal-50 px-1.5 py-0.2 rounded text-[8px] font-bold text-lab-teal-700 font-mono uppercase tracking-wider">
+                              <span className="border border-lab-teal-100 bg-lab-teal-50 px-1.5 py-0.5 rounded text-[10px] font-bold text-lab-teal-700 font-sans uppercase tracking-wide">
                                 {t.currentStartDate}
                               </span>
                             ) : null}
                             {option.recommended ? (
-                              <span className="border border-lab-amber-100 bg-lab-amber-50 px-1.5 py-0.2 rounded text-[8px] font-bold text-lab-amber-600 font-mono uppercase tracking-wider">
+                              <span className="border border-lab-amber-100 bg-lab-amber-50 px-1.5 py-0.5 rounded text-[10px] font-bold text-lab-amber-600 font-sans uppercase tracking-wide">
                                 {t.recommended}
                               </span>
                             ) : null}
                           </span>
                         </span>
-                        <span className="mt-2 block text-[10px] text-lab-steel-500 font-medium">
+                        <span className="mt-2 block text-xs text-lab-steel-500 font-sans font-medium leading-relaxed">
                           {option.warnings || option.shifted || option.calendarConflicts
                             ? `${t.warnings}: ${option.warnings} · ${t.adjusted}: ${option.shifted} · ${t.calendarConflictCount}: ${option.calendarConflicts}`
                             : t.noIssues}
                         </span>
-                        <span className="mt-1 block text-[9px] font-bold text-lab-teal-700 font-mono uppercase tracking-wider">
+                        <span className="mt-1.5 block text-[10px] font-bold text-lab-teal-700 font-sans uppercase tracking-wide">
                           {isPreviewed ? t.previewSelected : t.chooseStartDate}
                         </span>
                       </button>
@@ -3282,14 +3282,14 @@ export default function Home() {
                 </div>
                 {previewStartDate && previewStartDate !== startDate ? (
                   <button
-                    className="w-full bg-lab-teal-600 hover:bg-lab-teal-700 py-2 rounded-lg text-xs font-bold text-white transition shadow-sm cursor-pointer"
+                    className="w-full bg-lab-teal-600 hover:bg-lab-teal-700 py-2.5 rounded-lg text-xs font-bold text-white transition shadow-sm cursor-pointer font-sans"
                     onClick={applyPreviewStartDate}
                     type="button"
                   >
                     {t.applyStartDate}
                   </button>
                 ) : null}
-                <p className="text-[10px] leading-relaxed text-lab-steel-400">
+                <p className="text-xs leading-relaxed text-lab-steel-400 font-sans">
                   {t.startDateApplyHint}
                 </p>
               </div>
@@ -3345,34 +3345,34 @@ export default function Home() {
                 <div className="border border-lab-steel-200 bg-lab-steel-50/30 p-5 rounded-2xl shadow-xs">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <h3 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-lab-indigo-600"></span>
                         {t.experimentSet}
                       </h3>
                       <p className="mt-1.5 max-w-2xl text-xs text-lab-steel-500 font-medium leading-relaxed">
                         {t.experimentSetDescription}
                       </p>
-                      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-lab-steel-400 font-semibold font-mono">
-                        <span className="flex items-center gap-1.5">
-                          <span className="inline-block w-1.5 h-1.5 border border-lab-steel-300 bg-lab-steel-100 rounded-sm"></span>
-                          {t.setMoveNote}
+                      <div className="mt-3 flex flex-col gap-1.5 text-xs text-lab-steel-600 font-sans leading-relaxed">
+                        <span className="flex items-start gap-1.5">
+                          <span className="inline-block w-1.5 h-1.5 border border-lab-steel-300 bg-lab-steel-100 rounded-sm mt-1.5 flex-shrink-0"></span>
+                          <span>{t.setMoveNote}</span>
                         </span>
-                        <span className="flex items-center gap-1.5 text-lab-teal-700">
-                          <span className="w-1 h-1 rounded-full bg-lab-teal-600 animate-pulse"></span>
-                          {t.dragToMoveSet}
+                        <span className="flex items-start gap-1.5 text-lab-teal-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-lab-teal-600 animate-pulse mt-1.5 flex-shrink-0"></span>
+                          <span>{t.dragToMoveSet}</span>
                         </span>
                       </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="flex gap-2.5 flex-shrink-0">
                       <button
                         onClick={() => shiftDraftSet(-1)}
-                        className="px-4 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-xs"
+                        className="whitespace-nowrap px-4 py-2.5 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-xs font-sans"
                       >
                         {t.moveSetEarlier}
                       </button>
                       <button
                         onClick={() => shiftDraftSet(1)}
-                        className="px-4 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-xs"
+                        className="whitespace-nowrap px-4 py-2.5 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-xs font-sans"
                       >
                         {t.moveSetLater}
                       </button>
@@ -3444,27 +3444,29 @@ export default function Home() {
                                   <span
                                     className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
                                   />
-                                  <span className="block text-[10px] font-bold text-lab-steel-400 font-mono tracking-tight uppercase">
+                                  <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
                                     {formatTime(event.date, language)} ·{" "}
                                     {formatDuration(event.durationMinutes, language)}
                                   </span>
-                                  <span className="mt-1 block text-xs font-bold text-lab-steel-900 leading-snug">
+                                  <span className="mt-1 block text-sm font-bold text-lab-steel-900 leading-snug">
                                     {event.name}
                                   </span>
                                   <span
-                                    className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                    className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
                                   >
                                     {t.categories[event.category]}
                                   </span>
                                   {movementDetails.moved && movementDetails.originalDate ? (
-                                    <span className="mt-2.5 block text-[10px] font-semibold text-lab-amber-700 bg-lab-amber-50/50 border border-lab-amber-100 rounded px-2 py-1 font-mono">
+                                    <span className="mt-3 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-1.5 font-sans leading-normal">
                                       {t.adjustedFrom}:{" "}
-                                      {formatDate(movementDetails.originalDate, language)}{" "}
-                                      {formatTime(movementDetails.originalDate, language)}
+                                      <span className="font-mono font-bold">
+                                        {formatDate(movementDetails.originalDate, language)}{" "}
+                                        {formatTime(movementDetails.originalDate, language)}
+                                      </span>
                                     </span>
                                   ) : null}
                                   {movementDetails.reasons.length ? (
-                                    <span className="mt-1.5 block text-[10px] font-medium text-lab-amber-600 pl-1 border-l-2 border-lab-amber-400">
+                                    <span className="mt-2.5 block text-xs font-medium text-lab-amber-600 pl-2 border-l-2 border-lab-amber-300 font-sans leading-normal">
                                       {movementDetails.reasons[0]}
                                     </span>
                                   ) : null}
@@ -3549,14 +3551,14 @@ export default function Home() {
                         </p>
                         <div className="mt-2.5 grid grid-cols-2 gap-2">
                           <button
-                            className="px-2 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-[10px] font-bold text-lab-steel-700 transition cursor-pointer shadow-2xs"
+                            className="whitespace-nowrap px-3 py-2.5 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-2xs font-sans"
                             onClick={() => shiftDraftEventsFrom(selectedEvent.id, -1)}
                             type="button"
                           >
                             {t.moveFollowingEarlier}
                           </button>
                           <button
-                            className="px-2 py-2 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-[10px] font-bold text-lab-steel-700 transition cursor-pointer shadow-2xs"
+                            className="whitespace-nowrap px-3 py-2.5 border border-lab-steel-200 bg-white hover:bg-lab-steel-50 rounded-lg text-xs font-bold text-lab-steel-700 transition cursor-pointer shadow-2xs font-sans"
                             onClick={() => shiftDraftEventsFrom(selectedEvent.id, 1)}
                             type="button"
                           >
@@ -3566,27 +3568,27 @@ export default function Home() {
                       </div>
 
                       <div className="border border-lab-steel-200 bg-white p-4 rounded-xl text-xs text-lab-steel-500 leading-relaxed shadow-xs space-y-3.5">
-                        <h4 className="text-[10px] font-bold text-lab-steel-900 uppercase tracking-wider border-b border-lab-steel-100 pb-1.5">
+                        <h4 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider border-b border-lab-steel-100 pb-2 font-sans">
                           {t.scheduleExplanation}
                         </h4>
-                        <div className="space-y-3 font-medium">
+                        <div className="space-y-3.5 font-medium">
                           <p>
-                            <span className="block text-[9px] font-bold uppercase tracking-wider text-lab-steel-400 font-mono">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-lab-steel-400 font-sans">
                               {t.currentDraftTime}
                             </span>
-                            <span className="text-xs font-bold text-lab-steel-800 font-mono">
+                            <span className="text-xs font-bold text-lab-steel-800 font-sans leading-normal">
                               {formatDate(selectedEvent.date, language)}{" "}
-                              {formatTime(selectedEvent.date, language)}
+                              <span className="font-mono">{formatTime(selectedEvent.date, language)}</span>
                             </span>
                           </p>
                           <p>
-                            <span className="block text-[9px] font-bold uppercase tracking-wider text-lab-steel-400 font-mono">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-lab-steel-400 font-sans">
                               {t.originalCalculatedTime}
                             </span>
                             <span
-                              className={`text-xs font-bold font-mono ${
+                              className={`text-xs font-bold font-sans leading-normal ${
                                 selectedMovementDetails?.moved
-                                  ? "text-lab-amber-600 bg-lab-amber-50 px-1 py-0.5 rounded"
+                                  ? "text-lab-amber-600 bg-lab-amber-50 px-2 py-0.5 rounded-md"
                                   : "text-lab-steel-800"
                               }`}
                             >
@@ -3603,38 +3605,38 @@ export default function Home() {
                           </p>
                           {selectedEvent.conflict ? (
                             <p>
-                              <span className="block text-[9px] font-bold uppercase tracking-wider text-lab-steel-400 font-mono">
+                              <span className="block text-[10px] font-bold uppercase tracking-wider text-lab-steel-400 font-sans">
                                 {t.conflictAvoided}
                               </span>
-                              <span className="text-xs font-bold text-lab-amber-600 bg-lab-amber-50 px-1 py-0.5 rounded font-mono">
+                              <span className="text-xs font-bold text-lab-amber-600 bg-lab-amber-50 px-2 py-0.5 rounded-md font-sans leading-normal">
                                 {selectedEvent.conflict}
                               </span>
                             </p>
                           ) : null}
                         </div>
-                        <div className="mt-3 border-t border-lab-steel-100 pt-2.5 text-[10px] font-mono font-bold text-lab-steel-400 space-y-1">
+                        <div className="mt-3 border-t border-lab-steel-100 pt-2.5 text-xs font-sans font-bold text-lab-steel-400 space-y-1.5">
                           <p className="flex justify-between">
                             <span>SEQUENCE ID:</span>
-                            <span className="text-lab-steel-700">DAY {selectedEvent.dayOffset}</span>
+                            <span className="text-lab-steel-700 font-mono">DAY {selectedEvent.dayOffset}</span>
                           </p>
                           <p className="flex justify-between">
                             <span>{t.protocolPlaceholder.toUpperCase()}:</span>
-                            <span className="text-lab-steel-700">{selectedEvent.protocol}</span>
+                            <span className="text-lab-steel-700 font-sans">{selectedEvent.protocol}</span>
                           </p>
                         </div>
                         {selectedMovementDetails?.reasons.length ? (
                           <div className="mt-3 border-t border-lab-steel-100 pt-2.5">
-                            <p className="text-[10px] font-bold text-lab-amber-700 uppercase tracking-wider">
+                            <p className="text-xs font-bold text-lab-amber-700 uppercase tracking-wider font-sans">
                               {t.movedBecause}
                             </p>
-                            <ul className="mt-1 space-y-1 text-[10px] font-medium text-lab-amber-600 pl-3.5 list-disc">
+                            <ul className="mt-1 space-y-1.5 text-xs font-medium text-lab-amber-600 pl-3.5 list-disc font-sans leading-normal">
                               {selectedMovementDetails.reasons.map((reason) => (
                                 <li key={reason}>{reason}</li>
                               ))}
                             </ul>
                           </div>
                         ) : selectedMovementDetails?.moved ? null : (
-                          <p className="mt-3 border-t border-lab-steel-100 pt-2.5 text-[10px] font-bold text-lab-teal-600 font-mono flex items-center gap-1.5">
+                          <p className="mt-3 border-t border-lab-steel-100 pt-2.5 text-xs font-bold text-lab-teal-600 font-sans flex items-center gap-1.5 leading-normal">
                             <span className="w-1.5 h-1.5 bg-lab-teal-500 rounded-full animate-pulse"></span>
                             {t.noMovementNeeded.toUpperCase()}
                           </p>
