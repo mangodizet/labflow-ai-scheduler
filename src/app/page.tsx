@@ -3380,144 +3380,146 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
-                  <div>
-                    <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100 mb-4 flex items-center justify-between">
-                      <span>{t.draftCalendar}</span>
-                      <span className="text-[10px] text-lab-steel-400 font-mono font-bold">GRID-MODE: 7-DAY CALENDAR</span>
-                    </h3>
-                    
-                    {/* Weekday Header Bar for Desktops */}
-                    <div className="grid grid-cols-7 gap-3 mb-2 text-center text-xs font-extrabold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2 hidden md:grid">
-                      {(language === "ko" 
-                        ? ["일", "월", "화", "수", "목", "금", "토"] 
-                        : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
-                      ).map((dayName, idx) => (
-                        <div key={dayName} className={idx === 0 || idx === 6 ? "text-lab-amber-600" : "text-lab-steel-500"}>
-                          {dayName}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="grid gap-3 grid-cols-1 md:grid-cols-7">
-                      {/* Align first day to the correct weekday column */}
-                      {(() => {
-                        const firstDateKey = draftDates[0];
-                        const startDayOfWeek = firstDateKey ? new Date(`${firstDateKey}T00:00:00`).getDay() : 0;
-                        return Array.from({ length: startDayOfWeek }).map((_, idx) => (
-                          <div 
-                            key={`empty-${idx}`} 
-                            className="hidden md:flex border border-dashed border-lab-steel-100/30 rounded-2xl bg-lab-steel-50/5 min-h-48 items-center justify-center text-[10px] font-bold text-lab-steel-200 font-mono"
-                          >
-                            {/* Empty placeholder for clean visual alignment */}
+                  <div className="overflow-x-auto pb-4 scrollbar-thin">
+                    <div className="min-w-[950px] pr-2">
+                      <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100 mb-4 flex items-center justify-between">
+                        <span>{t.draftCalendar}</span>
+                        <span className="text-[10px] text-lab-steel-400 font-mono font-bold">GRID-MODE: 7-DAY CALENDAR</span>
+                      </h3>
+                      
+                      {/* Weekday Header Bar */}
+                      <div className="grid grid-cols-7 gap-3 mb-2 text-center text-xs font-extrabold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2">
+                        {(language === "ko" 
+                          ? ["일", "월", "화", "수", "목", "금", "토"] 
+                          : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+                        ).map((dayName, idx) => (
+                          <div key={dayName} className={idx === 0 || idx === 6 ? "text-lab-amber-600" : "text-lab-steel-500"}>
+                            {dayName}
                           </div>
-                        ));
-                      })()}
+                        ))}
+                      </div>
 
-                      {draftDates.map((dateKey) => {
-                        const dateObj = new Date(`${dateKey}T00:00:00`);
-                        const dayOfWeek = dateObj.getDay();
-                        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                      <div className="grid gap-3 grid-cols-7">
+                        {/* Align first day to the correct weekday column */}
+                        {(() => {
+                          const firstDateKey = draftDates[0];
+                          const startDayOfWeek = firstDateKey ? new Date(`${firstDateKey}T00:00:00`).getDay() : 0;
+                          return Array.from({ length: startDayOfWeek }).map((_, idx) => (
+                            <div 
+                              key={`empty-${idx}`} 
+                              className="border border-dashed border-lab-steel-100/30 rounded-2xl bg-lab-steel-50/5 min-h-48 items-center justify-center text-[10px] font-bold text-lab-steel-200 font-mono"
+                            >
+                              {/* Empty placeholder for clean visual alignment */}
+                            </div>
+                          ));
+                        })()}
 
-                        return (
-                          <section
-                            key={dateKey}
-                            onDragLeave={() => setDragTargetDate("")}
-                            onDragOver={(event) => {
-                              event.preventDefault();
-                              setDragTargetDate(dateKey);
-                            }}
-                            onDrop={(event) => {
-                              event.preventDefault();
-                              const eventId =
-                                event.dataTransfer.getData("text/plain") ||
-                                draggedEventId;
-                              handleDraftEventDrop(eventId, dateKey);
-                            }}
-                            className={`min-h-48 border rounded-2xl bg-precision-grid transition duration-200 flex flex-col overflow-hidden ${
-                              dragTargetDate === dateKey
-                                ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
-                                : isWeekend
-                                  ? "border-lab-steel-200 bg-lab-steel-50/30 shadow-2xs"
-                                  : "border-lab-steel-200 bg-white shadow-2xs"
-                            }`}
-                          >
-                            <div className={`border-b border-lab-steel-100 px-3.5 py-2.5 flex items-center justify-between ${
-                              isWeekend ? "bg-lab-steel-100/30" : "bg-lab-steel-50/50"
-                            }`}>
-                              <p className={`text-sm font-extrabold font-sans tracking-tight flex items-center gap-1.5 ${
-                                isWeekend ? "text-lab-amber-600" : "text-lab-steel-800"
+                        {draftDates.map((dateKey) => {
+                          const dateObj = new Date(`${dateKey}T00:00:00`);
+                          const dayOfWeek = dateObj.getDay();
+                          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                          return (
+                            <section
+                              key={dateKey}
+                              onDragLeave={() => setDragTargetDate("")}
+                              onDragOver={(event) => {
+                                event.preventDefault();
+                                setDragTargetDate(dateKey);
+                              }}
+                              onDrop={(event) => {
+                                event.preventDefault();
+                                const eventId =
+                                  event.dataTransfer.getData("text/plain") ||
+                                  draggedEventId;
+                                handleDraftEventDrop(eventId, dateKey);
+                              }}
+                              className={`min-h-48 border rounded-2xl bg-precision-grid transition duration-200 flex flex-col overflow-hidden ${
+                                dragTargetDate === dateKey
+                                  ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
+                                  : isWeekend
+                                    ? "border-lab-steel-200 bg-lab-steel-50/30 shadow-2xs"
+                                    : "border-lab-steel-200 bg-white shadow-2xs"
+                              }`}
+                            >
+                              <div className={`border-b border-lab-steel-100 px-3.5 py-2.5 flex items-center justify-between ${
+                                isWeekend ? "bg-lab-steel-100/30" : "bg-lab-steel-50/50"
                               }`}>
-                                <span className={`w-2 h-2 rounded-full ${
-                                  isWeekend ? "bg-lab-amber-500 animate-pulse" : "bg-lab-teal-500 animate-pulse"
-                                }`}></span>
-                                {language === "ko" ? `${dateObj.getDate()}일` : dateObj.getDate()}
-                              </p>
-                            </div>
-                            <div className="space-y-3 p-3 flex-1">
-                              {groupedDraftEvents[dateKey].map((event) => {
-                                const movementDetails = getMovementDetails(event);
-                                const categoryAccent = getCategoryAccent(event.category);
+                                <p className={`text-sm font-extrabold font-sans tracking-tight flex items-center gap-1.5 ${
+                                  isWeekend ? "text-lab-amber-600" : "text-lab-steel-800"
+                                }`}>
+                                  <span className={`w-2 h-2 rounded-full ${
+                                    isWeekend ? "bg-lab-amber-500 animate-pulse" : "bg-lab-teal-500 animate-pulse"
+                                  }`}></span>
+                                  {language === "ko" ? `${dateObj.getDate()}일` : dateObj.getDate()}
+                                </p>
+                              </div>
+                              <div className="space-y-3.5 p-3.5 flex-1">
+                                {groupedDraftEvents[dateKey].map((event) => {
+                                  const movementDetails = getMovementDetails(event);
+                                  const categoryAccent = getCategoryAccent(event.category);
 
-                                return (
-                                  <button
-                                    draggable
-                                    key={event.id}
-                                    onClick={() => setSelectedEventId(event.id)}
-                                    onDragEnd={() => {
-                                      setDraggedEventId("");
-                                      setDragTargetDate("");
-                                    }}
-                                    onDragStart={(dragEvent) => {
-                                      setDraggedEventId(event.id);
-                                      setSelectedEventId(event.id);
-                                      dragEvent.dataTransfer.setData(
-                                        "text/plain",
-                                        event.id,
-                                      );
-                                      dragEvent.dataTransfer.effectAllowed = "move";
-                                    }}
-                                    className={`relative w-full border rounded-xl py-3 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
-                                      selectedEventId === event.id
-                                        ? "border-lab-teal-600 bg-lab-teal-50/40 ring-1 ring-lab-teal-600/20 shadow-xs"
-                                        : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
-                                    }`}
-                                  >
-                                    <span
-                                      className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
-                                    />
-                                    <span className="block text-[11px] font-extrabold text-lab-steel-500 font-mono tracking-tight uppercase">
-                                      {formatTime(event.date, language)} ·{" "}
-                                      {formatDuration(event.durationMinutes, language)}
-                                    </span>
-                                    <span className="mt-1.5 block text-sm font-extrabold text-lab-steel-900 leading-snug break-words">
-                                      {event.name}
-                                    </span>
-                                    <span
-                                      className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                  return (
+                                    <button
+                                      draggable
+                                      key={event.id}
+                                      onClick={() => setSelectedEventId(event.id)}
+                                      onDragEnd={() => {
+                                        setDraggedEventId("");
+                                        setDragTargetDate("");
+                                      }}
+                                      onDragStart={(dragEvent) => {
+                                        setDraggedEventId(event.id);
+                                        setSelectedEventId(event.id);
+                                        dragEvent.dataTransfer.setData(
+                                          "text/plain",
+                                          event.id,
+                                        );
+                                        dragEvent.dataTransfer.effectAllowed = "move";
+                                      }}
+                                      className={`relative w-full border rounded-xl py-3.5 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
+                                        selectedEventId === event.id
+                                          ? "border-lab-teal-600 bg-lab-teal-50/40 ring-1 ring-lab-teal-600/20 shadow-xs"
+                                          : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
+                                      }`}
                                     >
-                                      {t.categories[event.category]}
-                                    </span>
-                                    {movementDetails.moved && movementDetails.originalDate ? (
-                                      <span className="mt-3 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-1.5 font-sans leading-normal">
-                                        {t.adjustedFrom}:{" "}
-                                        <span className="font-mono font-bold">
-                                          {formatDate(movementDetails.originalDate, language)}{" "}
-                                          {formatTime(movementDetails.originalDate, language)}
+                                      <span
+                                        className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
+                                      />
+                                      <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
+                                        {formatTime(event.date, language)} ·{" "}
+                                        {formatDuration(event.durationMinutes, language)}
+                                      </span>
+                                      <span className="mt-2 block text-[15px] font-extrabold text-lab-steel-900 leading-snug break-words">
+                                        {event.name}
+                                      </span>
+                                      <span
+                                        className={`mt-2.5 inline-block border rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                      >
+                                        {t.categories[event.category]}
+                                      </span>
+                                      {movementDetails.moved && movementDetails.originalDate ? (
+                                        <span className="mt-3.5 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-2 font-sans leading-normal">
+                                          {t.adjustedFrom}:{" "}
+                                          <span className="font-mono font-bold block mt-1">
+                                            {formatDate(movementDetails.originalDate, language)}{" "}
+                                            {formatTime(movementDetails.originalDate, language)}
+                                          </span>
                                         </span>
-                                      </span>
-                                    ) : null}
-                                    {movementDetails.reasons.length ? (
-                                      <span className="mt-2.5 block text-xs font-medium text-lab-amber-600 pl-2 border-l-2 border-lab-amber-300 font-sans leading-normal">
-                                        {movementDetails.reasons[0]}
-                                      </span>
-                                    ) : null}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </section>
-                        );
-                      })}
+                                      ) : null}
+                                      {movementDetails.reasons.length ? (
+                                        <span className="mt-3 block text-xs font-medium text-lab-amber-600 pl-2.5 border-l-2 border-lab-amber-300 font-sans leading-normal">
+                                          {movementDetails.reasons[0]}
+                                        </span>
+                                      ) : null}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </section>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
