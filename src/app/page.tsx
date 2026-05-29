@@ -3009,23 +3009,23 @@ export default function Home() {
                     </label>
                     <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                       {templateBuilder.steps.map((step, index) => (
-                        <div key={step.id} className="border border-lab-steel-200 bg-white p-2.5 rounded-lg space-y-2">
+                        <div key={step.id} className="border border-lab-steel-200 bg-white p-3.5 rounded-lg space-y-2.5">
                           <div className="flex items-center justify-between gap-2 border-b border-lab-steel-100 pb-1.5">
-                            <span className="text-[10px] font-bold text-lab-teal-700 bg-lab-teal-50 px-1.5 py-0.5 rounded border border-lab-teal-100 font-mono">
+                            <span className="text-xs font-bold text-lab-teal-700 bg-lab-teal-50 px-2 py-0.5 rounded border border-lab-teal-100 font-sans">
                               {t.day} {index + 1}
                             </span>
                             <button
-                              className="text-[10px] font-bold text-red-500 hover:text-red-700 cursor-pointer"
+                              className="text-xs font-bold text-red-500 hover:text-red-700 cursor-pointer font-sans"
                               onClick={() => removeTemplateBuilderStep(step.id)}
                               type="button"
                             >
                               {t.removeStep}
                             </button>
                           </div>
-                          <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                          <label className="block text-xs font-bold text-lab-steel-600 uppercase font-sans">
                             {t.stepName}
                             <input
-                              className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600"
+                              className="mt-1 w-full border border-lab-steel-200 px-2.5 py-1.5 rounded text-xs outline-none focus:border-lab-teal-600 font-sans"
                               value={step.name}
                               onChange={(event) =>
                                 updateTemplateBuilderStep(step.id, {
@@ -3034,11 +3034,11 @@ export default function Home() {
                               }
                             />
                           </label>
-                          <div className="grid grid-cols-2 gap-1.5 font-mono">
-                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                          <div className="grid grid-cols-2 gap-2">
+                            <label className="block text-xs font-bold text-lab-steel-600 uppercase font-sans">
                               {t.dayOffset}
                               <input
-                                className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600"
+                                className="mt-1 w-full border border-lab-steel-200 px-2.5 py-1.5 rounded text-xs outline-none focus:border-lab-teal-600 font-mono"
                                 min="0"
                                 type="number"
                                 value={step.dayOffset}
@@ -3052,10 +3052,10 @@ export default function Home() {
                                 }
                               />
                             </label>
-                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
-                              {t.eventDuration}
+                            <label className="block text-xs font-bold text-lab-steel-600 uppercase font-sans">
+                              {t.eventDuration} (Min)
                               <input
-                                className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600"
+                                className="mt-1 w-full border border-lab-steel-200 px-2.5 py-1.5 rounded text-xs outline-none focus:border-lab-teal-600 font-mono"
                                 min="1"
                                 type="number"
                                 value={step.durationMinutes}
@@ -3070,11 +3070,11 @@ export default function Home() {
                               />
                             </label>
                           </div>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                          <div className="grid grid-cols-2 gap-2">
+                            <label className="block text-xs font-bold text-lab-steel-600 uppercase font-sans">
                               {t.category}
                               <select
-                                className="mt-0.5 w-full border border-lab-steel-200 bg-white px-1.5 py-1 rounded text-2xs outline-none focus:border-lab-teal-600 font-semibold"
+                                className="mt-1 w-full border border-lab-steel-200 bg-white px-2 py-1.5 rounded text-xs outline-none focus:border-lab-teal-600 font-semibold font-sans"
                                 value={step.category}
                                 onChange={(event) =>
                                   updateTemplateBuilderStep(step.id, {
@@ -3087,10 +3087,10 @@ export default function Home() {
                                 <option value="Assay">{t.categories.Assay}</option>
                               </select>
                             </label>
-                            <label className="block text-[9px] font-bold text-lab-steel-600 uppercase">
+                            <label className="block text-xs font-bold text-lab-steel-600 uppercase font-sans">
                               {t.protocol}
                               <input
-                                className="mt-0.5 w-full border border-lab-steel-200 px-2 py-1 rounded text-xs outline-none focus:border-lab-teal-600 truncate"
+                                className="mt-1 w-full border border-lab-steel-200 px-2.5 py-1.5 rounded text-xs outline-none focus:border-lab-teal-600 truncate font-sans"
                                 value={step.protocol}
                                 onChange={(event) =>
                                   updateTemplateBuilderStep(step.id, {
@@ -3104,9 +3104,9 @@ export default function Home() {
                       ))}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 border-t border-lab-steel-100 pt-2.5">
+                  <div className="grid grid-cols-2 gap-2 border-t border-lab-steel-100 pt-3">
                     <button
-                      className="border border-lab-steel-200 bg-white py-1.5 rounded-lg text-2xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 transition cursor-pointer"
+                      className="border border-lab-steel-200 bg-white py-2 rounded-lg text-xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 transition cursor-pointer font-sans"
                       disabled={isSavingTemplate || isDeletingTemplate}
                       onClick={addTemplateBuilderStep}
                       type="button"
@@ -3114,7 +3114,7 @@ export default function Home() {
                       {t.addTemplateStep}
                     </button>
                     <button
-                      className="bg-lab-teal-600 hover:bg-lab-teal-700 py-1.5 rounded-lg text-2xs font-bold text-white transition shadow-2xs cursor-pointer disabled:bg-lab-steel-200"
+                      className="bg-lab-teal-600 hover:bg-lab-teal-700 py-2 rounded-lg text-xs font-bold text-white transition shadow-2xs cursor-pointer disabled:bg-lab-steel-200 font-sans"
                       disabled={isSavingTemplate || isDeletingTemplate}
                       onClick={saveTemplateBuilder}
                       type="button"
@@ -3128,7 +3128,7 @@ export default function Home() {
                   </div>
                   {editingTemplateId ? (
                     <button
-                      className="w-full mt-1.5 border border-lab-steel-200 bg-white py-1.5 rounded-lg text-2xs font-bold text-lab-steel-500 hover:bg-lab-steel-50 transition cursor-pointer"
+                      className="w-full mt-2 border border-lab-steel-200 bg-white py-2 rounded-lg text-xs font-bold text-lab-steel-500 hover:bg-lab-steel-50 transition cursor-pointer font-sans"
                       disabled={isSavingTemplate || isDeletingTemplate}
                       onClick={cancelTemplateEdit}
                       type="button"
@@ -3381,101 +3381,143 @@ export default function Home() {
                 </div>
                 <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
                   <div>
-                    <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100">
-                      {t.draftCalendar}
+                    <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100 mb-4 flex items-center justify-between">
+                      <span>{t.draftCalendar}</span>
+                      <span className="text-[10px] text-lab-steel-400 font-mono font-bold">GRID-MODE: 7-DAY CALENDAR</span>
                     </h3>
-                    <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                      {draftDates.map((dateKey) => (
-                        <section
-                          key={dateKey}
-                          onDragLeave={() => setDragTargetDate("")}
-                          onDragOver={(event) => {
-                            event.preventDefault();
-                            setDragTargetDate(dateKey);
-                          }}
-                          onDrop={(event) => {
-                            event.preventDefault();
-                            const eventId =
-                              event.dataTransfer.getData("text/plain") ||
-                              draggedEventId;
-                            handleDraftEventDrop(eventId, dateKey);
-                          }}
-                          className={`min-h-48 border rounded-2xl bg-white bg-precision-grid transition duration-200 flex flex-col overflow-hidden ${
-                            dragTargetDate === dateKey
-                              ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
-                              : "border-lab-steel-200 shadow-xs"
-                          }`}
-                        >
-                          <div className="border-b border-lab-steel-100 bg-lab-steel-50/50 px-4 py-2.5 flex items-center justify-between">
-                            <p className="text-xs font-bold text-lab-steel-800 font-mono tracking-tight flex items-center gap-2">
-                              <span className="w-1.5 h-1.5 rounded-full bg-lab-teal-500 animate-pulse"></span>
-                              {formatDate(new Date(`${dateKey}T00:00:00`), language)}
-                            </p>
-                          </div>
-                          <div className="space-y-3 p-4 flex-1">
-                            {groupedDraftEvents[dateKey].map((event) => {
-                              const movementDetails = getMovementDetails(event);
-                              const categoryAccent = getCategoryAccent(event.category);
-
-                              return (
-                                <button
-                                  draggable
-                                  key={event.id}
-                                  onClick={() => setSelectedEventId(event.id)}
-                                  onDragEnd={() => {
-                                    setDraggedEventId("");
-                                    setDragTargetDate("");
-                                  }}
-                                  onDragStart={(dragEvent) => {
-                                    setDraggedEventId(event.id);
-                                    setSelectedEventId(event.id);
-                                    dragEvent.dataTransfer.setData(
-                                      "text/plain",
-                                      event.id,
-                                    );
-                                    dragEvent.dataTransfer.effectAllowed = "move";
-                                  }}
-                                  className={`relative w-full border rounded-xl py-3 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
-                                    selectedEventId === event.id
-                                      ? "border-lab-teal-600 bg-lab-teal-50/40 ring-1 ring-lab-teal-600/20 shadow-xs"
-                                      : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
-                                  }`}
-                                >
-                                  <span
-                                    className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
-                                  />
-                                  <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
-                                    {formatTime(event.date, language)} ·{" "}
-                                    {formatDuration(event.durationMinutes, language)}
-                                  </span>
-                                  <span className="mt-1 block text-sm font-bold text-lab-steel-900 leading-snug">
-                                    {event.name}
-                                  </span>
-                                  <span
-                                    className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
-                                  >
-                                    {t.categories[event.category]}
-                                  </span>
-                                  {movementDetails.moved && movementDetails.originalDate ? (
-                                    <span className="mt-3 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-1.5 font-sans leading-normal">
-                                      {t.adjustedFrom}:{" "}
-                                      <span className="font-mono font-bold">
-                                        {formatDate(movementDetails.originalDate, language)}{" "}
-                                        {formatTime(movementDetails.originalDate, language)}
-                                      </span>
-                                    </span>
-                                  ) : null}
-                                  {movementDetails.reasons.length ? (
-                                    <span className="mt-2.5 block text-xs font-medium text-lab-amber-600 pl-2 border-l-2 border-lab-amber-300 font-sans leading-normal">
-                                      {movementDetails.reasons[0]}
-                                    </span>
-                                  ) : null}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </section>
+                    
+                    {/* Weekday Header Bar for Desktops */}
+                    <div className="grid grid-cols-7 gap-3 mb-2 text-center text-[10px] font-bold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2 hidden md:grid">
+                      {(language === "ko" 
+                        ? ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] 
+                        : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                      ).map((dayName, idx) => (
+                        <div key={dayName} className={idx === 0 || idx === 6 ? "text-lab-amber-600" : "text-lab-steel-500"}>
+                          {dayName}
+                        </div>
                       ))}
+                    </div>
+
+                    <div className="grid gap-3 grid-cols-1 md:grid-cols-7">
+                      {/* Align first day to the correct weekday column */}
+                      {(() => {
+                        const firstDateKey = draftDates[0];
+                        const startDayOfWeek = firstDateKey ? new Date(`${firstDateKey}T00:00:00`).getDay() : 0;
+                        return Array.from({ length: startDayOfWeek }).map((_, idx) => (
+                          <div 
+                            key={`empty-${idx}`} 
+                            className="hidden md:flex border border-dashed border-lab-steel-100/50 rounded-2xl bg-lab-steel-50/5 min-h-48 items-center justify-center text-[10px] font-bold text-lab-steel-300 font-mono uppercase"
+                          >
+                            OUT OF RANGE
+                          </div>
+                        ));
+                      })()}
+
+                      {draftDates.map((dateKey) => {
+                        const dateObj = new Date(`${dateKey}T00:00:00`);
+                        const dayOfWeek = dateObj.getDay();
+                        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+                        return (
+                          <section
+                            key={dateKey}
+                            onDragLeave={() => setDragTargetDate("")}
+                            onDragOver={(event) => {
+                              event.preventDefault();
+                              setDragTargetDate(dateKey);
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              const eventId =
+                                event.dataTransfer.getData("text/plain") ||
+                                draggedEventId;
+                              handleDraftEventDrop(eventId, dateKey);
+                            }}
+                            className={`min-h-48 border rounded-2xl bg-precision-grid transition duration-200 flex flex-col overflow-hidden ${
+                              dragTargetDate === dateKey
+                                ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
+                                : isWeekend
+                                  ? "border-lab-steel-200 bg-lab-steel-50/30 shadow-2xs"
+                                  : "border-lab-steel-200 bg-white shadow-2xs"
+                            }`}
+                          >
+                            <div className={`border-b border-lab-steel-100 px-3.5 py-2.5 flex items-center justify-between ${
+                              isWeekend ? "bg-lab-steel-100/30" : "bg-lab-steel-50/50"
+                            }`}>
+                              <p className={`text-xs font-bold font-mono tracking-tight flex items-center gap-1.5 ${
+                                isWeekend ? "text-lab-amber-600" : "text-lab-steel-800"
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  isWeekend ? "bg-lab-amber-500 animate-pulse" : "bg-lab-teal-500 animate-pulse"
+                                }`}></span>
+                                {formatDate(dateObj, language)}
+                              </p>
+                            </div>
+                            <div className="space-y-3 p-3 flex-1">
+                              {groupedDraftEvents[dateKey].map((event) => {
+                                const movementDetails = getMovementDetails(event);
+                                const categoryAccent = getCategoryAccent(event.category);
+
+                                return (
+                                  <button
+                                    draggable
+                                    key={event.id}
+                                    onClick={() => setSelectedEventId(event.id)}
+                                    onDragEnd={() => {
+                                      setDraggedEventId("");
+                                      setDragTargetDate("");
+                                    }}
+                                    onDragStart={(dragEvent) => {
+                                      setDraggedEventId(event.id);
+                                      setSelectedEventId(event.id);
+                                      dragEvent.dataTransfer.setData(
+                                        "text/plain",
+                                        event.id,
+                                      );
+                                      dragEvent.dataTransfer.effectAllowed = "move";
+                                    }}
+                                    className={`relative w-full border rounded-xl py-3 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
+                                      selectedEventId === event.id
+                                        ? "border-lab-teal-600 bg-lab-teal-50/40 ring-1 ring-lab-teal-600/20 shadow-xs"
+                                        : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
+                                    />
+                                    <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
+                                      {formatTime(event.date, language)} ·{" "}
+                                      {formatDuration(event.durationMinutes, language)}
+                                    </span>
+                                    <span className="mt-1 block text-sm font-bold text-lab-steel-900 leading-snug">
+                                      {event.name}
+                                    </span>
+                                    <span
+                                      className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                    >
+                                      {t.categories[event.category]}
+                                    </span>
+                                    {movementDetails.moved && movementDetails.originalDate ? (
+                                      <span className="mt-3 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-1.5 font-sans leading-normal">
+                                        {t.adjustedFrom}:{" "}
+                                        <span className="font-mono font-bold">
+                                          {formatDate(movementDetails.originalDate, language)}{" "}
+                                          {formatTime(movementDetails.originalDate, language)}
+                                        </span>
+                                      </span>
+                                    ) : null}
+                                    {movementDetails.reasons.length ? (
+                                      <span className="mt-2.5 block text-xs font-medium text-lab-amber-600 pl-2 border-l-2 border-lab-amber-300 font-sans leading-normal">
+                                        {movementDetails.reasons[0]}
+                                      </span>
+                                    ) : null}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </section>
+                        );
+                      })}
                     </div>
                   </div>
 
