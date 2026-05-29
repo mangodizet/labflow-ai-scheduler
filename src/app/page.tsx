@@ -3387,10 +3387,10 @@ export default function Home() {
                     </h3>
                     
                     {/* Weekday Header Bar for Desktops */}
-                    <div className="grid grid-cols-7 gap-3 mb-2 text-center text-[10px] font-bold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2 hidden md:grid">
+                    <div className="grid grid-cols-7 gap-3 mb-2 text-center text-xs font-extrabold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2 hidden md:grid">
                       {(language === "ko" 
-                        ? ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"] 
-                        : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+                        ? ["일", "월", "화", "수", "목", "금", "토"] 
+                        : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
                       ).map((dayName, idx) => (
                         <div key={dayName} className={idx === 0 || idx === 6 ? "text-lab-amber-600" : "text-lab-steel-500"}>
                           {dayName}
@@ -3406,9 +3406,9 @@ export default function Home() {
                         return Array.from({ length: startDayOfWeek }).map((_, idx) => (
                           <div 
                             key={`empty-${idx}`} 
-                            className="hidden md:flex border border-dashed border-lab-steel-100/50 rounded-2xl bg-lab-steel-50/5 min-h-48 items-center justify-center text-[10px] font-bold text-lab-steel-300 font-mono uppercase"
+                            className="hidden md:flex border border-dashed border-lab-steel-100/30 rounded-2xl bg-lab-steel-50/5 min-h-48 items-center justify-center text-[10px] font-bold text-lab-steel-200 font-mono"
                           >
-                            OUT OF RANGE
+                            {/* Empty placeholder for clean visual alignment */}
                           </div>
                         ));
                       })()}
@@ -3444,13 +3444,13 @@ export default function Home() {
                             <div className={`border-b border-lab-steel-100 px-3.5 py-2.5 flex items-center justify-between ${
                               isWeekend ? "bg-lab-steel-100/30" : "bg-lab-steel-50/50"
                             }`}>
-                              <p className={`text-xs font-bold font-mono tracking-tight flex items-center gap-1.5 ${
+                              <p className={`text-sm font-extrabold font-sans tracking-tight flex items-center gap-1.5 ${
                                 isWeekend ? "text-lab-amber-600" : "text-lab-steel-800"
                               }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                <span className={`w-2 h-2 rounded-full ${
                                   isWeekend ? "bg-lab-amber-500 animate-pulse" : "bg-lab-teal-500 animate-pulse"
                                 }`}></span>
-                                {formatDate(dateObj, language)}
+                                {language === "ko" ? `${dateObj.getDate()}일` : dateObj.getDate()}
                               </p>
                             </div>
                             <div className="space-y-3 p-3 flex-1">
@@ -3485,15 +3485,15 @@ export default function Home() {
                                     <span
                                       className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
                                     />
-                                    <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
+                                    <span className="block text-[11px] font-extrabold text-lab-steel-500 font-mono tracking-tight uppercase">
                                       {formatTime(event.date, language)} ·{" "}
                                       {formatDuration(event.durationMinutes, language)}
                                     </span>
-                                    <span className="mt-1 block text-sm font-bold text-lab-steel-900 leading-snug">
+                                    <span className="mt-1.5 block text-sm font-extrabold text-lab-steel-900 leading-snug break-words">
                                       {event.name}
                                     </span>
                                     <span
-                                      className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                      className={`mt-2 inline-block border rounded px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
                                     >
                                       {t.categories[event.category]}
                                     </span>
