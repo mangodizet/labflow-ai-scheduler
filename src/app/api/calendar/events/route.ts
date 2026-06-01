@@ -26,6 +26,7 @@ type GoogleCalendarListEvent = {
     date?: string;
     dateTime?: string;
   };
+  id?: string;
   start?: {
     date?: string;
     dateTime?: string;
@@ -349,11 +350,11 @@ async function deleteGoogleCalendarEvent({
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const timeMin =
-    searchParams.get("timeMin") ?? new Date().toISOString();
+  const timeMin = searchParams.get("timeMin") ?? new Date().toISOString();
   const timeMax =
     searchParams.get("timeMax") ??
     new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const includeDisplay = searchParams.get("include") === "events";
   const { error, token } = await getGoogleSession();
 
   if (error || !token) {
@@ -385,11 +386,12 @@ export async function GET(request: Request) {
   }
 
   const data = await googleResponse.json();
-  const busy = ((data.items ?? []) as GoogleCalendarListEvent[])
-    .filter(
-      (event) =>
-        !event.description?.includes("Created by LabFlow AI Scheduler."),
-    )
+  const items = (data.items ?? []) as GoogleCalendarListEvent[];
+  const nonLabFlowItems = items.filter(
+    (event) => !event.description?.includes("Created by LabFlow AI Scheduler."),
+  );
+
+  const busy = nonLabFlowItems
     .map((event) => ({
       end: event.end?.dateTime ?? event.end?.date,
       start: event.start?.dateTime ?? event.start?.date,
@@ -397,9 +399,20 @@ export async function GET(request: Request) {
     }))
     .filter((event) => event.start && event.end);
 
-  return NextResponse.json({
-    busy,
-  });
+  if (!includeDisplay) {
+    return NextResponse.json({ busy });
+  }
+
+  const displayEvents = nonLabFlowItems
+    .map((event) => ({
+      end: event.end?.dateTime ?? event.end?.date,
+      id: event.id ?? "",
+      start: event.start?.dateTime ?? event.start?.date,
+      title: event.summary ?? "(No title)",
+    }))
+    .filter((event) => event.start && event.end);
+
+  return NextResponse.json({ busy, displayEvents });
 }
 
 export async function POST(request: Request) {

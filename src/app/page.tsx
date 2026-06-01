@@ -32,6 +32,15 @@ type TemplateDraftStep = Step & {
   id: string;
 };
 
+type DisplayCalendarEvent = {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+};
+
+type AIStatus = "idle" | "loading" | "error";
+
 const templates: ExperimentTemplate[] = [
   {
     id: "thp1-m2",
@@ -395,7 +404,17 @@ const copy = {
       "This schedule has already been synced. Edit the draft schedule before syncing again.",
     noTimeline: "No timeline generated yet",
     noTimelineDescription:
-      "Select an experiment template, start date, and preferred start time to preview the schedule.",
+      "Describe your experiment above and click Generate to preview the schedule.",
+    aiInputLabel: "Describe your experiment",
+    aiInputPlaceholder:
+      "e.g. I want to start THP-1 differentiation next Monday, include M2 polarization and a Live/Dead assay at the end",
+    aiGenerateButton: "Generate schedule with AI",
+    aiGenerating: "AI is generating your schedule...",
+    aiError: "Unable to generate schedule. Please try again.",
+    aiGeneratedBadge: "AI Generated",
+    existingEventsLabel: "Your calendar",
+    savedTemplatesLabel: "Saved templates",
+    savedTemplatesHint: "Or choose a saved template directly",
     day: "Day",
     protocolPlaceholder: "Protocol link placeholder",
     scheduleExplanation: "Schedule explanation",
@@ -611,7 +630,17 @@ const copy = {
       "이미 동기화된 일정입니다. 다시 동기화하려면 초안 일정을 수정하세요.",
     noTimeline: "아직 생성된 일정이 없습니다",
     noTimelineDescription:
-      "실험 템플릿, 시작 날짜, 희망 시작 시간을 설정하면 일정 미리보기가 표시됩니다.",
+      "위에 실험 계획을 입력하고 생성 버튼을 누르면 일정 미리보기가 표시됩니다.",
+    aiInputLabel: "실험 계획 입력",
+    aiInputPlaceholder:
+      "예: 다음주 월요일부터 THP-1 세포를 분화시켜서 M2 극화까지 하고 싶어. 마지막에 Live/Dead assay도 포함해줘",
+    aiGenerateButton: "AI로 일정 생성하기",
+    aiGenerating: "AI가 실험 일정을 분석 중입니다...",
+    aiError: "일정 생성에 실패했습니다. 다시 시도해주세요.",
+    aiGeneratedBadge: "AI 생성됨",
+    existingEventsLabel: "내 캘린더",
+    savedTemplatesLabel: "저장된 템플릿",
+    savedTemplatesHint: "또는 저장된 템플릿을 직접 선택",
     day: "Day",
     protocolPlaceholder: "프로토콜 링크 자리",
     scheduleExplanation: "일정 이동 설명",
@@ -1402,6 +1431,11 @@ async function fetchCalendarConflicts(
 
 export default function Home() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [naturalLanguageInput, setNaturalLanguageInput] = useState("");
+  const [aiStatus, setAiStatus] = useState<AIStatus>("idle");
+  const [aiErrorMessage, setAiErrorMessage] = useState("");
+  const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState<ExperimentTemplate | null>(null);
+  const [existingCalendarEvents, setExistingCalendarEvents] = useState<DisplayCalendarEvent[]>([]);
   const [showIntroBanner, setShowIntroBanner] = useState(
     getInitialIntroBannerVisibility,
   );
@@ -1456,20 +1490,22 @@ export default function Home() {
     [addOnTemplateIds, allTemplates],
   );
   const template = useMemo(
-    () =>
-      primaryTemplate
+    () => {
+      if (aiGeneratedTemplate) return aiGeneratedTemplate;
+      return primaryTemplate
         ? combineExperimentTemplates(
             primaryTemplate,
             addOnTemplates,
             addOnPlacementMode,
           )
-        : undefined,
-    [addOnPlacementMode, addOnTemplates, primaryTemplate],
+        : undefined;
+    },
+    [addOnPlacementMode, addOnTemplates, aiGeneratedTemplate, primaryTemplate],
   );
   const isCustomTemplateSelected = Boolean(
     templateId && customTemplates.some((item) => item.id === templateId),
   );
-  const canGenerateSchedule = Boolean(template && startDate && workStart);
+  const canGenerateSchedule = Boolean((aiGeneratedTemplate || template) && startDate && workStart);
 
   useEffect(() => {
     if (!showIntroBanner) {
@@ -1750,6 +1786,19 @@ export default function Home() {
     userEmail,
     workStart,
   ]);
+
+  useEffect(() => {
+    if (!userId || !startDate) return;
+
+    const rangeStart = new Date(startDate);
+    rangeStart.setDate(rangeStart.getDate() - 1);
+    const rangeEnd = new Date(startDate);
+    rangeEnd.setDate(rangeEnd.getDate() + 60);
+
+    void loadExistingCalendarEvents(rangeStart.toISOString(), rangeEnd.toISOString());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, startDate]);
+
 
   async function handleGoogleConnect() {
     if (!canConnectGoogle) {
@@ -2395,6 +2444,84 @@ export default function Home() {
     }
   }
 
+  async function handleAIGenerate() {
+    const prompt = naturalLanguageInput.trim();
+
+    if (!prompt) return;
+
+    setAiStatus("loading");
+    setAiErrorMessage("");
+
+    try {
+      const todayDate = new Date().toISOString().split("T")[0];
+      const response = await fetch("/api/ai/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, todayDate }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error ?? t.aiError);
+      }
+
+      const generated: ExperimentTemplate = {
+        id: `ai-${Date.now()}`,
+        name: data.name,
+        summary: data.summary,
+        steps: data.steps,
+        source: "local",
+      };
+
+      setAiGeneratedTemplate(generated);
+      setDraftEdits({});
+      setSelectedEventId("");
+
+      if (data.suggestedStartDate) {
+        setStartDate(data.suggestedStartDate);
+      } else if (!startDate) {
+        setStartDate(new Date().toISOString().split("T")[0]);
+      }
+
+      if (!workStart) {
+        setWorkStart("09:00");
+        setPreferredPeriod("AM");
+        setPreferredTimeText("9:00");
+      }
+
+      setAiStatus("idle");
+    } catch (error) {
+      setAiStatus("error");
+      setAiErrorMessage(error instanceof Error ? error.message : t.aiError);
+    }
+  }
+
+  async function loadExistingCalendarEvents(timeMin: string, timeMax: string) {
+    try {
+      const params = new URLSearchParams({ timeMin, timeMax, include: "events" });
+      const response = await fetch(`/api/calendar/events?${params.toString()}`);
+
+      if (!response.ok) return;
+
+      const data = await response.json().catch(() => null);
+      const events = data?.displayEvents;
+
+      if (Array.isArray(events)) {
+        setExistingCalendarEvents(
+          events.map((e: { id: string; title: string; start: string; end: string }) => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end,
+          })),
+        );
+      }
+    } catch {
+      // Silently ignore - existing events are best-effort display only
+    }
+  }
+
   const currentTutorialPage = t.introPages[tutorialPage] ?? t.introPages[0];
   const isFirstTutorialPage = tutorialPage === 0;
   const isLastTutorialPage = tutorialPage === t.introPages.length - 1;
@@ -2753,6 +2880,83 @@ export default function Home() {
             </div>
           </div>
         </header>
+        {/* Natural Language Input Section */}
+        <section className="border border-lab-teal-200 bg-gradient-to-br from-lab-teal-50/60 to-white rounded-2xl shadow-sm p-6">
+          <label className="block text-sm font-bold text-lab-steel-900 mb-3 flex items-center gap-2" htmlFor="ai-input">
+            <svg className="h-5 w-5 text-lab-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            {t.aiInputLabel}
+          </label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <textarea
+              id="ai-input"
+              value={naturalLanguageInput}
+              onChange={(e) => setNaturalLanguageInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  void handleAIGenerate();
+                }
+              }}
+              placeholder={t.aiInputPlaceholder}
+              rows={3}
+              className="flex-1 border border-lab-teal-200 bg-white px-4 py-3 rounded-xl text-sm outline-none focus:border-lab-teal-500 focus:ring-4 focus:ring-lab-teal-500/10 transition-all resize-none text-lab-steel-800 placeholder:text-lab-steel-400"
+            />
+            <button
+              onClick={() => void handleAIGenerate()}
+              disabled={!naturalLanguageInput.trim() || aiStatus === "loading"}
+              className="sm:w-48 px-5 py-3 bg-lab-teal-600 hover:bg-lab-teal-700 disabled:bg-lab-steel-200 disabled:text-lab-steel-400 text-white font-bold text-sm rounded-xl transition shadow-sm disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {aiStatus === "loading" ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {language === "ko" ? "생성 중..." : "Generating..."}
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  {t.aiGenerateButton}
+                </>
+              )}
+            </button>
+          </div>
+          {aiStatus === "loading" && (
+            <p className="mt-3 text-xs font-semibold text-lab-teal-700 bg-lab-teal-50 border border-lab-teal-100 rounded-lg px-3 py-2 flex items-center gap-2">
+              <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {t.aiGenerating}
+            </p>
+          )}
+          {aiStatus === "error" && (
+            <p className="mt-3 text-xs font-semibold text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {aiErrorMessage || t.aiError}
+            </p>
+          )}
+          {aiGeneratedTemplate && aiStatus !== "loading" && (
+            <div className="mt-3 flex items-center gap-2 text-xs text-lab-teal-700 font-semibold bg-lab-teal-50 border border-lab-teal-100 rounded-lg px-3 py-2">
+              <svg className="h-3.5 w-3.5 text-lab-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="bg-lab-teal-100 text-lab-teal-800 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">{t.aiGeneratedBadge}</span>
+              <span className="truncate">{aiGeneratedTemplate.name}</span>
+              <button
+                onClick={() => { setAiGeneratedTemplate(null); setDraftEdits({}); }}
+                className="ml-auto text-lab-steel-400 hover:text-lab-steel-700 transition cursor-pointer"
+                title={language === "ko" ? "지우기" : "Clear"}
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </section>
+
         <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
           <aside className="flex flex-col gap-5 border border-lab-steel-200 bg-white p-5 rounded-2xl shadow-sm h-fit">
             <div className="border border-lab-steel-200 bg-lab-steel-50/30 p-4 rounded-xl">
@@ -2811,135 +3015,54 @@ export default function Home() {
               ) : null}
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider" htmlFor="template">
-                {t.experimentTemplate}
-              </label>
-              <select
-                id="template"
-                value={templateId}
-                onChange={(event) => {
-                  handleTemplateSelection(event.currentTarget.value);
-                }}
-                onInput={(event) => {
-                  handleTemplateSelection(event.currentTarget.value);
-                }}
-                className="mt-1 w-full border border-lab-steel-200 bg-white px-3 py-2 rounded-lg text-xs outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all font-medium text-lab-steel-800"
-              >
-                <option value="">{t.selectExperiment}</option>
-                {allTemplates.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-2 text-xs leading-relaxed text-lab-steel-500">
-                {primaryTemplate
-                  ? getTemplateSummary(
-                      primaryTemplate.id,
-                      language,
-                      primaryTemplate.summary,
-                    )
-                  : t.chooseTemplate}
-              </p>
-              {primaryTemplate && availableAddOnTemplates.length ? (
-                <details className="mt-3 border border-lab-steel-200 bg-lab-steel-50/20 rounded-xl overflow-hidden">
-                  <summary className="cursor-pointer text-2xs font-bold text-lab-steel-900 p-3 hover:bg-lab-steel-50 flex items-center justify-between uppercase tracking-wider">
-                    {t.planningOptions}
-                  </summary>
-                  <div className="p-3 border-t border-lab-steel-200 bg-white space-y-3.5">
-                    <p className="text-xs leading-relaxed text-lab-steel-500">
-                      {t.planningOptionsDescription}
-                    </p>
-                    <div className="border-t border-lab-steel-100 pt-3">
-                      <h3 className="text-xs font-bold text-lab-steel-800">
-                        {t.addOnExperiments}
-                      </h3>
-                      <p className="mt-1 text-[11px] leading-relaxed text-lab-steel-500">
-                        {t.addOnExperimentsDescription}
-                      </p>
-                    </div>
-                    <div className="bg-lab-steel-50/50 p-2.5 rounded-lg border border-lab-steel-100">
-                      <p className="text-[11px] font-bold text-lab-steel-700">
-                        {t.addOnPlacement}
-                      </p>
-                      <div className="mt-1.5 grid grid-cols-2 border border-lab-steel-200 bg-white rounded-lg p-0.5">
-                        {([
-                          ["append", t.appendAddOns],
-                          ["parallel", t.parallelAddOns],
-                        ] as const).map(([mode, label]) => (
-                          <button
-                            key={mode}
-                            className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
-                              addOnPlacementMode === mode
-                                ? "bg-lab-teal-600 text-white shadow-sm"
-                                : "text-lab-steel-600 hover:bg-lab-steel-50"
-                            }`}
-                            onClick={() => handleAddOnPlacementModeSelection(mode)}
-                            type="button"
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
-                      {availableAddOnTemplates.map((item) => (
-                        <label
-                          key={item.id}
-                          className="flex items-start gap-2.5 border border-lab-steel-200 bg-white p-2.5 rounded-lg text-xs text-lab-steel-700 cursor-pointer hover:border-lab-steel-300 transition-colors"
-                        >
-                          <input
-                            checked={addOnTemplateIds.includes(item.id)}
-                            className="mt-0.5 h-3.5 w-3.5 rounded accent-lab-teal-600 border-lab-steel-300"
-                            onChange={(event) =>
-                              handleAddOnTemplateSelection(
-                                item.id,
-                                event.currentTarget.checked,
-                              )
-                            }
-                            type="checkbox"
-                          />
-                          <span className="flex-1 min-w-0">
-                            <span className="block font-semibold text-lab-steel-900 truncate">
-                              {item.name}
-                            </span>
-                            <span className="mt-0.5 block text-[10px] leading-normal text-lab-steel-500">
-                              {getTemplateSummary(item.id, language, item.summary)}
-                            </span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                    {addOnTemplates.length ? (
-                      <div className="mt-3 border-t border-lab-steel-100 pt-2.5 text-2xs font-bold text-lab-teal-700 bg-lab-teal-50/20 px-2 py-1.5 rounded border border-lab-teal-100/50 truncate">
-                        {t.combinedSet}: {template?.name}
-                      </div>
-                    ) : null}
+            <details className="border border-lab-steel-200 bg-lab-steel-50/20 rounded-xl overflow-hidden">
+              <summary className="cursor-pointer text-2xs font-bold text-lab-steel-900 p-3 hover:bg-lab-steel-50 flex items-center justify-between uppercase tracking-wider">
+                {t.savedTemplatesLabel}
+                <span className="text-[10px] text-lab-steel-400 font-normal normal-case">{t.savedTemplatesHint}</span>
+              </summary>
+              <div className="p-3 border-t border-lab-steel-200 bg-white space-y-2">
+                <select
+                  id="template"
+                  value={templateId}
+                  onChange={(event) => {
+                    handleTemplateSelection(event.currentTarget.value);
+                    if (event.currentTarget.value) setAiGeneratedTemplate(null);
+                  }}
+                  onInput={(event) => {
+                    handleTemplateSelection(event.currentTarget.value);
+                    if (event.currentTarget.value) setAiGeneratedTemplate(null);
+                  }}
+                  className="w-full border border-lab-steel-200 bg-white px-3 py-2 rounded-lg text-xs outline-none focus:border-lab-teal-600 focus:ring-4 focus:ring-lab-teal-600/10 transition-all font-medium text-lab-steel-800"
+                >
+                  <option value="">{t.selectExperiment}</option>
+                  {allTemplates.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+                {isCustomTemplateSelected ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      className="border border-lab-steel-200 bg-white py-2 rounded-lg text-xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 hover:text-lab-steel-900 transition cursor-pointer"
+                      disabled={isSavingTemplate || isDeletingTemplate}
+                      onClick={editSelectedTemplate}
+                      type="button"
+                    >
+                      {t.editSelectedTemplate}
+                    </button>
+                    <button
+                      className="border border-red-200 bg-white py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition cursor-pointer"
+                      disabled={isSavingTemplate || isDeletingTemplate}
+                      onClick={deleteSelectedTemplate}
+                      type="button"
+                    >
+                      {isDeletingTemplate ? t.deletingTemplate : t.deleteSelectedTemplate}
+                    </button>
                   </div>
-                </details>
-              ) : null}
-              {isCustomTemplateSelected ? (
-                <div className="mt-2.5 grid grid-cols-2 gap-2">
-                  <button
-                    className="border border-lab-steel-200 bg-white py-2 rounded-lg text-xs font-bold text-lab-steel-600 hover:bg-lab-steel-50 hover:text-lab-steel-900 transition cursor-pointer"
-                    disabled={isSavingTemplate || isDeletingTemplate}
-                    onClick={editSelectedTemplate}
-                    type="button"
-                  >
-                    {t.editSelectedTemplate}
-                  </button>
-                  <button
-                    className="border border-red-200 bg-white py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition cursor-pointer"
-                    disabled={isSavingTemplate || isDeletingTemplate}
-                    onClick={deleteSelectedTemplate}
-                    type="button"
-                  >
-                    {isDeletingTemplate ? t.deletingTemplate : t.deleteSelectedTemplate}
-                  </button>
-                </div>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            </details>
 
             <details className="border border-lab-steel-200 bg-lab-steel-50/20 rounded-xl overflow-hidden">
               <summary className="cursor-pointer text-2xs font-bold text-lab-steel-900 p-3 hover:bg-lab-steel-50 flex items-center justify-between uppercase tracking-wider">
@@ -3455,6 +3578,32 @@ export default function Home() {
                                 </p>
                               </div>
                               <div className="space-y-3.5 p-3.5 flex-1">
+                                {existingCalendarEvents
+                                  .filter((ev) => {
+                                    const evDate = ev.start.split("T")[0];
+                                    return evDate === dateKey;
+                                  })
+                                  .map((ev) => {
+                                    const startTime = ev.start.includes("T")
+                                      ? new Date(ev.start).toLocaleTimeString(
+                                          language === "ko" ? "ko-KR" : "en-US",
+                                          { hour: "2-digit", minute: "2-digit", hour12: language !== "ko" },
+                                        )
+                                      : language === "ko" ? "종일" : "All day";
+                                    return (
+                                      <div
+                                        key={ev.id || ev.start}
+                                        className="border border-lab-steel-200 bg-lab-steel-50/70 rounded-lg px-3 py-2 flex items-start gap-2"
+                                        title={ev.title}
+                                      >
+                                        <span className="mt-0.5 h-2 w-2 rounded-full bg-lab-steel-400 flex-shrink-0" />
+                                        <div className="min-w-0">
+                                          <p className="text-[10px] font-mono font-bold text-lab-steel-400 uppercase tracking-wide">{startTime}</p>
+                                          <p className="text-xs font-semibold text-lab-steel-600 truncate">{ev.title}</p>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 {groupedDraftEvents[dateKey].map((event) => {
                                   const movementDetails = getMovementDetails(event);
                                   const categoryAccent = getCategoryAccent(event.category);
