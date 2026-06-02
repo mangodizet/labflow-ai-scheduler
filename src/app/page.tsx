@@ -28,6 +28,17 @@ type ExperimentTemplate = {
   source?: "local" | "supabase";
 };
 
+const RUN_HEX_COLORS = [
+  { bar: "#0d9488", bg: "#f0fdf4", text: "#0f766e", border: "#99f6e4" },
+  { bar: "#2563eb", bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe" },
+  { bar: "#7c3aed", bg: "#f5f3ff", text: "#6d28d9", border: "#ddd6fe" },
+  { bar: "#e11d48", bg: "#fff1f2", text: "#be123c", border: "#fecdd3" },
+  { bar: "#ea580c", bg: "#fff7ed", text: "#c2410c", border: "#fed7aa" },
+  { bar: "#059669", bg: "#ecfdf5", text: "#047857", border: "#a7f3d0" },
+] as const;
+
+type CalendarView = "monthly" | "weekly";
+
 type TemplateDraftStep = Step & {
   id: string;
 };
@@ -997,18 +1008,22 @@ function combineExperimentTemplates(
   placementMode: AddOnPlacementMode,
 ) {
   if (!addOnTemplates.length) {
-    return primaryTemplate;
+    return {
+      ...primaryTemplate,
+      steps: primaryTemplate.steps.map((step) => ({ ...step, runIndex: 0 })),
+    };
   }
 
-  const steps = [...primaryTemplate.steps];
+  const steps = [...primaryTemplate.steps.map((step) => ({ ...step, runIndex: 0 }))];
   let nextOffset = placementMode === "append" ? getLastStepOffset(primaryTemplate) + 1 : 0;
 
-  for (const addOnTemplate of addOnTemplates) {
+  for (const [addOnIndex, addOnTemplate] of addOnTemplates.entries()) {
     steps.push(
       ...addOnTemplate.steps.map((step) => ({
         ...step,
         dayOffset: step.dayOffset + nextOffset,
         name: `${addOnTemplate.name}: ${step.name}`,
+        runIndex: addOnIndex + 1,
       })),
     );
 
@@ -1473,6 +1488,7 @@ export default function Home() {
   const [selectedEventId, setSelectedEventId] = useState("");
   const [draggedEventId, setDraggedEventId] = useState("");
   const [dragTargetDate, setDragTargetDate] = useState("");
+  const [calendarView, setCalendarView] = useState<CalendarView>("monthly");
   const previousBusySignature = useRef("");
   const t = copy[language];
 
@@ -1642,6 +1658,50 @@ export default function Home() {
     }, {});
   }, [draftEvents]);
   const draftDates = Object.keys(groupedDraftEvents).sort();
+
+  const allCalendarDates = useMemo(() => {
+    if (!draftDates.length) return [];
+    const first = new Date(`${draftDates[0]}T00:00:00`);
+    const last = new Date(`${draftDates[draftDates.length - 1]}T00:00:00`);
+    const dates: string[] = [];
+    const cur = new Date(first);
+    while (cur <= last) {
+      dates.push(formatDateInput(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+  }, [draftDates]);
+
+  const runNames = useMemo(() => {
+    if (aiGeneratedTemplate) return [aiGeneratedTemplate.name];
+    if (!primaryTemplate) return [];
+    return [primaryTemplate.name, ...addOnTemplates.map((t) => t.name)];
+  }, [aiGeneratedTemplate, primaryTemplate, addOnTemplates]);
+
+  const eventsByRun = useMemo(() => {
+    const runs = new Map<number, DraftEvent[]>();
+    for (const event of draftEvents) {
+      const idx = event.runIndex ?? 0;
+      const existing = runs.get(idx) ?? [];
+      runs.set(idx, [...existing, event]);
+    }
+    return runs;
+  }, [draftEvents]);
+
+  const runDateRanges = useMemo(() => {
+    return Array.from(eventsByRun.entries())
+      .map(([runIdx, events]) => {
+        const dates = events.map((e) => formatDateInput(e.date)).sort();
+        return {
+          runIndex: runIdx,
+          startDate: dates[0]!,
+          endDate: dates[dates.length - 1]!,
+          name: runNames[runIdx] ?? `Run ${runIdx + 1}`,
+          color: RUN_HEX_COLORS[runIdx % RUN_HEX_COLORS.length]!,
+        };
+      })
+      .sort((a, b) => a.runIndex - b.runIndex);
+  }, [eventsByRun, runNames]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -3502,173 +3562,395 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
+                {/* View toggle */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider font-mono mr-1">{language === "ko" ? "보기" : "View"}:</span>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarView("monthly")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${calendarView === "monthly" ? "bg-lab-teal-600 text-white shadow-sm" : "border border-lab-steel-200 text-lab-steel-600 hover:bg-lab-steel-50"}`}
+                  >
+                    {language === "ko" ? "월간 개요" : "Monthly Overview"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalendarView("weekly")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${calendarView === "weekly" ? "bg-lab-teal-600 text-white shadow-sm" : "border border-lab-steel-200 text-lab-steel-600 hover:bg-lab-steel-50"}`}
+                  >
+                    {language === "ko" ? "주간 상세" : "Weekly Detail"}
+                  </button>
+                </div>
+
                 <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
                   <div className="overflow-x-auto pb-4 scrollbar-thin">
-                    <div className="min-w-[950px] pr-2">
-                      <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100 mb-4 flex items-center justify-between">
-                        <span>{t.draftCalendar}</span>
-                        <span className="text-[10px] text-lab-steel-400 font-mono font-bold">GRID-MODE: 7-DAY CALENDAR</span>
-                      </h3>
-                      
-                      {/* Weekday Header Bar */}
-                      <div className="grid grid-cols-7 gap-3 mb-2 text-center text-xs font-extrabold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2">
-                        {(language === "ko" 
-                          ? ["일", "월", "화", "수", "목", "금", "토"] 
-                          : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
-                        ).map((dayName, idx) => (
-                          <div key={dayName} className={idx === 0 || idx === 6 ? "text-lab-amber-600" : "text-lab-steel-500"}>
-                            {dayName}
-                          </div>
-                        ))}
-                      </div>
+                    <div className={calendarView === "weekly" ? "min-w-[950px] pr-2" : "pr-2"}>
 
-                      <div className="grid gap-3 grid-cols-7">
-                        {/* Align first day to the correct weekday column */}
-                        {(() => {
-                          const firstDateKey = draftDates[0];
-                          const startDayOfWeek = firstDateKey ? new Date(`${firstDateKey}T00:00:00`).getDay() : 0;
-                          return Array.from({ length: startDayOfWeek }).map((_, idx) => (
-                            <div 
-                              key={`empty-${idx}`} 
-                              className="border border-dashed border-lab-steel-100/30 rounded-2xl bg-lab-steel-50/5 min-h-48 items-center justify-center text-[10px] font-bold text-lab-steel-200 font-mono"
-                            >
-                              {/* Empty placeholder for clean visual alignment */}
-                            </div>
-                          ));
-                        })()}
+                      {/* ── MONTHLY OVERVIEW ── */}
+                      {calendarView === "monthly" && (() => {
+                        const firstDateKey = allCalendarDates[0];
+                        const lastDateKey = allCalendarDates[allCalendarDates.length - 1];
+                        if (!firstDateKey || !lastDateKey) return null;
+                        const firstDate = new Date(`${firstDateKey}T00:00:00`);
+                        const lastDate = new Date(`${lastDateKey}T00:00:00`);
+                        const totalDays = Math.max(1, getDayDifference(firstDate, lastDate) + 1);
 
-                        {draftDates.map((dateKey) => {
-                          const dateObj = new Date(`${dateKey}T00:00:00`);
-                          const dayOfWeek = dateObj.getDay();
-                          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-                          return (
-                            <section
-                              key={dateKey}
-                              onDragLeave={() => setDragTargetDate("")}
-                              onDragOver={(event) => {
-                                event.preventDefault();
-                                setDragTargetDate(dateKey);
-                              }}
-                              onDrop={(event) => {
-                                event.preventDefault();
-                                const eventId =
-                                  event.dataTransfer.getData("text/plain") ||
-                                  draggedEventId;
-                                handleDraftEventDrop(eventId, dateKey);
-                              }}
-                              className={`min-h-48 border rounded-2xl bg-precision-grid transition duration-200 flex flex-col overflow-hidden ${
-                                dragTargetDate === dateKey
-                                  ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
-                                  : isWeekend
-                                    ? "border-lab-steel-200 bg-lab-steel-50/30 shadow-2xs"
-                                    : "border-lab-steel-200 bg-white shadow-2xs"
-                              }`}
-                            >
-                              <div className={`border-b border-lab-steel-100 px-3.5 py-2.5 flex items-center justify-between ${
-                                isWeekend ? "bg-lab-steel-100/30" : "bg-lab-steel-50/50"
-                              }`}>
-                                <p className={`text-sm font-extrabold font-sans tracking-tight flex items-center gap-1.5 ${
-                                  isWeekend ? "text-lab-amber-600" : "text-lab-steel-800"
-                                }`}>
-                                  <span className={`w-2 h-2 rounded-full ${
-                                    isWeekend ? "bg-lab-amber-500 animate-pulse" : "bg-lab-teal-500 animate-pulse"
-                                  }`}></span>
-                                  {language === "ko" ? `${dateObj.getDate()}일` : dateObj.getDate()}
-                                </p>
+                        return (
+                          <div className="space-y-6">
+                            {/* Gantt timeline */}
+                            <div className="border border-lab-steel-200 bg-lab-steel-50/30 rounded-2xl p-5">
+                              <h3 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-lab-indigo-600"></span>
+                                {language === "ko" ? "실험 타임라인" : "Experiment Timeline"}
+                              </h3>
+                              {/* Date axis labels */}
+                              <div className="relative mb-1 h-5">
+                                {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
+                                  const d = addDays(firstDate, Math.round(frac * (totalDays - 1)));
+                                  return (
+                                    <span
+                                      key={frac}
+                                      className="absolute text-[9px] font-mono font-bold text-lab-steel-400 -translate-x-1/2"
+                                      style={{ left: `${frac * 100}%` }}
+                                    >
+                                      {language === "ko"
+                                        ? `${d.getMonth() + 1}/${d.getDate()}`
+                                        : `${d.toLocaleString("en-US", { month: "short" })} ${d.getDate()}`}
+                                    </span>
+                                  );
+                                })}
                               </div>
-                              <div className="space-y-3.5 p-3.5 flex-1">
-                                {existingCalendarEvents
-                                  .filter((ev) => {
-                                    const evDate = ev.start.split("T")[0];
-                                    return evDate === dateKey;
-                                  })
-                                  .map((ev) => {
-                                    const startTime = ev.start.includes("T")
-                                      ? new Date(ev.start).toLocaleTimeString(
-                                          language === "ko" ? "ko-KR" : "en-US",
-                                          { hour: "2-digit", minute: "2-digit", hour12: language !== "ko" },
-                                        )
-                                      : language === "ko" ? "종일" : "All day";
-                                    return (
-                                      <div
-                                        key={ev.id || ev.start}
-                                        className="border border-lab-steel-200 bg-lab-steel-50/70 rounded-lg px-3 py-2 flex items-start gap-2"
-                                        title={ev.title}
+                              {/* Bars */}
+                              <div className="space-y-3">
+                                {runDateRanges.map((run) => {
+                                  const runStart = new Date(`${run.startDate}T00:00:00`);
+                                  const runEnd = new Date(`${run.endDate}T00:00:00`);
+                                  const leftPct = (getDayDifference(firstDate, runStart) / totalDays) * 100;
+                                  const widthPct = ((getDayDifference(runStart, runEnd) + 1) / totalDays) * 100;
+                                  return (
+                                    <div key={run.runIndex} className="flex items-center gap-3">
+                                      <span
+                                        className="text-[11px] font-bold truncate flex-shrink-0"
+                                        style={{ color: run.color.text, width: "160px" }}
+                                        title={run.name}
                                       >
-                                        <span className="mt-0.5 h-2 w-2 rounded-full bg-lab-steel-400 flex-shrink-0" />
-                                        <div className="min-w-0">
-                                          <p className="text-[10px] font-mono font-bold text-lab-steel-400 uppercase tracking-wide">{startTime}</p>
-                                          <p className="text-xs font-semibold text-lab-steel-600 truncate">{ev.title}</p>
-                                        </div>
+                                        {run.name}
+                                      </span>
+                                      <div className="relative flex-1 h-7 bg-lab-steel-100 rounded-lg overflow-hidden">
+                                        <button
+                                          type="button"
+                                          title={`${run.name}: ${run.startDate} → ${run.endDate}`}
+                                          onClick={() => setCalendarView("weekly")}
+                                          className="absolute h-full rounded-lg flex items-center px-3 text-white text-[10px] font-bold cursor-pointer hover:opacity-90 transition"
+                                          style={{
+                                            left: `${leftPct}%`,
+                                            width: `${Math.max(widthPct, 4)}%`,
+                                            backgroundColor: run.color.bar,
+                                          }}
+                                        >
+                                          <span className="truncate">{getDayDifference(runStart, runEnd) + 1}d</span>
+                                        </button>
                                       </div>
-                                    );
-                                  })}
-                                {groupedDraftEvents[dateKey].map((event) => {
-                                  const movementDetails = getMovementDetails(event);
-                                  const categoryAccent = getCategoryAccent(event.category);
+                                      <span className="text-[10px] font-mono text-lab-steel-400 flex-shrink-0 whitespace-nowrap">
+                                        {language === "ko"
+                                          ? `${runStart.getMonth() + 1}/${runStart.getDate()} → ${runEnd.getMonth() + 1}/${runEnd.getDate()}`
+                                          : `${runStart.toLocaleString("en-US", { month: "short" })} ${runStart.getDate()} → ${runEnd.toLocaleString("en-US", { month: "short" })} ${runEnd.getDate()}`}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
 
+                            {/* Monthly calendar grid */}
+                            <div>
+                              <h3 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider mb-3 flex items-center justify-between">
+                                <span>{language === "ko" ? "월간 달력" : "Monthly Calendar"}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setCalendarView("weekly")}
+                                  className="text-[10px] font-bold text-lab-teal-600 hover:text-lab-teal-700 underline underline-offset-2 cursor-pointer"
+                                >
+                                  {language === "ko" ? "상세 보기 →" : "View detail →"}
+                                </button>
+                              </h3>
+                              {/* Run legend */}
+                              {runDateRanges.length > 1 && (
+                                <div className="flex flex-wrap gap-3 mb-3">
+                                  {runDateRanges.map((run) => (
+                                    <span key={run.runIndex} className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: run.color.text }}>
+                                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: run.color.bar }} />
+                                      {run.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
+                                {(language === "ko"
+                                  ? ["일", "월", "화", "수", "목", "금", "토"]
+                                  : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+                                ).map((d, i) => (
+                                  <div key={d} className={i === 0 || i === 6 ? "text-lab-amber-500" : ""}>{d}</div>
+                                ))}
+                              </div>
+                              <div className="grid grid-cols-7 gap-1">
+                                {/* Leading empty cells */}
+                                {Array.from({ length: firstDate.getDay() }).map((_, i) => (
+                                  <div key={`pre-${i}`} className="h-16 rounded-lg" />
+                                ))}
+                                {allCalendarDates.map((dateKey) => {
+                                  const d = new Date(`${dateKey}T00:00:00`);
+                                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                                  const hasEvents = Boolean(groupedDraftEvents[dateKey]?.length);
+                                  const activeRuns = runDateRanges.filter((run) =>
+                                    groupedDraftEvents[dateKey]?.some((ev) => (ev.runIndex ?? 0) === run.runIndex)
+                                  );
                                   return (
                                     <button
-                                      draggable
-                                      key={event.id}
-                                      onClick={() => setSelectedEventId(event.id)}
-                                      onDragEnd={() => {
-                                        setDraggedEventId("");
-                                        setDragTargetDate("");
-                                      }}
-                                      onDragStart={(dragEvent) => {
-                                        setDraggedEventId(event.id);
-                                        setSelectedEventId(event.id);
-                                        dragEvent.dataTransfer.setData(
-                                          "text/plain",
-                                          event.id,
-                                        );
-                                        dragEvent.dataTransfer.effectAllowed = "move";
-                                      }}
-                                      className={`relative w-full border rounded-xl py-3.5 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
-                                        selectedEventId === event.id
-                                          ? "border-lab-teal-600 bg-lab-teal-50/40 ring-1 ring-lab-teal-600/20 shadow-xs"
-                                          : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
+                                      key={dateKey}
+                                      type="button"
+                                      onClick={() => setCalendarView("weekly")}
+                                      className={`h-16 rounded-lg border p-1.5 flex flex-col items-center gap-1 transition hover:border-lab-teal-400 cursor-pointer ${
+                                        isWeekend
+                                          ? "border-lab-steel-200 bg-lab-steel-50/40"
+                                          : hasEvents
+                                            ? "border-lab-steel-200 bg-white"
+                                            : "border-lab-steel-100 bg-lab-steel-50/20"
                                       }`}
                                     >
-                                      <span
-                                        className={`absolute bottom-0 left-0 top-0 w-1 rounded-l-xl ${categoryAccent.bar}`}
-                                      />
-                                      <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
-                                        {formatTime(event.date, language)} ·{" "}
-                                        {formatDuration(event.durationMinutes, language)}
+                                      <span className={`text-[11px] font-bold font-mono ${isWeekend ? "text-lab-amber-500" : hasEvents ? "text-lab-steel-800" : "text-lab-steel-400"}`}>
+                                        {d.getDate()}
                                       </span>
-                                      <span className="mt-2 block text-[15px] font-extrabold text-lab-steel-900 leading-snug break-words">
-                                        {event.name}
-                                      </span>
-                                      <span
-                                        className={`mt-2.5 inline-block border rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
-                                      >
-                                        {t.categories[event.category]}
-                                      </span>
-                                      {movementDetails.moved && movementDetails.originalDate ? (
-                                        <span className="mt-3.5 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-2 font-sans leading-normal">
-                                          {t.adjustedFrom}:{" "}
-                                          <span className="font-mono font-bold block mt-1">
-                                            {formatDate(movementDetails.originalDate, language)}{" "}
-                                            {formatTime(movementDetails.originalDate, language)}
-                                          </span>
-                                        </span>
-                                      ) : null}
-                                      {movementDetails.reasons.length ? (
-                                        <span className="mt-3 block text-xs font-medium text-lab-amber-600 pl-2.5 border-l-2 border-lab-amber-300 font-sans leading-normal">
-                                          {movementDetails.reasons[0]}
-                                        </span>
-                                      ) : null}
+                                      <div className="flex flex-wrap gap-0.5 justify-center">
+                                        {activeRuns.map((run) => (
+                                          <span
+                                            key={run.runIndex}
+                                            className="w-2 h-2 rounded-full flex-shrink-0"
+                                            style={{ backgroundColor: run.color.bar }}
+                                            title={run.name}
+                                          />
+                                        ))}
+                                      </div>
                                     </button>
                                   );
                                 })}
                               </div>
-                            </section>
-                          );
-                        })}
-                      </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* ── WEEKLY DETAIL ── */}
+                      {calendarView === "weekly" && (
+                        <>
+                          <h3 className="text-sm font-bold text-lab-steel-900 uppercase tracking-wider pb-2 border-b border-lab-steel-100 mb-3 flex items-center justify-between">
+                            <span>{t.draftCalendar}</span>
+                            <span className="text-[10px] text-lab-steel-400 font-mono font-bold">7-DAY GRID</span>
+                          </h3>
+
+                          {/* Run legend */}
+                          {runDateRanges.length > 1 && (
+                            <div className="flex flex-wrap gap-3 mb-3">
+                              {runDateRanges.map((run) => (
+                                <span key={run.runIndex} className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: run.color.text }}>
+                                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: run.color.bar }} />
+                                  {run.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Weekday header */}
+                          <div className="grid grid-cols-7 gap-3 mb-2 text-center text-xs font-extrabold text-lab-steel-500 font-sans tracking-wider uppercase border-b border-lab-steel-100 pb-2">
+                            {(language === "ko"
+                              ? ["일", "월", "화", "수", "목", "금", "토"]
+                              : ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+                            ).map((dayName, idx) => (
+                              <div key={dayName} className={idx === 0 || idx === 6 ? "text-lab-amber-600" : "text-lab-steel-500"}>
+                                {dayName}
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="grid gap-3 grid-cols-7">
+                            {/* Leading empty cells to align first day */}
+                            {(() => {
+                              const firstDateKey = allCalendarDates[0];
+                              const startDayOfWeek = firstDateKey ? new Date(`${firstDateKey}T00:00:00`).getDay() : 0;
+                              return Array.from({ length: startDayOfWeek }).map((_, idx) => (
+                                <div
+                                  key={`empty-${idx}`}
+                                  className="border border-dashed border-lab-steel-100/30 rounded-2xl bg-lab-steel-50/5 min-h-48"
+                                />
+                              ));
+                            })()}
+
+                            {allCalendarDates.map((dateKey) => {
+                              const dateObj = new Date(`${dateKey}T00:00:00`);
+                              const dayOfWeek = dateObj.getDay();
+                              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                              const dayEvents = groupedDraftEvents[dateKey] ?? [];
+                              const isEmpty = dayEvents.length === 0;
+
+                              return (
+                                <section
+                                  key={dateKey}
+                                  onDragLeave={() => setDragTargetDate("")}
+                                  onDragOver={(event) => {
+                                    event.preventDefault();
+                                    setDragTargetDate(dateKey);
+                                  }}
+                                  onDrop={(event) => {
+                                    event.preventDefault();
+                                    const eventId =
+                                      event.dataTransfer.getData("text/plain") ||
+                                      draggedEventId;
+                                    handleDraftEventDrop(eventId, dateKey);
+                                  }}
+                                  className={`min-h-48 border rounded-2xl transition duration-200 flex flex-col overflow-hidden ${
+                                    dragTargetDate === dateKey
+                                      ? "border-lab-teal-500 ring-4 ring-lab-teal-500/10 bg-lab-teal-50/10"
+                                      : isEmpty
+                                        ? "border-dashed border-lab-steel-100 bg-lab-steel-50/10"
+                                        : isWeekend
+                                          ? "border-lab-steel-200 bg-lab-steel-50/30 shadow-2xs"
+                                          : "border-lab-steel-200 bg-white shadow-2xs"
+                                  }`}
+                                >
+                                  <div className={`border-b border-lab-steel-100 px-3.5 py-2.5 flex items-center justify-between ${
+                                    isEmpty ? "bg-transparent border-lab-steel-50" : isWeekend ? "bg-lab-steel-100/30" : "bg-lab-steel-50/50"
+                                  }`}>
+                                    <p className={`text-sm font-extrabold font-sans tracking-tight flex items-center gap-1.5 ${
+                                      isEmpty ? "text-lab-steel-300" : isWeekend ? "text-lab-amber-600" : "text-lab-steel-800"
+                                    }`}>
+                                      {!isEmpty && (
+                                        <span className={`w-2 h-2 rounded-full ${isWeekend ? "bg-lab-amber-500 animate-pulse" : "bg-lab-teal-500 animate-pulse"}`} />
+                                      )}
+                                      {language === "ko" ? `${dateObj.getDate()}일` : dateObj.getDate()}
+                                    </p>
+                                    {/* Run color dots for this day */}
+                                    {!isEmpty && runDateRanges.length > 1 && (
+                                      <div className="flex gap-0.5">
+                                        {runDateRanges
+                                          .filter((run) => dayEvents.some((ev) => (ev.runIndex ?? 0) === run.runIndex))
+                                          .map((run) => (
+                                            <span
+                                              key={run.runIndex}
+                                              className="w-2 h-2 rounded-full"
+                                              style={{ backgroundColor: run.color.bar }}
+                                              title={run.name}
+                                            />
+                                          ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="space-y-3.5 p-3.5 flex-1">
+                                    {existingCalendarEvents
+                                      .filter((ev) => ev.start.split("T")[0] === dateKey)
+                                      .map((ev) => {
+                                        const startTime = ev.start.includes("T")
+                                          ? new Date(ev.start).toLocaleTimeString(
+                                              language === "ko" ? "ko-KR" : "en-US",
+                                              { hour: "2-digit", minute: "2-digit", hour12: language !== "ko" },
+                                            )
+                                          : language === "ko" ? "종일" : "All day";
+                                        return (
+                                          <div
+                                            key={ev.id || ev.start}
+                                            className="border border-lab-steel-200 bg-lab-steel-50/70 rounded-lg px-3 py-2 flex items-start gap-2"
+                                            title={ev.title}
+                                          >
+                                            <span className="mt-0.5 h-2 w-2 rounded-full bg-lab-steel-400 flex-shrink-0" />
+                                            <div className="min-w-0">
+                                              <p className="text-[10px] font-mono font-bold text-lab-steel-400 uppercase tracking-wide">{startTime}</p>
+                                              <p className="text-xs font-semibold text-lab-steel-600 truncate">{ev.title}</p>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    {dayEvents.map((event) => {
+                                      const movementDetails = getMovementDetails(event);
+                                      const runIdx = event.runIndex ?? 0;
+                                      const runColor = RUN_HEX_COLORS[runIdx % RUN_HEX_COLORS.length]!;
+                                      const categoryAccent = getCategoryAccent(event.category);
+
+                                      return (
+                                        <button
+                                          draggable
+                                          key={event.id}
+                                          onClick={() => setSelectedEventId(event.id)}
+                                          onDragEnd={() => {
+                                            setDraggedEventId("");
+                                            setDragTargetDate("");
+                                          }}
+                                          onDragStart={(dragEvent) => {
+                                            setDraggedEventId(event.id);
+                                            setSelectedEventId(event.id);
+                                            dragEvent.dataTransfer.setData("text/plain", event.id);
+                                            dragEvent.dataTransfer.effectAllowed = "move";
+                                          }}
+                                          className={`relative w-full border rounded-xl py-3.5 pl-4 pr-3.5 text-left transition duration-200 cursor-grab active:cursor-grabbing ${
+                                            selectedEventId === event.id
+                                              ? "ring-1 shadow-xs"
+                                              : "border-lab-steel-200 bg-white hover:border-lab-steel-400 hover:shadow-xs"
+                                          }`}
+                                          style={
+                                            selectedEventId === event.id
+                                              ? { borderColor: runColor.bar, backgroundColor: runColor.bg, outlineColor: runColor.bar }
+                                              : undefined
+                                          }
+                                        >
+                                          {/* Run color bar on left */}
+                                          <span
+                                            className="absolute bottom-0 left-0 top-0 w-1.5 rounded-l-xl"
+                                            style={{ backgroundColor: runColor.bar }}
+                                          />
+                                          <span className="block text-xs font-bold text-lab-steel-500 font-mono tracking-tight uppercase">
+                                            {formatTime(event.date, language)} · {formatDuration(event.durationMinutes, language)}
+                                          </span>
+                                          <span className="mt-2 block text-[15px] font-extrabold text-lab-steel-900 leading-snug break-words">
+                                            {event.name}
+                                          </span>
+                                          <div className="mt-2.5 flex flex-wrap gap-1.5">
+                                            {/* Category chip */}
+                                            <span
+                                              className={`inline-block border rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono ${categoryAccent.chip}`}
+                                            >
+                                              {t.categories[event.category]}
+                                            </span>
+                                            {/* Run label chip when multiple runs */}
+                                            {runDateRanges.length > 1 && (
+                                              <span
+                                                className="inline-block border rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider font-mono"
+                                                style={{ borderColor: runColor.border, backgroundColor: runColor.bg, color: runColor.text }}
+                                              >
+                                                {runNames[runIdx] ?? `Run ${runIdx + 1}`}
+                                              </span>
+                                            )}
+                                          </div>
+                                          {movementDetails.moved && movementDetails.originalDate ? (
+                                            <span className="mt-3.5 block text-xs font-medium text-lab-amber-700 bg-lab-amber-50/60 border border-lab-amber-100 rounded-lg px-2.5 py-2 font-sans leading-normal">
+                                              {t.adjustedFrom}:{" "}
+                                              <span className="font-mono font-bold block mt-1">
+                                                {formatDate(movementDetails.originalDate, language)}{" "}
+                                                {formatTime(movementDetails.originalDate, language)}
+                                              </span>
+                                            </span>
+                                          ) : null}
+                                          {movementDetails.reasons.length ? (
+                                            <span className="mt-3 block text-xs font-medium text-lab-amber-600 pl-2.5 border-l-2 border-lab-amber-300 font-sans leading-normal">
+                                              {movementDetails.reasons[0]}
+                                            </span>
+                                          ) : null}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </section>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 

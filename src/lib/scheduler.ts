@@ -4,6 +4,7 @@ export type Step = {
   durationMinutes: number;
   category: "Hands-on" | "Incubation" | "Assay";
   protocol: string;
+  runIndex?: number;
 };
 
 export type CalendarConflict = {
