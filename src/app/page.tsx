@@ -1444,6 +1444,18 @@ async function fetchCalendarConflicts(
   };
 }
 
+function getMonthCalendarDays(yearMonth: string) {
+  const [year, month] = yearMonth.split("-").map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const firstCell = new Date(firstDay);
+  firstCell.setDate(firstDay.getDate() - firstDay.getDay());
+  return Array.from({ length: 42 }, (_, i) => {
+    const date = new Date(firstCell);
+    date.setDate(firstCell.getDate() + i);
+    return { date, dateKey: formatDateInput(date), inMonth: date.getMonth() === month - 1 };
+  });
+}
+
 export default function Home() {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
   const [naturalLanguageInput, setNaturalLanguageInput] = useState("");
@@ -1489,6 +1501,8 @@ export default function Home() {
   const [draggedEventId, setDraggedEventId] = useState("");
   const [dragTargetDate, setDragTargetDate] = useState("");
   const [calendarView, setCalendarView] = useState<CalendarView>("monthly");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
   const previousBusySignature = useRef("");
   const t = copy[language];
 
@@ -1671,6 +1685,19 @@ export default function Home() {
     }
     return dates;
   }, [draftDates]);
+
+  const calendarBaseMonth = allCalendarDates[0]?.slice(0, 7) ?? "";
+  const calendarDisplayMonthKey = useMemo(() => {
+    if (!calendarBaseMonth) return "";
+    const [y, m] = calendarBaseMonth.split("-").map(Number);
+    const d = new Date(y, m - 1 + calendarMonthOffset, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }, [calendarBaseMonth, calendarMonthOffset]);
+  const allWarningMessages = useMemo(() =>
+    draftEvents.flatMap(event =>
+      event.warnings.map(w => ({ eventName: event.name, message: t.warningMessages[w] }))
+    ),
+  [draftEvents, t]);
 
   const runNames = useMemo(() => {
     if (aiGeneratedTemplate) return [aiGeneratedTemplate.name];
@@ -1899,6 +1926,10 @@ export default function Home() {
     setLanguage(nextLanguage);
     writeBrowserStorage(languageStorageKey, nextLanguage);
   }
+
+  useEffect(() => {
+    setCalendarMonthOffset(0);
+  }, [calendarBaseMonth]);
 
   function dismissIntroBanner() {
     setShowIntroBanner(false);
@@ -2912,20 +2943,35 @@ export default function Home() {
                 </svg>
               </div>
             </div>
-            <div className={`border rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group transition-all min-h-[76px] ${
+            <div className={`relative border rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group/warn transition-all min-h-[76px] ${
               warningCount > 0
-                ? "border-lab-amber-200 bg-lab-amber-50/30 hover:border-lab-amber-500/50"
+                ? "border-lab-amber-200 bg-lab-amber-50/30 hover:border-lab-amber-500/50 cursor-help"
                 : "border-lab-steel-200 bg-white hover:border-lab-steel-300"
             }`}>
               <div className="flex flex-col">
                 <span className="block font-semibold text-lab-steel-600">{t.warnings}</span>
                 <strong className={`mt-0.5 block text-2xl font-bold tracking-tight ${warningCount > 0 ? "text-lab-amber-600" : "text-lab-steel-900"}`}>{warningCount}</strong>
               </div>
-              <div className={`p-2 rounded-lg transition-colors ${warningCount > 0 ? "bg-lab-amber-100/70 text-lab-amber-600" : "bg-lab-steel-100 text-lab-steel-500 group-hover:bg-lab-steel-200"}`}>
+              <div className={`p-2 rounded-lg transition-colors ${warningCount > 0 ? "bg-lab-amber-100/70 text-lab-amber-600" : "bg-lab-steel-100 text-lab-steel-500 group-hover/warn:bg-lab-steel-200"}`}>
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
+              {warningCount > 0 && (
+                <div className="absolute bottom-full left-0 mb-2 w-80 bg-white border border-lab-amber-200 rounded-xl shadow-xl p-3 z-20 pointer-events-none opacity-0 group-hover/warn:opacity-100 transition-opacity duration-150">
+                  <p className="text-xs font-bold text-lab-amber-700 uppercase tracking-wider mb-2">
+                    {t.warnings}
+                  </p>
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    {allWarningMessages.map((item, i) => (
+                      <div key={i} className="text-xs text-lab-steel-700 pb-1.5 border-b border-lab-steel-100 last:border-0 last:pb-0">
+                        <span className="font-semibold text-lab-steel-900 block truncate">{item.eventName}</span>
+                        <span className="text-lab-amber-700">{item.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="border border-lab-steel-200 bg-white rounded-xl p-3 shadow-sm flex items-center justify-between gap-2 group hover:border-lab-teal-600/30 transition-all min-h-[76px]">
               <div className="flex flex-col">
@@ -3661,80 +3707,110 @@ export default function Home() {
                               </div>
                             </div>
 
-                            {/* Monthly calendar grid */}
-                            <div>
-                              <h3 className="text-xs font-bold text-lab-steel-900 uppercase tracking-wider mb-3 flex items-center justify-between">
-                                <span>{language === "ko" ? "월간 달력" : "Monthly Calendar"}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setCalendarView("weekly")}
-                                  className="text-[10px] font-bold text-lab-teal-600 hover:text-lab-teal-700 underline underline-offset-2 cursor-pointer"
-                                >
-                                  {language === "ko" ? "상세 보기 →" : "View detail →"}
-                                </button>
-                              </h3>
-                              {/* Run legend */}
-                              {runDateRanges.length > 1 && (
-                                <div className="flex flex-wrap gap-3 mb-3">
-                                  {runDateRanges.map((run) => (
-                                    <span key={run.runIndex} className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: run.color.text }}>
-                                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: run.color.bar }} />
-                                      {run.name}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                              <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
-                                {(language === "ko"
-                                  ? ["일", "월", "화", "수", "목", "금", "토"]
-                                  : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-                                ).map((d, i) => (
-                                  <div key={d} className={i === 0 || i === 6 ? "text-lab-amber-500" : ""}>{d}</div>
-                                ))}
-                              </div>
-                              <div className="grid grid-cols-7 gap-1">
-                                {/* Leading empty cells */}
-                                {Array.from({ length: firstDate.getDay() }).map((_, i) => (
-                                  <div key={`pre-${i}`} className="h-16 rounded-lg" />
-                                ))}
-                                {allCalendarDates.map((dateKey) => {
-                                  const d = new Date(`${dateKey}T00:00:00`);
-                                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                                  const hasEvents = Boolean(groupedDraftEvents[dateKey]?.length);
-                                  const activeRuns = runDateRanges.filter((run) =>
-                                    groupedDraftEvents[dateKey]?.some((ev) => (ev.runIndex ?? 0) === run.runIndex)
-                                  );
-                                  return (
+                            {/* Monthly calendar grid – Jarvis style full 7×6 */}
+                            {calendarDisplayMonthKey && (() => {
+                              const today = formatDateInput(new Date());
+                              const [cy, cm] = calendarDisplayMonthKey.split("-").map(Number);
+                              const monthLabel = language === "ko"
+                                ? `${cy}년 ${cm}월`
+                                : new Date(cy, cm - 1, 1).toLocaleString("en-US", { year: "numeric", month: "long" });
+                              const cells = getMonthCalendarDays(calendarDisplayMonthKey);
+                              return (
+                                <div>
+                                  {/* Header: nav + title + legend */}
+                                  <div className="flex items-center justify-between mb-3 gap-2">
                                     <button
-                                      key={dateKey}
                                       type="button"
-                                      onClick={() => setCalendarView("weekly")}
-                                      className={`h-16 rounded-lg border p-1.5 flex flex-col items-center gap-1 transition hover:border-lab-teal-400 cursor-pointer ${
-                                        isWeekend
-                                          ? "border-lab-steel-200 bg-lab-steel-50/40"
-                                          : hasEvents
-                                            ? "border-lab-steel-200 bg-white"
-                                            : "border-lab-steel-100 bg-lab-steel-50/20"
-                                      }`}
+                                      onClick={() => setCalendarMonthOffset((o) => o - 1)}
+                                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-lab-steel-200 hover:bg-lab-steel-50 text-lab-steel-600 text-sm font-bold transition"
                                     >
-                                      <span className={`text-[11px] font-bold font-mono ${isWeekend ? "text-lab-amber-500" : hasEvents ? "text-lab-steel-800" : "text-lab-steel-400"}`}>
-                                        {d.getDate()}
-                                      </span>
-                                      <div className="flex flex-wrap gap-0.5 justify-center">
-                                        {activeRuns.map((run) => (
-                                          <span
-                                            key={run.runIndex}
-                                            className="w-2 h-2 rounded-full flex-shrink-0"
-                                            style={{ backgroundColor: run.color.bar }}
-                                            title={run.name}
-                                          />
-                                        ))}
-                                      </div>
+                                      ‹
                                     </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                                    <div className="flex items-center gap-3 flex-1 justify-center flex-wrap">
+                                      <span className="text-xs font-bold text-lab-steel-900">{monthLabel}</span>
+                                      {runDateRanges.length > 1 && runDateRanges.map((run) => (
+                                        <span key={run.runIndex} className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: run.color.text }}>
+                                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: run.color.bar }} />
+                                          {run.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setCalendarMonthOffset((o) => o + 1)}
+                                      className="w-7 h-7 flex items-center justify-center rounded-lg border border-lab-steel-200 hover:bg-lab-steel-50 text-lab-steel-600 text-sm font-bold transition"
+                                    >
+                                      ›
+                                    </button>
+                                  </div>
+                                  {/* Day-of-week header */}
+                                  <div className="grid grid-cols-7 gap-1 mb-1 text-center text-[10px] font-bold text-lab-steel-500 uppercase tracking-wider">
+                                    {(language === "ko"
+                                      ? ["일", "월", "화", "수", "목", "금", "토"]
+                                      : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+                                    ).map((d, i) => (
+                                      <div key={d} className={i === 0 || i === 6 ? "text-lab-amber-500" : ""}>{d}</div>
+                                    ))}
+                                  </div>
+                                  {/* 42-cell grid */}
+                                  <div className="grid grid-cols-7 gap-1">
+                                    {cells.map(({ date, dateKey, inMonth }) => {
+                                      const dayOfWeek = date.getDay();
+                                      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                                      const isToday = dateKey === today;
+                                      const hasEvents = Boolean(groupedDraftEvents[dateKey]?.length);
+                                      const activeRuns = runDateRanges.filter((run) =>
+                                        groupedDraftEvents[dateKey]?.some((ev) => (ev.runIndex ?? 0) === run.runIndex)
+                                      );
+                                      return (
+                                        <button
+                                          key={dateKey}
+                                          type="button"
+                                          onClick={() => {
+                                            if (hasEvents) setSelectedCalendarDate(dateKey);
+                                          }}
+                                          className={[
+                                            "h-16 rounded-lg border p-1.5 flex flex-col items-center gap-1 transition",
+                                            hasEvents ? "cursor-pointer hover:border-lab-teal-400" : "cursor-default",
+                                            !inMonth ? "opacity-30" : "",
+                                            isToday
+                                              ? "border-lab-teal-500 bg-lab-teal-50 ring-1 ring-lab-teal-400"
+                                              : isWeekend
+                                                ? "border-lab-steel-200 bg-lab-steel-50/40"
+                                                : hasEvents
+                                                  ? "border-lab-steel-200 bg-white"
+                                                  : "border-lab-steel-100 bg-lab-steel-50/20",
+                                          ].join(" ")}
+                                        >
+                                          <span className={[
+                                            "text-[11px] font-bold font-mono",
+                                            isToday
+                                              ? "text-lab-teal-700"
+                                              : isWeekend && inMonth
+                                                ? "text-lab-amber-500"
+                                                : hasEvents
+                                                  ? "text-lab-steel-800"
+                                                  : "text-lab-steel-400",
+                                          ].join(" ")}>
+                                            {date.getDate()}
+                                          </span>
+                                          <div className="flex flex-wrap gap-0.5 justify-center">
+                                            {activeRuns.slice(0, 2).map((run) => (
+                                              <span
+                                                key={run.runIndex}
+                                                className="w-2 h-2 rounded-full flex-shrink-0"
+                                                style={{ backgroundColor: run.color.bar }}
+                                                title={run.name}
+                                              />
+                                            ))}
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })()}
@@ -4137,6 +4213,55 @@ export default function Home() {
           </section>
         </section>
       </div>
+
+      {/* Calendar date modal */}
+      {selectedCalendarDate && (() => {
+        const events = groupedDraftEvents[selectedCalendarDate] ?? [];
+        if (events.length === 0) return null;
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            onClick={() => setSelectedCalendarDate(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-lab-steel-100">
+                <p className="text-sm font-bold text-lab-steel-900">{selectedCalendarDate}</p>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCalendarDate(null)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-lab-steel-100 text-lab-steel-500 text-sm font-bold transition"
+                  aria-label="닫기"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="divide-y divide-lab-steel-50 max-h-72 overflow-y-auto">
+                {events.map((ev) => {
+                  const run = runDateRanges.find((r) => r.runIndex === (ev.runIndex ?? 0));
+                  return (
+                    <button
+                      key={ev.id}
+                      type="button"
+                      onClick={() => { setCalendarView("weekly"); setSelectedCalendarDate(null); }}
+                      className="w-full flex flex-col gap-0.5 px-5 py-3 text-left hover:bg-lab-steel-50 transition border-l-4"
+                      style={{ borderLeftColor: run?.color.bar ?? "#64748b" }}
+                    >
+                      <span className="text-xs font-bold text-lab-steel-900">{ev.name}</span>
+                      {run && <span className="text-[10px] font-semibold" style={{ color: run.color.text }}>{run.name}</span>}
+                      <span className="text-[10px] text-lab-steel-500">{ev.category}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </main>
   );
 }
