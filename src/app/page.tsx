@@ -2958,7 +2958,7 @@ export default function Home() {
                 </svg>
               </div>
               {warningCount > 0 && (
-                <div className="absolute bottom-full left-0 mb-2 w-80 bg-white border border-lab-amber-200 rounded-xl shadow-xl p-3 z-20 pointer-events-none opacity-0 group-hover/warn:opacity-100 transition-opacity duration-150">
+                <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-lab-amber-200 rounded-xl shadow-xl p-3 z-20 pointer-events-none opacity-0 group-hover/warn:opacity-100 transition-opacity duration-150">
                   <p className="text-xs font-bold text-lab-amber-700 uppercase tracking-wider mb-2">
                     {t.warnings}
                   </p>
@@ -3770,40 +3770,49 @@ export default function Home() {
                                             if (hasEvents) setSelectedCalendarDate(dateKey);
                                           }}
                                           className={[
-                                            "h-16 rounded-lg border p-1.5 flex flex-col items-center gap-1 transition",
+                                            "h-16 rounded-lg border flex flex-col overflow-hidden transition",
                                             hasEvents ? "cursor-pointer hover:border-lab-teal-400" : "cursor-default",
                                             !inMonth ? "opacity-30" : "",
                                             isToday
-                                              ? "border-lab-teal-500 bg-lab-teal-50 ring-1 ring-lab-teal-400"
+                                              ? "border-lab-teal-500 ring-1 ring-lab-teal-400"
                                               : isWeekend
-                                                ? "border-lab-steel-200 bg-lab-steel-50/40"
+                                                ? "border-lab-steel-200"
                                                 : hasEvents
-                                                  ? "border-lab-steel-200 bg-white"
-                                                  : "border-lab-steel-100 bg-lab-steel-50/20",
+                                                  ? "border-lab-steel-200"
+                                                  : "border-lab-steel-100",
                                           ].join(" ")}
                                         >
-                                          <span className={[
-                                            "text-[11px] font-bold font-mono",
-                                            isToday
-                                              ? "text-lab-teal-700"
-                                              : isWeekend && inMonth
-                                                ? "text-lab-amber-500"
-                                                : hasEvents
-                                                  ? "text-lab-steel-800"
-                                                  : "text-lab-steel-400",
+                                          {/* Date number */}
+                                          <div className={[
+                                            "flex-1 flex items-start justify-center pt-1.5",
+                                            isToday ? "bg-lab-teal-50" : isWeekend ? "bg-lab-steel-50/40" : hasEvents ? "bg-white" : "bg-lab-steel-50/20",
                                           ].join(" ")}>
-                                            {date.getDate()}
-                                          </span>
-                                          <div className="flex flex-wrap gap-0.5 justify-center">
-                                            {activeRuns.slice(0, 2).map((run) => (
-                                              <span
-                                                key={run.runIndex}
-                                                className="w-2 h-2 rounded-full flex-shrink-0"
-                                                style={{ backgroundColor: run.color.bar }}
-                                                title={run.name}
-                                              />
-                                            ))}
+                                            <span className={[
+                                              "text-[11px] font-bold font-mono",
+                                              isToday
+                                                ? "text-lab-teal-700"
+                                                : isWeekend && inMonth
+                                                  ? "text-lab-amber-500"
+                                                  : hasEvents
+                                                    ? "text-lab-steel-800"
+                                                    : "text-lab-steel-400",
+                                            ].join(" ")}>
+                                              {date.getDate()}
+                                            </span>
                                           </div>
+                                          {/* Colored run bars at bottom */}
+                                          {activeRuns.length > 0 && (
+                                            <div className="flex w-full flex-shrink-0">
+                                              {activeRuns.map((run) => (
+                                                <div
+                                                  key={run.runIndex}
+                                                  className="h-2 flex-1"
+                                                  style={{ backgroundColor: run.color.bar }}
+                                                  title={run.name}
+                                                />
+                                              ))}
+                                            </div>
+                                          )}
                                         </button>
                                       );
                                     })}
