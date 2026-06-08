@@ -1699,6 +1699,15 @@ export default function Home() {
     ),
   [draftEvents, t]);
 
+  const calendarEventsByDate = useMemo(() => {
+    const map: Record<string, DisplayCalendarEvent[]> = {};
+    for (const ev of existingCalendarEvents) {
+      const dateKey = ev.start.slice(0, 10);
+      map[dateKey] = [...(map[dateKey] ?? []), ev];
+    }
+    return map;
+  }, [existingCalendarEvents]);
+
   const runNames = useMemo(() => {
     if (aiGeneratedTemplate) return [aiGeneratedTemplate.name];
     if (!primaryTemplate) return [];
@@ -3758,7 +3767,9 @@ export default function Home() {
                                       const dayOfWeek = date.getDay();
                                       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                                       const isToday = dateKey === today;
-                                      const hasEvents = Boolean(groupedDraftEvents[dateKey]?.length);
+                                      const hasExperiments = Boolean(groupedDraftEvents[dateKey]?.length);
+                                      const gcalEvents = calendarEventsByDate[dateKey] ?? [];
+                                      const hasAnything = hasExperiments || gcalEvents.length > 0;
                                       const activeRuns = runDateRanges.filter((run) =>
                                         groupedDraftEvents[dateKey]?.some((ev) => (ev.runIndex ?? 0) === run.runIndex)
                                       );
@@ -3767,38 +3778,47 @@ export default function Home() {
                                           key={dateKey}
                                           type="button"
                                           onClick={() => {
-                                            if (hasEvents) setSelectedCalendarDate(dateKey);
+                                            if (hasAnything) setSelectedCalendarDate(dateKey);
                                           }}
                                           className={[
                                             "h-16 rounded-lg border flex flex-col overflow-hidden transition",
-                                            hasEvents ? "cursor-pointer hover:border-lab-teal-400" : "cursor-default",
+                                            hasAnything ? "cursor-pointer hover:border-lab-teal-400" : "cursor-default",
                                             !inMonth ? "opacity-30" : "",
                                             isToday
                                               ? "border-lab-teal-500 ring-1 ring-lab-teal-400"
                                               : isWeekend
                                                 ? "border-lab-steel-200"
-                                                : hasEvents
+                                                : hasAnything
                                                   ? "border-lab-steel-200"
                                                   : "border-lab-steel-100",
                                           ].join(" ")}
                                         >
-                                          {/* Date number */}
+                                          {/* Date number + google calendar event titles */}
                                           <div className={[
-                                            "flex-1 flex items-start justify-center pt-1.5",
-                                            isToday ? "bg-lab-teal-50" : isWeekend ? "bg-lab-steel-50/40" : hasEvents ? "bg-white" : "bg-lab-steel-50/20",
+                                            "flex-1 flex flex-col items-start px-1 pt-1 gap-0.5 overflow-hidden",
+                                            isToday ? "bg-lab-teal-50" : isWeekend ? "bg-lab-steel-50/40" : hasAnything ? "bg-white" : "bg-lab-steel-50/20",
                                           ].join(" ")}>
                                             <span className={[
-                                              "text-[11px] font-bold font-mono",
+                                              "text-[11px] font-bold font-mono w-full text-center",
                                               isToday
                                                 ? "text-lab-teal-700"
                                                 : isWeekend && inMonth
                                                   ? "text-lab-amber-500"
-                                                  : hasEvents
+                                                  : hasAnything
                                                     ? "text-lab-steel-800"
                                                     : "text-lab-steel-400",
                                             ].join(" ")}>
                                               {date.getDate()}
                                             </span>
+                                            {gcalEvents.slice(0, 2).map((ev) => (
+                                              <span
+                                                key={ev.id}
+                                                className="w-full truncate rounded text-[9px] font-medium leading-tight px-0.5 bg-lab-indigo-100 text-lab-indigo-700"
+                                                title={ev.title}
+                                              >
+                                                {ev.title}
+                                              </span>
+                                            ))}
                                           </div>
                                           {/* Colored run bars at bottom */}
                                           {activeRuns.length > 0 && (
@@ -4225,8 +4245,9 @@ export default function Home() {
 
       {/* Calendar date modal */}
       {selectedCalendarDate && (() => {
-        const events = groupedDraftEvents[selectedCalendarDate] ?? [];
-        if (events.length === 0) return null;
+        const experiments = groupedDraftEvents[selectedCalendarDate] ?? [];
+        const gcalEventsForDate = calendarEventsByDate[selectedCalendarDate] ?? [];
+        if (experiments.length === 0 && gcalEventsForDate.length === 0) return null;
         return (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
@@ -4249,8 +4270,20 @@ export default function Home() {
                   ✕
                 </button>
               </div>
-              <div className="divide-y divide-lab-steel-50 max-h-72 overflow-y-auto">
-                {events.map((ev) => {
+              <div className="divide-y divide-lab-steel-50 max-h-80 overflow-y-auto">
+                {/* Google Calendar events */}
+                {gcalEventsForDate.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="flex flex-col gap-0.5 px-5 py-3 border-l-4 border-lab-indigo-400"
+                  >
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-lab-indigo-500">Google Calendar</span>
+                    <span className="text-xs font-bold text-lab-steel-900">{ev.title}</span>
+                    <span className="text-[10px] text-lab-steel-500">{ev.start.slice(11, 16) || ""}{ev.end ? ` ~ ${ev.end.slice(11, 16)}` : ""}</span>
+                  </div>
+                ))}
+                {/* Experiment schedule events */}
+                {experiments.map((ev) => {
                   const run = runDateRanges.find((r) => r.runIndex === (ev.runIndex ?? 0));
                   return (
                     <button
