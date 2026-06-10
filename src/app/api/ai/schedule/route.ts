@@ -5,7 +5,7 @@ type GeneratedStep = {
   name: string;
   dayOffset: number;
   durationMinutes: number;
-  category: "Hands-on" | "Wait" | "Assay" | "Imaging";
+  category: "Hands-on" | "Incubation" | "Assay";
   protocol: string;
 };
 
@@ -36,8 +36,8 @@ Return ONLY valid JSON matching this exact structure (no markdown, no explanatio
 
 Rules:
 - dayOffset: days from start (0 = day 1). Incubation/wait steps start on the day waiting begins.
-- durationMinutes: actual hands-on time only (not wait duration). Wait steps use 10-15 min for note-taking.
-- category: "Hands-on" for active work, "Wait" for incubation/resting, "Assay" for measurements, "Imaging" for microscopy.
+- durationMinutes: actual hands-on time only (not wait duration). Incubation steps use 10-15 min for note-taking.
+- category: "Hands-on" for active lab work, "Incubation" for incubation/resting/wait periods, "Assay" for measurements and imaging.
 - Include realistic biological steps based on standard lab protocols.
 - If the user mentions a date or relative time ("next Monday", "다음주 월요일", "tomorrow"), parse it relative to todayDate and set suggestedStartDate.
 - If no date is mentioned, set suggestedStartDate to null.
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const validCategories = new Set(["Hands-on", "Wait", "Assay", "Imaging"]);
+  const validCategories = new Set(["Hands-on", "Incubation", "Assay"]);
   const cleanedSteps: GeneratedStep[] = parsed.steps
     .filter((s) => s.name && typeof s.dayOffset === "number")
     .map((s) => ({
