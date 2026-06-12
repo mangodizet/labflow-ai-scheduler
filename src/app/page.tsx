@@ -1158,15 +1158,18 @@ function parseProtocolTextToDraft(protocolText: string): TemplateBuilderState {
     return createThp1M2ProtocolDraft();
   }
 
+  let lastDayOffset = 0;
   const parsedSteps = protocolText
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line, index) => {
+    .map((line) => {
       const dayMatch = /\b(?:day|d)\s*(\d+)\b/i.exec(line);
       const hourMatch = /(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i.exec(line);
       const minuteMatch = /(\d+)\s*(?:m|min|mins|minute|minutes)\b/i.exec(line);
       const lowerLine = line.toLowerCase();
+
+      if (dayMatch) lastDayOffset = Number(dayMatch[1]);
 
       return createDraftStep({
         category: lowerLine.includes("assay")
@@ -1174,7 +1177,7 @@ function parseProtocolTextToDraft(protocolText: string): TemplateBuilderState {
           : lowerLine.includes("culture") || lowerLine.includes("incubat")
             ? "Incubation"
             : "Hands-on",
-        dayOffset: dayMatch ? Number(dayMatch[1]) : index,
+        dayOffset: lastDayOffset,
         durationMinutes: hourMatch
           ? Math.max(1, Math.round(Number(hourMatch[1]) * 60))
           : minuteMatch
@@ -1504,6 +1507,7 @@ export default function Home() {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
   const previousBusySignature = useRef("");
+  const conflictRequestRef = useRef(0);
   const t = copy[language];
 
   const allTemplates = useMemo(
@@ -1830,7 +1834,7 @@ export default function Home() {
   }, [t.templateSyncFailed, userId]);
 
   useEffect(() => {
-    let isMounted = true;
+    const requestId = ++conflictRequestRef.current;
 
     async function loadCalendarConflicts() {
       if (!template || !startDate || !workStart || !userEmail) {
@@ -1848,40 +1852,26 @@ export default function Home() {
           language,
         );
 
-        if (isMounted) {
-          setCalendarConflicts(result.conflicts);
-          setCalendarStatus(t.calendarConflictsLoaded);
+        if (requestId !== conflictRequestRef.current) return;
 
-          if (previousBusySignature.current !== result.busySignature) {
-            previousBusySignature.current = result.busySignature;
-            setDraftEdits({});
-            setSelectedEventId("");
-          }
+        setCalendarConflicts(result.conflicts);
+        setCalendarStatus(t.calendarConflictsLoaded);
+
+        if (previousBusySignature.current !== result.busySignature) {
+          previousBusySignature.current = result.busySignature;
+          setDraftEdits({});
+          setSelectedEventId("");
         }
       } catch {
-        if (isMounted) {
-          setCalendarConflicts([]);
-          setCalendarStatus(t.calendarConflictsUnavailable);
-        }
+        if (requestId !== conflictRequestRef.current) return;
+        setCalendarConflicts([]);
+        setCalendarStatus(t.calendarConflictsUnavailable);
       }
     }
 
     void loadCalendarConflicts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    calendarRefreshToken,
-    language,
-    startDate,
-    t.calendarConflictsLoaded,
-    t.calendarConflictsUnavailable,
-    t.loadingCalendarConflicts,
-    template,
-    userEmail,
-    workStart,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarRefreshToken, startDate, template, userEmail, workStart]);
 
   useEffect(() => {
     if (!userId || !startDate) return;
@@ -1891,6 +1881,7 @@ export default function Home() {
     const rangeEnd = new Date(startDate);
     rangeEnd.setDate(rangeEnd.getDate() + 60);
 
+    // eslint-disable-next-line react-hooks/immutability
     void loadExistingCalendarEvents(rangeStart.toISOString(), rangeEnd.toISOString());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, startDate]);
@@ -1937,6 +1928,7 @@ export default function Home() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCalendarMonthOffset(0);
   }, [calendarBaseMonth]);
 

@@ -12,6 +12,17 @@
 - 월간 캘린더 그리드 + 날짜 클릭 모달
 - 실험 단계 카테고리: Hands-on / Incubation / Assay
 
+## 검증 (코드 수정 후 반드시 실행)
+```
+verify.cmd   # tsc 타입 체크 + Vitest + ESLint
+```
+개별 실행:
+```
+npx tsc --noEmit
+npm test
+npm run lint
+```
+
 ## 빌드 및 배포
 ```
 npm run build
