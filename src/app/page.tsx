@@ -1460,15 +1460,13 @@ function getMonthCalendarDays(yearMonth: string) {
 }
 
 export default function Home() {
-  const [language, setLanguage] = useState<Language>(getInitialLanguage);
+  const [language, setLanguage] = useState<Language>("en");
   const [naturalLanguageInput, setNaturalLanguageInput] = useState("");
   const [aiStatus, setAiStatus] = useState<AIStatus>("idle");
   const [aiErrorMessage, setAiErrorMessage] = useState("");
   const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState<ExperimentTemplate | null>(null);
   const [existingCalendarEvents, setExistingCalendarEvents] = useState<DisplayCalendarEvent[]>([]);
-  const [showIntroBanner, setShowIntroBanner] = useState(
-    getInitialIntroBannerVisibility,
-  );
+  const [showIntroBanner, setShowIntroBanner] = useState(true);
   const [tutorialPage, setTutorialPage] = useState(0);
   const [customTemplates, setCustomTemplates] = useState<ExperimentTemplate[]>([]);
   const [customTemplatesLoaded, setCustomTemplatesLoaded] = useState(false);
@@ -1540,6 +1538,11 @@ export default function Home() {
     templateId && customTemplates.some((item) => item.id === templateId),
   );
   const canGenerateSchedule = Boolean((aiGeneratedTemplate || template) && startDate && workStart);
+
+  useEffect(() => {
+    setLanguage(getInitialLanguage());
+    setShowIntroBanner(getInitialIntroBannerVisibility());
+  }, []);
 
   useEffect(() => {
     if (!showIntroBanner) {
