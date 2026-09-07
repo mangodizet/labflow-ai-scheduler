@@ -419,7 +419,11 @@ const copy = {
     aiInputLabel: "Describe your experiment",
     aiInputPlaceholder:
       "e.g. I want to start THP-1 differentiation next Monday, include M2 polarization and a Live/Dead assay at the end",
+    aiFollowupLabel: "Refine the schedule",
+    aiFollowupPlaceholder: "e.g. Extend the day 3 incubation to 5 days",
     aiGenerateButton: "Generate schedule with AI",
+    aiSendButton: "Send",
+    aiNewChatButton: "Start new experiment",
     aiGenerating: "AI is generating your schedule...",
     aiError: "Unable to generate schedule. Please try again.",
     aiGeneratedBadge: "AI Generated",
@@ -645,7 +649,11 @@ const copy = {
     aiInputLabel: "실험 계획 입력",
     aiInputPlaceholder:
       "예: 다음주 월요일부터 THP-1 세포를 분화시켜서 M2 극화까지 하고 싶어. 마지막에 Live/Dead assay도 포함해줘",
+    aiFollowupLabel: "일정 수정하기",
+    aiFollowupPlaceholder: "예: 3일차 배양 기간을 5일로 늘려줘",
     aiGenerateButton: "AI로 일정 생성하기",
+    aiSendButton: "전송",
+    aiNewChatButton: "새 실험으로 시작",
     aiGenerating: "AI가 실험 일정을 분석 중입니다...",
     aiError: "일정 생성에 실패했습니다. 다시 시도해주세요.",
     aiGeneratedBadge: "AI 생성됨",
@@ -1465,6 +1473,7 @@ export default function Home() {
   const [aiStatus, setAiStatus] = useState<AIStatus>("idle");
   const [aiErrorMessage, setAiErrorMessage] = useState("");
   const [aiGeneratedTemplate, setAiGeneratedTemplate] = useState<ExperimentTemplate | null>(null);
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [existingCalendarEvents, setExistingCalendarEvents] = useState<DisplayCalendarEvent[]>([]);
   const [showIntroBanner, setShowIntroBanner] = useState(true);
   const [tutorialPage, setTutorialPage] = useState(0);
@@ -1540,6 +1549,7 @@ export default function Home() {
   const canGenerateSchedule = Boolean((aiGeneratedTemplate || template) && startDate && workStart);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLanguage(getInitialLanguage());
     setShowIntroBanner(getInitialIntroBannerVisibility());
   }, []);
@@ -2547,12 +2557,16 @@ export default function Home() {
     setAiStatus("loading");
     setAiErrorMessage("");
 
+    const nextMessages = [...chatMessages, { role: "user" as const, content: prompt }];
+    setChatMessages(nextMessages);
+    setNaturalLanguageInput("");
+
     try {
       const todayDate = new Date().toISOString().split("T")[0];
       const response = await fetch("/api/ai/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, todayDate }),
+        body: JSON.stringify({ messages: nextMessages, todayDate }),
       });
 
       const data = await response.json().catch(() => null);
@@ -2569,6 +2583,7 @@ export default function Home() {
         source: "local",
       };
 
+      setChatMessages([...nextMessages, { role: "assistant", content: JSON.stringify(data) }]);
       setAiGeneratedTemplate(generated);
       setDraftEdits({});
       setSelectedEventId("");
@@ -2590,6 +2605,15 @@ export default function Home() {
       setAiStatus("error");
       setAiErrorMessage(error instanceof Error ? error.message : t.aiError);
     }
+  }
+
+  function handleAINewChat() {
+    setChatMessages([]);
+    setAiGeneratedTemplate(null);
+    setDraftEdits({});
+    setNaturalLanguageInput("");
+    setAiStatus("idle");
+    setAiErrorMessage("");
   }
 
   async function loadExistingCalendarEvents(timeMin: string, timeMax: string) {
@@ -2615,6 +2639,18 @@ export default function Home() {
     } catch {
       // Silently ignore - existing events are best-effort display only
     }
+  }
+
+  function describeAiTurn(content: string) {
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed && typeof parsed.name === "string" && Array.isArray(parsed.steps)) {
+        return `${parsed.name} · ${parsed.steps.length} ${t.steps}`;
+      }
+    } catch {
+      // not JSON (shouldn't happen since we write this ourselves) - show raw text
+    }
+    return content;
   }
 
   const currentTutorialPage = t.introPages[tutorialPage] ?? t.introPages[0];
@@ -2992,12 +3028,38 @@ export default function Home() {
         </header>
         {/* Natural Language Input Section */}
         <section className="border border-lab-teal-200 bg-gradient-to-br from-lab-teal-50/60 to-white rounded-2xl shadow-sm p-6">
-          <label className="block text-sm font-bold text-lab-steel-900 mb-3 flex items-center gap-2" htmlFor="ai-input">
-            <svg className="h-5 w-5 text-lab-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            {t.aiInputLabel}
-          </label>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <label className="text-sm font-bold text-lab-steel-900 flex items-center gap-2" htmlFor="ai-input">
+              <svg className="h-5 w-5 text-lab-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              {chatMessages.length > 0 ? t.aiFollowupLabel : t.aiInputLabel}
+            </label>
+            {chatMessages.length > 0 && (
+              <button
+                onClick={handleAINewChat}
+                className="text-xs font-semibold text-lab-steel-500 hover:text-lab-steel-800 transition cursor-pointer"
+              >
+                {t.aiNewChatButton}
+              </button>
+            )}
+          </div>
+          {chatMessages.length > 0 && (
+            <div className="mb-3 flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+              {chatMessages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                    message.role === "user"
+                      ? "self-end bg-lab-teal-600 text-white"
+                      : "self-start bg-white border border-lab-steel-200 text-lab-steel-700"
+                  }`}
+                >
+                  {message.role === "user" ? message.content : describeAiTurn(message.content)}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-3">
             <textarea
               id="ai-input"
@@ -3008,7 +3070,7 @@ export default function Home() {
                   void handleAIGenerate();
                 }
               }}
-              placeholder={t.aiInputPlaceholder}
+              placeholder={chatMessages.length > 0 ? t.aiFollowupPlaceholder : t.aiInputPlaceholder}
               rows={3}
               className="flex-1 border border-lab-teal-200 bg-white px-4 py-3 rounded-xl text-sm outline-none focus:border-lab-teal-500 focus:ring-4 focus:ring-lab-teal-500/10 transition-all resize-none text-lab-steel-800 placeholder:text-lab-steel-400"
             />
@@ -3030,7 +3092,7 @@ export default function Home() {
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  {t.aiGenerateButton}
+                  {chatMessages.length > 0 ? t.aiSendButton : t.aiGenerateButton}
                 </>
               )}
             </button>
@@ -3057,7 +3119,7 @@ export default function Home() {
               <span className="bg-lab-teal-100 text-lab-teal-800 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">{t.aiGeneratedBadge}</span>
               <span className="truncate">{aiGeneratedTemplate.name}</span>
               <button
-                onClick={() => { setAiGeneratedTemplate(null); setDraftEdits({}); }}
+                onClick={handleAINewChat}
                 className="ml-auto text-lab-steel-400 hover:text-lab-steel-700 transition cursor-pointer"
                 title={language === "ko" ? "지우기" : "Clear"}
               >

@@ -16,7 +16,12 @@ type GeneratedTemplate = {
   steps: GeneratedStep[];
 };
 
-const systemPrompt = `You are a biological experiment scheduling assistant. When a researcher describes an experiment in natural language (English or Korean), generate a detailed, realistic protocol schedule.
+const MAX_HISTORY_MESSAGES = 20;
+
+function buildSystemPrompt(todayDate: string) {
+  return `You are a biological experiment scheduling assistant. A researcher describes an experiment, or asks you to revise a schedule you already generated, in natural language (English or Korean).
+
+Today's date: ${todayDate}
 
 Return ONLY valid JSON matching this exact structure (no markdown, no explanation):
 {
@@ -39,13 +44,15 @@ Rules:
 - durationMinutes: actual hands-on time only (not wait duration). Incubation steps use 10-15 min for note-taking.
 - category: "Hands-on" for active lab work, "Incubation" for incubation/resting/wait periods, "Assay" for measurements and imaging.
 - Include realistic biological steps based on standard lab protocols.
-- If the user mentions a date or relative time ("next Monday", "다음주 월요일", "tomorrow"), parse it relative to todayDate and set suggestedStartDate.
+- If the user mentions a date or relative time ("next Monday", "다음주 월요일", "tomorrow"), parse it relative to today's date and set suggestedStartDate.
 - If no date is mentioned, set suggestedStartDate to null.
 - Keep step names concise (2-5 words). Protocol notes should be brief references.
 - For THP-1 differentiation: typically PMA treatment → 24h incubation → wash+rest 48h → cytokine treatment → 72h incubation → downstream assay.
 - For cell culture: include seeding, media changes at appropriate intervals, passage when needed.
 - Generate 5-15 steps covering the full workflow.
-- Steps should be ordered by dayOffset (ascending).`;
+- Steps should be ordered by dayOffset (ascending).
+- If the researcher is asking to modify a schedule you already returned (visible earlier in the conversation), start from that schedule and apply only the requested change, keeping everything else the same. Still return the FULL schedule JSON, not just the changed parts.`;
+}
 
 export async function POST(request: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -58,28 +65,38 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
   const todayDate = typeof body?.todayDate === "string" ? body.todayDate : new Date().toISOString().split("T")[0];
 
-  if (!prompt) {
+  const rawMessages: unknown[] = Array.isArray(body?.messages) ? body.messages : [];
+  const history: { role: "user" | "assistant"; content: string }[] = rawMessages
+    .filter(
+      (m): m is { role: "user" | "assistant"; content: string } =>
+        typeof m === "object" &&
+        m !== null &&
+        ((m as { role: unknown }).role === "user" || (m as { role: unknown }).role === "assistant") &&
+        typeof (m as { content: unknown }).content === "string",
+    )
+    .map((m) => ({ role: m.role, content: m.content }));
+
+  const lastMessage = history[history.length - 1];
+
+  if (!lastMessage || lastMessage.role !== "user" || !lastMessage.content.trim()) {
     return NextResponse.json(
       { error: "실험 계획을 입력해주세요." },
       { status: 400 },
     );
   }
 
+  // ponytail: fixed sliding window instead of token-aware trimming/compaction; revisit if long chats start losing early context.
+  const trimmedHistory = history.slice(-MAX_HISTORY_MESSAGES);
+
   const client = new Anthropic({ apiKey });
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 2048,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: `Today's date: ${todayDate}\n\nResearcher's request: ${prompt}`,
-      },
-    ],
+    system: buildSystemPrompt(todayDate),
+    messages: trimmedHistory,
   });
 
   const rawContent = message.content[0];
